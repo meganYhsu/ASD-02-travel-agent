@@ -1,2 +1,4 @@
 .env
 .vs/
+node_module/
+dist/
