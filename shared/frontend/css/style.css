@@ -159,9 +159,77 @@ select {
     background-color: #1d4ed8;
 }
 
+/* Management Pages */
 
-/* Error */
+.management-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
 
-.error {
-    color: #b91c1c;
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 32px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #555555;
+}
+
+.section-card,
+.ai-assistant {
+    background-color: white;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.management-page table {
+    width: 60%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.management-page th,
+.management-page td {
+    padding: 12px;
+    border-bottom: 1px solid #dddddd;
+    text-align: left;
+    font-size: 14px;
+}
+
+.management-page th {
+    background-color: #f7f8fa;
+}
+
+.management-page button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 16px;
+    cursor: pointer;
+}
+
+.management-page button:hover {
+    background-color: #1d4ed8;
+}
+
+.ai-assistant select {
+    width: 60%;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+#ai-result {
+    margin-top: 20px;
 }
