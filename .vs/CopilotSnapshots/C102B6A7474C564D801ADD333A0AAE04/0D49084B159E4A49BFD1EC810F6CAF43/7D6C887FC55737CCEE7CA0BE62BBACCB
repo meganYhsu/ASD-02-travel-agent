@@ -1,0 +1,99 @@
+﻿def test_detects_expired_and_missing_documents(client):
+    response = client.post(
+        "/api/alerts/compliance",
+        json={
+            "trip_id": "trip-002",
+            "traveller_id": "traveller-002",
+            "destination": "United States",
+            "nationality": "British",
+            "departure_date": "2026-07-04",
+            "return_date": "2026-07-18",
+        },
+    )
+    assert response.status_code == 200
+    alerts = response.get_json()["data"]
+    types = {item["alert_type"] for item in alerts}
+    assert "DOCUMENT_EXPIRED" in types
+
+
+def test_detects_missing_required_document(client):
+    response = client.post(
+        "/api/ai/check-compliance",
+        json={
+            "trip_id": "trip-custom",
+            "traveller_id": "traveller-005",
+            "destination": "Japan",
+            "nationality": "Australian",
+            "departure_date": "2026-09-01",
+            "return_date": "2026-09-10",
+        },
+    )
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["compliant"] is False
+    assert data["missing_documents"]
+
+
+def test_detects_expiring_before_and_during_trip(client):
+    created = client.post(
+        "/api/documents",
+        json={
+            "traveller_id": "traveller-mid",
+            "document_type": "Passport",
+            "document_number": "PMID0001",
+            "issuing_country": "Australia",
+            "nationality": "Australian",
+            "issue_date": "2020-01-01",
+            "expiry_date": "2026-09-05",
+        },
+    )
+    assert created.status_code == 201
+    response = client.post(
+        "/api/ai/check-compliance",
+        json={
+            "trip_id": "trip-001",
+            "traveller_id": "traveller-mid",
+            "destination": "Japan",
+            "nationality": "Australian",
+            "departure_date": "2026-09-01",
+            "return_date": "2026-09-10",
+        },
+    )
+    data = response.get_json()["data"]
+    assert data["expiring_documents"] or data["expired_documents"]
+
+
+def test_compliant_traveller(client):
+    response = client.post(
+        "/api/ai/check-compliance",
+        json={
+            "trip_id": "trip-001",
+            "traveller_id": "traveller-001",
+            "destination": "Japan",
+            "nationality": "Australian",
+            "departure_date": "2026-09-01",
+            "return_date": "2026-09-10",
+        },
+    )
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert data["compliant"] is True
+    assert data["missing_documents"] == []
+    assert data["expired_documents"] == []
+
+
+def test_unknown_requirements_are_safe(client):
+    response = client.post(
+        "/api/ai/check-compliance",
+        json={
+            "trip_id": "trip-unknown",
+            "traveller_id": "traveller-001",
+            "destination": "Atlantis",
+            "nationality": "Martian",
+            "departure_date": "2026-09-01",
+            "return_date": "2026-09-10",
+        },
+    )
+    assert response.status_code == 200
+    data = response.get_json()["data"]
+    assert "No matching entry-requirement records" in " ".join(data["warnings"])

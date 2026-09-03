@@ -1,0 +1,41 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "python",
+      "name": "Student-5 Database",
+      "project": "student-5\\database\\app.py",
+      "cwd": "$(WorkspaceRoot)\\student-5\\database",
+      "env": {
+        "PORT": "5405",
+        "DATABASE_PATH": "$(WorkspaceRoot)\\student-5\\database\\data\\travel_docs.db"
+      },
+      "webBrowserUrl": ""
+    },
+    {
+      "type": "python",
+      "name": "Student-5 Backend",
+      "project": "student-5\\backend\\app.py",
+      "cwd": "$(WorkspaceRoot)\\student-5\\backend",
+      "env": {
+        "PORT": "5505",
+        "DATABASE_SERVICE_URL": "http://127.0.0.1:5405",
+        "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
+        "OLLAMA_MODEL": "qwen2.5:3b"
+      },
+      "webBrowserUrl": "http://localhost:5505/health"
+    },
+    {
+      "type": "python",
+      "name": "Student-5 Frontend",
+      "project": "student-5\\frontend\\app.py",
+      "cwd": "$(WorkspaceRoot)\\student-5\\frontend",
+      "env": {
+        "PORT": "8505",
+        "BACKEND_URL": "http://127.0.0.1:5505"
+      },
+      "webBrowserUrl": "http://localhost:8505"
+    }
+  ]
+}

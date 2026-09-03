@@ -1,0 +1,72 @@
+def test_seed_documents_count(client):
+    response = client.get("/api/documents")
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["success"] is True
+    assert len(body["data"]) >= 10
+
+
+def test_create_get_update_delete_document(client):
+    created = client.post(
+        "/api/documents",
+        json={
+            "traveller_id": "traveller-test",
+            "document_type": "Passport",
+            "document_number": "PTEST001",
+            "issuing_country": "Australia",
+            "nationality": "Australian",
+            "issue_date": "2020-01-01",
+            "expiry_date": "2030-01-01",
+        },
+    )
+    assert created.status_code == 201
+    record = created.get_json()["data"]
+    record_id = record["id"]
+    assert record["document_number"].endswith("T001")
+    assert "PTEST" not in record["document_number"]
+    fetched = client.get(f"/api/documents/{record_id}")
+    assert fetched.status_code == 200
+    updated = client.put(
+        f"/api/documents/{record_id}",
+        json={"issuing_country": "New Zealand"},
+    )
+    assert updated.status_code == 200
+    assert updated.get_json()["data"]["issuing_country"] == "New Zealand"
+    listed = client.get("/api/documents", query_string={"traveller_id": "traveller-test"})
+    assert any(item["id"] == record_id for item in listed.get_json()["data"])
+    deleted = client.delete(f"/api/documents/{record_id}")
+    assert deleted.status_code == 204
+    missing = client.get(f"/api/documents/{record_id}")
+    assert missing.status_code == 404
+
+
+def test_reject_invalid_document(client):
+    response = client.post("/api/documents", json={"traveller_id": ""})
+    assert response.status_code == 400
+    assert response.get_json()["success"] is False
+
+
+def test_expired_date_sets_expired_status(client):
+    response = client.post(
+        "/api/documents",
+        json={
+            "traveller_id": "traveller-expired",
+            "document_type": "Passport",
+            "document_number": "PEXP001",
+            "issuing_country": "Australia",
+            "nationality": "Australian",
+            "issue_date": "2010-01-01",
+            "expiry_date": "2015-01-01",
+        },
+    )
+    assert response.status_code == 201
+    assert response.get_json()["data"]["status"] == "expired"
+
+
+def test_malformed_json_document(client):
+    response = client.post(
+        "/api/documents",
+        data="{bad",
+        content_type="application/json",
+    )
+    assert response.status_code == 400

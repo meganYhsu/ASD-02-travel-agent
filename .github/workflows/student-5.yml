@@ -1,0 +1,35 @@
+name: student-5
+
+on:
+  push:
+    paths:
+      - "student-5/**"
+      - ".github/workflows/student-5.yml"
+  pull_request:
+    paths:
+      - "student-5/**"
+      - ".github/workflows/student-5.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: student-5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install microservice dependencies
+        run: pip install -r requirements.txt
+      - name: Validate Python syntax
+        run: python -m compileall database backend frontend tests
+      - name: Run pytest
+        run: pytest
+        env:
+          OLLAMA_BASE_URL: http://127.0.0.1:11434
+          OLLAMA_MODEL: qwen2.5:3b

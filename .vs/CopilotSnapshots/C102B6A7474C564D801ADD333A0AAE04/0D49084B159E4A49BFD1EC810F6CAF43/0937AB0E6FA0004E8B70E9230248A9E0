@@ -1,0 +1,173 @@
+﻿from __future__ import annotations
+
+from datetime import datetime, timedelta
+from typing import Any
+
+from config import EXPIRY_WARNING_DAYS
+from validation import parse_iso_date
+
+
+def parse_date(value: str) -> datetime:
+    return parse_iso_date(value, "date")
+
+
+def compute_document_status(expiry_date: str, warning_days: int = EXPIRY_WARNING_DAYS) -> str:
+    today = datetime.utcnow().date()
+    expiry = parse_date(expiry_date).date()
+    if expiry < today:
+        return "expired"
+    if expiry <= today + timedelta(days=warning_days):
+        return "expiring"
+    return "valid"
+
+
+def remaining_days(expiry_date: str, from_date: str) -> int:
+    return (parse_date(expiry_date).date() - parse_date(from_date).date()).days
+
+
+def evaluate_compliance(
+    documents: list[dict[str, Any]],
+    requirements: list[dict[str, Any]],
+    departure_date: str,
+    return_date: str,
+    warning_days: int = EXPIRY_WARNING_DAYS,
+) -> dict[str, Any]:
+    missing: list[dict[str, Any]] = []
+    expired: list[dict[str, Any]] = []
+    expiring: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    recommended: list[str] = []
+    alerts: list[dict[str, Any]] = []
+
+    docs_by_type: dict[str, list[dict[str, Any]]] = {}
+    for document in documents:
+        docs_by_type.setdefault(document.get("document_type"), []).append(document)
+        expiry = document.get("expiry_date")
+        if not expiry:
+            continue
+        expiry_dt = parse_date(expiry).date()
+        departure_dt = parse_date(departure_date).date()
+        return_dt = parse_date(return_date).date()
+        summary = {
+            "id": document.get("id"),
+            "document_type": document.get("document_type"),
+            "expiry_date": expiry,
+        }
+        if expiry_dt < departure_dt:
+            expired.append(summary)
+            alerts.append(
+                {
+                    "alert_type": "DOCUMENT_EXPIRED",
+                    "severity": "error",
+                    "document_id": document.get("id"),
+                    "message": f"{document.get('document_type')} expired on {expiry}.",
+                    "recommended_action": "Renew or replace this document before travel.",
+                }
+            )
+        elif expiry_dt <= return_dt:
+            expiring.append(summary)
+            alerts.append(
+                {
+                    "alert_type": "DOCUMENT_EXPIRES_DURING_TRIP",
+                    "severity": "warning",
+                    "document_id": document.get("id"),
+                    "message": f"{document.get('document_type')} expires during the trip on {expiry}.",
+                    "recommended_action": "Renew this document so it remains valid for the full trip.",
+                }
+            )
+        elif remaining_days(expiry, departure_date) <= warning_days:
+            expiring.append(summary)
+            alerts.append(
+                {
+                    "alert_type": "DOCUMENT_EXPIRING",
+                    "severity": "warning",
+                    "document_id": document.get("id"),
+                    "message": f"{document.get('document_type')} expires on {expiry}, within {warning_days} days of departure.",
+                    "recommended_action": "Check renewal timelines before departure.",
+                }
+            )
+
+    required = [req for req in requirements if req.get("is_required")]
+    for requirement in required:
+        doc_type = requirement.get("document_type")
+        matches = docs_by_type.get(doc_type, [])
+        if not matches:
+            missing.append(
+                {
+                    "document_type": doc_type,
+                    "requirement_id": requirement.get("id"),
+                    "description": requirement.get("description"),
+                }
+            )
+            alerts.append(
+                {
+                    "alert_type": "MISSING_REQUIRED_DOCUMENT",
+                    "severity": "error",
+                    "document_id": None,
+                    "message": f"Missing required {doc_type}: {requirement.get('description')}",
+                    "recommended_action": f"Obtain a valid {doc_type} before travel.",
+                }
+            )
+            recommended.append(f"Obtain a valid {doc_type}.")
+            continue
+        min_days = int(requirement.get("minimum_validity_days") or 0)
+        if min_days <= 0:
+            continue
+        usable = False
+        for document in matches:
+            days_left = remaining_days(document.get("expiry_date"), departure_date)
+            if days_left >= min_days:
+                usable = True
+            else:
+                warnings.append(
+                    f"{document.get('document_type')} (id {document.get('id')}) has {days_left} days remaining; {min_days} required."
+                )
+                alerts.append(
+                    {
+                        "alert_type": "INSUFFICIENT_VALIDITY",
+                        "severity": "warning",
+                        "document_id": document.get("id"),
+                        "message": (
+                            f"{document.get('document_type')} does not meet the {min_days}-day validity rule."
+                        ),
+                        "recommended_action": "Renew the document to satisfy the destination validity window.",
+                    }
+                )
+        if not usable:
+            missing.append(
+                {
+                    "document_type": doc_type,
+                    "requirement_id": requirement.get("id"),
+                    "description": f"No {doc_type} meets the {min_days}-day validity rule.",
+                }
+            )
+            recommended.append(f"Renew {doc_type} to meet the {min_days}-day validity rule.")
+
+    compliant = not missing and not expired
+    if not documents:
+        warnings.append("No documents were found for this traveller.")
+    if not requirements:
+        warnings.append(
+            "No matching entry-requirement records were found. Demonstration data only; verify official sources."
+        )
+
+    summary = (
+        "Traveller appears compliant with the supplied demonstration requirements."
+        if compliant
+        else "Traveller is not compliant with one or more supplied demonstration requirements."
+    )
+    return {
+        "compliant": compliant,
+        "summary": summary,
+        "missing_documents": missing,
+        "expired_documents": expired,
+        "expiring_documents": expiring,
+        "warnings": warnings,
+        "recommended_actions": recommended or (["No immediate document actions required."] if compliant else []),
+        "alerts": alerts,
+        "reasoning": "Deterministic checks used stored documents and EntryRequirements records only.",
+    }
+
+
+def trip_duration_days(start_date: str, end_date: str) -> int:
+    return (parse_date(end_date).date() - parse_date(start_date).date()).days + 1

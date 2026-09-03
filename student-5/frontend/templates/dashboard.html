@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Documents & Pre-Trip Preparation</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+<header class="hero">
+    <p class="eyebrow">Student-5 · Release 0</p>
+    <h1>Travel Documents & Pre-Trip Preparation</h1>
+    <p>Check documents, review demonstration entry requirements, and generate a personalised packing/pre-trip checklist.</p>
+    <p class="disclaimer">Entry requirements in Release 0 are demonstration data only. Verify official government sources before real travel.</p>
+</header>
+
+<nav class="tabs">
+    <button class="tab active" data-tab="documents">Documents</button>
+    <button class="tab" data-tab="compliance">Compliance</button>
+    <button class="tab" data-tab="requirements">Entry Requirements</button>
+    <button class="tab" data-tab="packing">Packing</button>
+    <button class="tab" data-tab="tasks">Pre-Trip Tasks</button>
+    <button class="tab" data-tab="agentic">Plan → Act → Observe → Adapt</button>
+</nav>
+
+<main>
+<section id="documents" class="panel active">
+    <h2>Documents</h2>
+    <form class="card grid" hx-post="/documents" hx-target="#documents-table" hx-swap="innerHTML">
+        <label>Traveller ID <input name="traveller_id" value="traveller-001" required></label>
+        <label>Type
+            <select name="document_type">
+                <option>Passport</option>
+                <option>Visa</option>
+                <option>Travel Permit</option>
+                <option>Vaccination Certificate</option>
+                <option>Other</option>
+            </select>
+        </label>
+        <label>Document number <input name="document_number" required></label>
+        <label>Issuing country <input name="issuing_country" required></label>
+        <label>Nationality <input name="nationality" required></label>
+        <label>Issue date <input type="date" name="issue_date" required></label>
+        <label>Expiry date <input type="date" name="expiry_date" required></label>
+        <button type="submit">Add document</button>
+    </form>
+    <div id="documents-table" hx-get="/partials/documents" hx-trigger="load" hx-swap="innerHTML"></div>
+</section>
+
+<section id="compliance" class="panel">
+    <h2>Compliance check</h2>
+    <form class="card grid" hx-post="/ai/compliance" hx-target="#compliance-result" hx-indicator="#compliance-loading">
+        <label>Trip ID <input name="trip_id" value="trip-001" required></label>
+        <label>Traveller ID <input name="traveller_id" value="traveller-001" required></label>
+        <label>Destination <input name="destination" value="Japan" required></label>
+        <label>Nationality <input name="nationality" value="Australian" required></label>
+        <label>Departure <input type="date" name="departure_date" value="2026-09-01" required></label>
+        <label>Return <input type="date" name="return_date" value="2026-09-10" required></label>
+        <button type="submit">Check Travel Compliance</button>
+    </form>
+    <div id="compliance-loading" class="htmx-indicator loading">Checking documents with Ollama…</div>
+    <div id="compliance-result"></div>
+</section>
+
+<section id="requirements" class="panel">
+    <h2>Entry requirements</h2>
+    <form class="card grid" hx-get="/partials/requirements" hx-target="#requirements-table" hx-swap="innerHTML">
+        <label>Destination <input name="destination" placeholder="Japan"></label>
+        <label>Nationality <input name="nationality" placeholder="Australian"></label>
+        <button type="submit">Filter</button>
+    </form>
+    <form class="card grid" hx-post="/requirements" hx-target="#requirements-table" hx-swap="innerHTML">
+        <label>Destination <input name="destination_country" required></label>
+        <label>Traveller nationality <input name="traveller_nationality" required></label>
+        <label>Requirement type
+            <select name="requirement_type">
+                <option>Passport required</option>
+                <option>Minimum passport validity</option>
+                <option>Visa required</option>
+                <option>Visa not required</option>
+                <option>Vaccination required</option>
+                <option>Travel permit required</option>
+                <option>Other</option>
+            </select>
+        </label>
+        <label>Document type
+            <select name="document_type">
+                <option>Passport</option>
+                <option>Visa</option>
+                <option>Travel Permit</option>
+                <option>Vaccination Certificate</option>
+                <option>Other</option>
+            </select>
+        </label>
+        <label>Description <input name="description" required></label>
+        <label>Minimum validity days <input type="number" name="minimum_validity_days" value="0" min="0"></label>
+        <label>Required <select name="is_required"><option value="true">Yes</option><option value="false">No</option></select></label>
+        <button type="submit">Add requirement</button>
+    </form>
+    <div id="requirements-table" hx-get="/partials/requirements" hx-trigger="load"></div>
+</section>
+
+<section id="packing" class="panel">
+    <h2>Packing & pre-trip generator</h2>
+    <form class="card grid" hx-post="/ai/generate" hx-target="#generated" hx-indicator="#generate-loading">
+        <label>Trip ID <input name="trip_id" value="trip-001" required></label>
+        <label>Traveller ID <input name="traveller_id" value="traveller-001" required></label>
+        <label>Destination <input name="destination" value="Japan" required></label>
+        <label>Start date <input type="date" name="start_date" value="2026-09-01" required></label>
+        <label>End date <input type="date" name="end_date" value="2026-09-10" required></label>
+        <label>Climate <input name="climate" value="mild" required></label>
+        <label>Planned activities <input name="planned_activities" value="hiking, business meeting" required></label>
+        <button type="submit">Generate Packing & Pre-Trip Checklist</button>
+    </form>
+    <div id="generate-loading" class="htmx-indicator loading">Generating personalised suggestions with Ollama…</div>
+    <div id="generated"></div>
+    <h3>Saved packing lists</h3>
+    <div id="packing-table" hx-get="/partials/packing" hx-trigger="load"></div>
+</section>
+
+<section id="tasks" class="panel">
+    <h2>Pre-trip tasks</h2>
+    <form class="card grid" hx-post="/tasks" hx-target="#tasks-table">
+        <label>Trip ID <input name="trip_id" value="trip-001" required></label>
+        <label>Traveller ID <input name="traveller_id" value="traveller-001" required></label>
+        <label>Task name <input name="task_name" required></label>
+        <label>Description <input name="description" required></label>
+        <label>Due date <input type="date" name="due_date" required></label>
+        <label>Priority
+            <select name="priority">
+                <option>high</option>
+                <option selected>medium</option>
+                <option>low</option>
+            </select>
+        </label>
+        <button type="submit">Add custom task</button>
+    </form>
+    <div id="tasks-table" hx-get="/partials/tasks" hx-trigger="load"></div>
+</section>
+
+<section id="agentic" class="panel">
+    <h2>Agentic workflow</h2>
+    <p>This loop is driven by live document, packing and task data — not labels alone.</p>
+    <div id="agentic-board" class="agentic" hx-get="/partials/agentic" hx-trigger="load, every 15s"></div>
+</section>
+</main>
+
+<script>
+document.querySelectorAll(".tab").forEach((button) => {
+    button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(button.dataset.tab).classList.add("active");
+    });
+});
+</script>
+</body>
+</html>

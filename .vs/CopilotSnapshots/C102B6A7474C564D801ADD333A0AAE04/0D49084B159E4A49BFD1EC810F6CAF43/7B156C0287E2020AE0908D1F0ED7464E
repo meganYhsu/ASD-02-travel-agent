@@ -1,4 +1,7 @@
-networks:
+﻿from pathlib import Path
+
+Path("docker-compose.yml").write_text(
+    """networks:
   travel-net:
     driver: bridge
 
@@ -71,3 +74,7 @@ services:
       - student5-backend
     networks:
       - travel-net
+""",
+    encoding="utf-8",
+)
+print("wrote docker-compose.yml")

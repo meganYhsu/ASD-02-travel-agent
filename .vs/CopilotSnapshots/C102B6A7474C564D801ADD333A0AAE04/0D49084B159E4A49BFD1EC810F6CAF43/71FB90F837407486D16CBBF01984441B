@@ -1,0 +1,283 @@
+﻿from __future__ import annotations
+
+from datetime import datetime
+from typing import Any
+
+from config import (
+    CATEGORIES,
+    DOCUMENT_STATUSES,
+    DOCUMENT_TYPES,
+    PRIORITIES,
+    REQUIREMENT_TYPES,
+)
+
+
+class ValidationError(Exception):
+    def __init__(self, message: str, status: int = 400):
+        super().__init__(message)
+        self.message = message
+        self.status = status
+
+
+def require_object(payload: Any) -> dict[str, Any]:
+    if payload is None:
+        raise ValidationError("Malformed JSON", 400)
+    if not isinstance(payload, dict):
+        raise ValidationError("Request body must be a JSON object", 400)
+    return payload
+
+
+def require_non_empty(payload: dict[str, Any], field: str) -> str:
+    value = payload.get(field)
+    if value is None or (isinstance(value, str) and not value.strip()):
+        raise ValidationError(f"{field} is required")
+    if not isinstance(value, str):
+        raise ValidationError(f"{field} must be a string")
+    return value.strip()
+
+
+def optional_string(payload: dict[str, Any], field: str) -> str | None:
+    if field not in payload:
+        return None
+    value = payload.get(field)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValidationError(f"{field} cannot be blank")
+    return value.strip()
+
+
+def parse_iso_date(value: str, field: str) -> datetime:
+    try:
+        return datetime.strptime(value, "%Y-%m-%d")
+    except (TypeError, ValueError) as exc:
+        raise ValidationError(f"{field} must be an ISO date (YYYY-MM-DD)") from exc
+
+
+def require_date(payload: dict[str, Any], field: str) -> str:
+    raw = require_non_empty(payload, field)
+    parse_iso_date(raw, field)
+    return raw
+
+
+def require_int(payload: dict[str, Any], field: str, minimum: int | None = None) -> int:
+    if field not in payload:
+        raise ValidationError(f"{field} is required")
+    value = payload[field]
+    if isinstance(value, bool) or not isinstance(value, int):
+        if isinstance(value, str) and value.isdigit():
+            value = int(value)
+        else:
+            raise ValidationError(f"{field} must be an integer")
+    if minimum is not None and value < minimum:
+        raise ValidationError(f"{field} must be at least {minimum}")
+    return int(value)
+
+
+def require_bool(payload: dict[str, Any], field: str, default: bool | None = None) -> bool:
+    if field not in payload:
+        if default is None:
+            raise ValidationError(f"{field} is required")
+        return default
+    value = payload[field]
+    if isinstance(value, bool):
+        return value
+    if value in (0, 1):
+        return bool(value)
+    if isinstance(value, str) and value.lower() in {"true", "false", "1", "0"}:
+        return value.lower() in {"true", "1"}
+    raise ValidationError(f"{field} must be a boolean")
+
+
+def require_choice(payload: dict[str, Any], field: str, allowed: tuple[str, ...]) -> str:
+    value = require_non_empty(payload, field)
+    if value not in allowed:
+        raise ValidationError(f"{field} must be one of: {', '.join(allowed)}")
+    return value
+
+
+def parse_id(record_id: str | int) -> int:
+    try:
+        value = int(record_id)
+    except (TypeError, ValueError) as exc:
+        raise ValidationError("id must be a valid integer") from exc
+    if value <= 0:
+        raise ValidationError("id must be a valid integer")
+    return value
+
+
+def validate_document(payload: dict[str, Any], partial: bool = False) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    if not partial:
+        data["traveller_id"] = require_non_empty(payload, "traveller_id")
+        data["document_type"] = require_choice(payload, "document_type", DOCUMENT_TYPES)
+        data["document_number"] = require_non_empty(payload, "document_number")
+        data["issuing_country"] = require_non_empty(payload, "issuing_country")
+        data["nationality"] = require_non_empty(payload, "nationality")
+        data["issue_date"] = require_date(payload, "issue_date")
+        data["expiry_date"] = require_date(payload, "expiry_date")
+        status = payload.get("status")
+        data["status"] = (
+            require_choice(payload, "status", DOCUMENT_STATUSES)
+            if status
+            else None
+        )
+    else:
+        if "traveller_id" in payload:
+            data["traveller_id"] = require_non_empty(payload, "traveller_id")
+        if "document_type" in payload:
+            data["document_type"] = require_choice(payload, "document_type", DOCUMENT_TYPES)
+        if "document_number" in payload:
+            data["document_number"] = require_non_empty(payload, "document_number")
+        if "issuing_country" in payload:
+            data["issuing_country"] = require_non_empty(payload, "issuing_country")
+        if "nationality" in payload:
+            data["nationality"] = require_non_empty(payload, "nationality")
+        if "issue_date" in payload:
+            data["issue_date"] = require_date(payload, "issue_date")
+        if "expiry_date" in payload:
+            data["expiry_date"] = require_date(payload, "expiry_date")
+        if "status" in payload:
+            data["status"] = require_choice(payload, "status", DOCUMENT_STATUSES)
+    issue = data.get("issue_date")
+    expiry = data.get("expiry_date")
+    if issue and expiry and parse_iso_date(expiry, "expiry_date") < parse_iso_date(issue, "issue_date"):
+        raise ValidationError("expiry_date cannot be before issue_date")
+    return data
+
+
+def validate_entry_requirement(payload: dict[str, Any], partial: bool = False) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    string_fields = (
+        "destination_country",
+        "traveller_nationality",
+        "requirement_type",
+        "document_type",
+        "description",
+    )
+    for field in string_fields:
+        if not partial or field in payload:
+            if field == "requirement_type":
+                data[field] = require_choice(payload, field, REQUIREMENT_TYPES)
+            elif field == "document_type":
+                data[field] = require_choice(payload, field, DOCUMENT_TYPES)
+            else:
+                data[field] = require_non_empty(payload, field)
+    if not partial or "minimum_validity_days" in payload:
+        if "minimum_validity_days" not in payload and not partial:
+            data["minimum_validity_days"] = 0
+        else:
+            data["minimum_validity_days"] = require_int(payload, "minimum_validity_days", minimum=0)
+    if not partial or "is_required" in payload:
+        data["is_required"] = 1 if require_bool(payload, "is_required", True) else 0
+    return data
+
+
+def validate_packing_list(payload: dict[str, Any], partial: bool = False) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    if not partial or "trip_id" in payload:
+        data["trip_id"] = require_non_empty(payload, "trip_id")
+    if not partial or "traveller_id" in payload:
+        data["traveller_id"] = require_non_empty(payload, "traveller_id")
+    if not partial or "destination" in payload:
+        data["destination"] = require_non_empty(payload, "destination")
+    if not partial or "start_date" in payload:
+        data["start_date"] = require_date(payload, "start_date")
+    if not partial or "end_date" in payload:
+        data["end_date"] = require_date(payload, "end_date")
+    if not partial or "climate" in payload:
+        data["climate"] = require_non_empty(payload, "climate")
+    if not partial or "planned_activities" in payload:
+        activities = payload.get("planned_activities")
+        if isinstance(activities, list):
+            cleaned = [str(item).strip() for item in activities if str(item).strip()]
+            if not cleaned:
+                raise ValidationError("planned_activities cannot be blank")
+            data["planned_activities"] = ",".join(cleaned)
+        else:
+            data["planned_activities"] = require_non_empty(payload, "planned_activities")
+    if "generated_by_ai" in payload or not partial:
+        data["generated_by_ai"] = 1 if require_bool(payload, "generated_by_ai", False) else 0
+    start = data.get("start_date")
+    end = data.get("end_date")
+    if start and end and parse_iso_date(end, "end_date") < parse_iso_date(start, "start_date"):
+        raise ValidationError("start_date must not be after end_date")
+    return data
+
+
+def validate_checklist_item(payload: dict[str, Any], partial: bool = False) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    if not partial or "packing_list_id" in payload:
+        data["packing_list_id"] = require_int(payload, "packing_list_id", minimum=1)
+    if not partial or "item_name" in payload:
+        data["item_name"] = require_non_empty(payload, "item_name")
+    if not partial or "category" in payload:
+        data["category"] = require_choice(payload, "category", CATEGORIES)
+    if not partial or "quantity" in payload:
+        data["quantity"] = require_int(payload, "quantity", minimum=1)
+    if "is_completed" in payload or not partial:
+        completed = require_bool(payload, "is_completed", False)
+        data["is_completed"] = 1 if completed else 0
+        data["completed_at"] = payload.get("completed_at") if completed else None
+    if "is_ai_generated" in payload or not partial:
+        data["is_ai_generated"] = 1 if require_bool(payload, "is_ai_generated", False) else 0
+    return data
+
+
+def validate_task(payload: dict[str, Any], partial: bool = False) -> dict[str, Any]:
+    data: dict[str, Any] = {}
+    if not partial or "trip_id" in payload:
+        data["trip_id"] = require_non_empty(payload, "trip_id")
+    if not partial or "traveller_id" in payload:
+        data["traveller_id"] = require_non_empty(payload, "traveller_id")
+    if not partial or "task_name" in payload:
+        data["task_name"] = require_non_empty(payload, "task_name")
+    if not partial or "description" in payload:
+        data["description"] = require_non_empty(payload, "description")
+    if not partial or "due_date" in payload:
+        data["due_date"] = require_date(payload, "due_date")
+    if not partial or "priority" in payload:
+        data["priority"] = require_choice(payload, "priority", PRIORITIES)
+    if "is_completed" in payload or not partial:
+        completed = require_bool(payload, "is_completed", False)
+        data["is_completed"] = 1 if completed else 0
+        data["completed_at"] = payload.get("completed_at") if completed else None
+    if "is_ai_generated" in payload or not partial:
+        data["is_ai_generated"] = 1 if require_bool(payload, "is_ai_generated", False) else 0
+    return data
+
+
+def validate_compliance_request(payload: dict[str, Any]) -> dict[str, Any]:
+    data = {
+        "trip_id": require_non_empty(payload, "trip_id"),
+        "traveller_id": require_non_empty(payload, "traveller_id"),
+        "destination": require_non_empty(payload, "destination"),
+        "nationality": require_non_empty(payload, "nationality"),
+        "departure_date": require_date(payload, "departure_date"),
+        "return_date": require_date(payload, "return_date"),
+    }
+    if parse_iso_date(data["return_date"], "return_date") < parse_iso_date(
+        data["departure_date"], "departure_date"
+    ):
+        raise ValidationError("departure_date must not be after return_date")
+    return data
+
+
+def validate_generation_request(payload: dict[str, Any]) -> dict[str, Any]:
+    data = {
+        "trip_id": require_non_empty(payload, "trip_id"),
+        "traveller_id": require_non_empty(payload, "traveller_id"),
+        "destination": require_non_empty(payload, "destination"),
+        "start_date": require_date(payload, "start_date"),
+        "end_date": require_date(payload, "end_date"),
+        "climate": require_non_empty(payload, "climate"),
+    }
+    activities = payload.get("planned_activities", [])
+    if isinstance(activities, str):
+        activities = [part.strip() for part in activities.split(",") if part.strip()]
+    if not isinstance(activities, list) or not activities:
+        raise ValidationError("planned_activities must be a non-empty list")
+    data["planned_activities"] = [str(item).strip() for item in activities if str(item).strip()]
+    if parse_iso_date(data["end_date"], "end_date") < parse_iso_date(data["start_date"], "start_date"):
+        raise ValidationError("start_date must not be after end_date")
+    return data
