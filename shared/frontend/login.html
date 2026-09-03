@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Log In</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <nav>
+        <div class="nav-title">
+            Travel Agent
+        </div>
+
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/login">Log In</a>
+            <a href="/register">Register</a>
+        </div>
+    </nav>
+
+
+    <main class="page">
+
+        <div class="form-card">
+
+            <h2>Log In</h2>
+
+            <p>
+                Log in to continue planning your trip.
+            </p>
+
+            {% if error %}
+            <p class="error">
+                {{ error }}
+            </p>
+            {% endif %}
+
+            <form method="POST">
+
+                <label>Username</label>
+
+                <input type="text" name="username" required>
+
+                <label>Password</label>
+
+                <input type="password" name="password" required>
+
+                <button class="primary-button" type="submit">
+                    Log In
+                </button>
+
+            </form>
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>
