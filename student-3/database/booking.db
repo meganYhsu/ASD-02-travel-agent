@@ -1,0 +1,40 @@
+
+CREATE TABLE Itineraries (
+    itineraries_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER ,
+    date TEXT NOT NULL,
+    time TEXT,
+    activity TEXT NOT NULL,
+    location TEXT NOT NULL,
+    notes TEXT
+);
+
+CREATE TABLE Provider (
+    provider_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    contact_info TEXT
+);
+
+CREATE TABLE Booking (
+    booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER,
+    provider_id INTEGER,
+    booking_date NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    cost REAL NOT NULL,
+    create_time NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (provider_id) REFERENCES Providers (provider_id)
+);
+
+CREATE TABLE BookingItems (
+    booking_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    booking_id INTEGER NOT NULL,
+    itineraries_id INTEGER NOT NULL,
+    quantity NOT NULL DEFAULT 1,
+
+    FOREIGN KEY (booking_id) REFERENCES Bookings (booking_id),
+
+    FOREIGN KEY (itineraries_id) REFERENCES Itineraries (itineraries_id)
+);

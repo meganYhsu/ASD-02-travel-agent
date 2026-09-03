@@ -1,0 +1,135 @@
+networks:
+  travel-net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  student5_data:
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - travel-net
+
+  shared-frontend:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./shared/frontend/index.html:/usr/share/nginx/html/index.html:ro
+      - ./shared/frontend/css:/usr/share/nginx/html/css:ro
+      - ./shared/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+      depends_on:
+      - student3-frontend
+      
+    networks:
+      - travel-net
+
+
+#-------------------
+#student 3
+#------------------
+student3-database:
+    build:
+      context: ./student-3/database
+
+    ports:
+      - "5000:5000"
+
+    networks:
+      - travel-net
+
+
+  student3-backend:
+    build:
+      context: ./student-3/backend
+
+    environment:
+      DATABASE_URL: http://student3-database:5000
+      OLLAMA_BASE_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: qwen2.5:0.5b
+
+    ports:
+      - "5001:5001"
+
+    depends_on:
+      - student3-database
+      - ollama
+
+    networks:
+      - travel-net
+
+
+  student3-frontend:
+    build:
+      context: ./student-3/frontend
+
+    environment:
+      BACKEND_URL: http://student3-backend:5001
+
+    ports:
+      - "5002:5002"
+
+    depends_on:
+      - student3-backend
+
+    networks:
+      - travel-net
+
+
+
+
+  #--------------------
+  #student 5
+  #--------------------
+
+  student5-database:
+    build:
+      context: ./student-5/database
+    environment:
+      PORT: "5405"
+      DATABASE_PATH: /data/travel_docs.db
+    volumes:
+      - student5_data:/data
+    ports:
+      - "5405:5405"
+    networks:
+      - travel-net
+
+  student5-backend:
+    build:
+      context: ./student-5/backend
+    environment:
+      PORT: "5505"
+      DATABASE_SERVICE_URL: http://student5-database:5405
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:3b
+      OLLAMA_TIMEOUT_SECONDS: "60"
+      EXPIRY_WARNING_DAYS: "90"
+    ports:
+      - "5505:5505"
+    depends_on:
+      - student5-database
+      - ollama
+    networks:
+      - travel-net
+
+  student5-frontend:
+    build:
+      context: ./student-5/frontend
+    environment:
+      PORT: "8505"
+      BACKEND_URL: http://student5-backend:5505
+    ports:
+      - "8505:8505"
+    depends_on:
+      - student5-backend
+    networks:
+      - travel-net
