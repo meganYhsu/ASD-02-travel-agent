@@ -145,6 +145,16 @@ def create_expense():
     conn.close()
     return jsonify({"expense_id": new_id}), 201
 
+@app.route("/expenses/<int:expense_id>")
+def get_expense(expense_id):
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT * FROM Expenses WHERE expense_id = ?", (expense_id,)
+    ).fetchone()
+    conn.close()
+    if row is None:
+        return jsonify({"error": "not found"}), 404
+    return jsonify(dict(row))
 
 @app.route("/expenses/<int:expense_id>", methods=["PUT"])
 def update_expense(expense_id):

@@ -36,6 +36,7 @@ def get_trip(trip_id):
             "Budget analysis needs live trip data - try again later.</p>"
         )
 
+
 def call_model(system_prompt, user_prompt, max_tokens=250):
     try:
         response = client.chat.completions.create(
@@ -51,6 +52,7 @@ def call_model(system_prompt, user_prompt, max_tokens=250):
     except Exception as exc:
         return None, str(exc)
 
+
 @app.route("/dashboard/<int:trip_id>")
 def dashboard(trip_id):
     try:
@@ -64,22 +66,51 @@ def dashboard(trip_id):
     if "error" in budget:
         return f"<p>No budget set for trip {trip_id} yet.</p>", 404
 
-    spent = sum(e["amount"] for e in expenses)
+    spent = 0
+    for e in expenses:
+        spent += e["amount"]
     remaining = budget["total_budget"] - spent
 
     per_cat = {}
     for e in expenses:
-        per_cat[e["category_name"]] = per_cat.get(e["category_name"], 0) + e["amount"]
+        name = e["category_name"]
+        if name not in per_cat:
+            per_cat[name] = 0
+        per_cat[name] += e["amount"]
 
-    rows = "".join(
-        f"<tr><td>{escape(name)}</td><td>{amt:.2f}</td></tr>"
-        for name, amt in sorted(per_cat.items(), key=lambda x: -x[1])
-    )
+    sorted_cats = sorted(per_cat.items(), key=lambda x: x[1], reverse=True)
+    rows = ""
+    for name, amt in sorted_cats:
+        rows += f"<tr><td>{escape(name)}</td><td>{amt:.2f}</td></tr>"
+
+    items = ""
+    for e in expenses:
+        items += (
+            "<tr>"
+            f"<td>{e['expense_date']}</td>"
+            f"<td>{escape(e['description'])}</td>"
+            f"<td>{escape(e['category_name'])}</td>"
+            f"<td>{e['amount']:.2f}</td>"
+            "<td>"
+            f"<button hx-get='/api/expenses/{e['expense_id']}/edit' "
+            "hx-target='#edit-form'>Edit</button> "
+            f"<form hx-post='/api/expenses/{e['expense_id']}/delete' "
+            "hx-target='#dashboard' style='display:inline'>"
+            f"<input type='hidden' name='trip_id' value='{trip_id}'>"
+            "<button type='submit'>Delete</button></form>"
+            "</td></tr>"
+        )
+
     return f"""
     <h3>Trip {trip_id} budget</h3>
     <p>Total: {budget['total_budget']:.2f} {budget['currency']} |
        Spent: {spent:.2f} | Remaining: {remaining:.2f}</p>
     <table><tr><th>Category</th><th>Spent</th></tr>{rows}</table>
+    <h4>Expenses</h4>
+    <table>
+      <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th></tr>
+      {items}
+    </table>
     """
 
 
@@ -113,6 +144,63 @@ def delete_expense(expense_id):
     return dashboard(trip_id)
 
 
+@app.route("/expenses/<int:expense_id>/edit")
+def edit_expense_form(expense_id):
+    try:
+        expense = requests.get(f"{DB_API_URL}/expenses/{expense_id}", timeout=5).json()
+        categories = requests.get(f"{DB_API_URL}/categories", timeout=5).json()
+    except requests.RequestException:
+        return "<p class='error'>Budget database service is unavailable.</p>", 503
+
+    if "error" in expense:
+        return "<p class='error'>Expense not found.</p>", 404
+
+    options = ""
+    for c in categories:
+        selected = ""
+        if c["category_id"] == expense["category_id"]:
+            selected = " selected"
+        options += f"<option value='{c['category_id']}'{selected}>{escape(c['name'])}</option>"
+
+    return f"""
+    <h4>Edit expense {expense_id}</h4>
+    <form hx-post="/api/expenses/{expense_id}/update" hx-target="#dashboard">
+        <input type="hidden" name="trip_id" value="{expense['trip_id']}">
+        <label>Description
+            <input name="description" value="{escape(expense['description'])}" required></label>
+        <label>Amount (AUD)
+            <input name="amount" type="number" step="0.01" min="0"
+                   value="{expense['amount']}" required></label>
+        <label>Category <select name="category_id">{options}</select></label>
+        <label>Date
+            <input name="expense_date" type="date" value="{expense['expense_date']}"></label>
+        <button type="submit">Update expense</button>
+    </form>
+    """
+
+
+@app.route("/expenses/<int:expense_id>/update", methods=["POST"])
+def update_expense(expense_id):
+    form = request.form
+    trip_id = form.get("trip_id", type=int)
+    payload = {
+        "description": form.get("description", "").strip(),
+        "amount": form.get("amount", type=float),
+        "category_id": form.get("category_id", type=int),
+        "expense_date": form.get("expense_date") or date.today().isoformat(),
+    }
+    if not payload["description"] or payload["amount"] is None:
+        return "<p class='error'>Description and amount are required.</p>", 400
+    try:
+        resp = requests.put(
+            f"{DB_API_URL}/expenses/{expense_id}", json=payload, timeout=5
+        )
+        resp.raise_for_status()
+    except requests.RequestException:
+        return "<p class='error'>Could not update the expense.</p>", 503
+    return dashboard(trip_id)
+
+
 @app.route("/analyse/<int:trip_id>", methods=["POST"])
 def analyse(trip_id):
     trip, err = get_trip(trip_id)
@@ -126,7 +214,9 @@ def analyse(trip_id):
     except requests.RequestException:
         return "<p class='error'>Budget database service is unavailable.</p>", 503
 
-    spent = sum(e["amount"] for e in expenses)
+    spent = 0
+    for e in expenses:
+        spent += e["amount"]
     total_days = (date.fromisoformat(trip["end_date"])
                   - date.fromisoformat(trip["start_date"])).days + 1
     seen_dates = []
