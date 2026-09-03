@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traveller Preferences &middot; ASD-02</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+<main class="wrap">
+    <p class="crumb"><a href="http://localhost:8080">&larr; ASD-02 Travel Agent home</a></p>
+    <h1>Traveller Preferences</h1>
+    <p class="muted">
+        Student-2 microservice &middot; travellers, budget &amp; pace, interests,
+        accessibility and dietary needs, and the AI profile check that gates trip planning.
+    </p>
+
+    <section class="panel">
+        <h2>Travellers</h2>
+        <div id="travelers-table" hx-get="/travelers" hx-trigger="load"></div>
+
+        <details class="add-form">
+            <summary>Add a traveller</summary>
+            <form hx-post="/travelers" hx-target="#travelers-table">
+                <div class="grid">
+                    <label>Full name<input type="text" name="full_name" required></label>
+                    <label>Username<input type="text" name="username" required></label>
+                    <label>Email<input type="email" name="email" required></label>
+                    <label>Home location<input type="text" name="home_location" required></label>
+                    <label>Travel style
+                        <select name="travel_style" required>
+                            {% for style in travel_styles %}
+                            <option value="{{ style }}">{{ style }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <button type="submit">Create traveller</button>
+            </form>
+        </details>
+    </section>
+
+    <section>
+        <h2>Profile workspace</h2>
+        <p class="muted">Choose <em>Open</em> on a traveller above to edit their preference set.</p>
+        <div id="workspace" hx-get="/panel?traveler_id=1" hx-trigger="load"></div>
+    </section>
+
+    <footer class="muted">
+        Backend API: <code>{{ backend_url }}</code>
+    </footer>
+</main>
+</body>
+</html>
