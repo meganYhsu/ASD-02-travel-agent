@@ -162,9 +162,11 @@ select {
 /* Management Pages */
 
 .management-page {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 40px 20px;
+
+    display: block;
 }
 
 .page-header {
@@ -194,7 +196,7 @@ select {
 }
 
 .management-page table {
-    width: 60%;
+    width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
 }
@@ -225,7 +227,7 @@ select {
 }
 
 .ai-assistant select {
-    width: 60%;
+    width: 100%;
     margin-top: 8px;
     margin-bottom: 10px;
 }

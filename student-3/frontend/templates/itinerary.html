@@ -51,50 +51,51 @@
             <button type="button" onclick="openAddModal()">
                 Add Itinerary
             </button>
+        </div>
 
 
-            <div class="section-card">
-                <h2>Your Itinerary</h2>
-                <!-- Itinerary Table -->
-                <table>
+        <div class="section-card">
+            <h2>Your Itinerary</h2>
+            <!-- Itinerary Table -->
+            <table>
 
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Trip ID</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Activity</th>
-                            <th>Location</th>
-                            <th>Notes</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Trip ID</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Activity</th>
+                        <th>Location</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
 
-                    <tbody>
+                <tbody>
 
-                        {% for itinerary in itineraries %}
+                    {% for itinerary in itineraries %}
 
-                        <tr>
+                    <tr>
 
-                            <td>{{ itinerary.itinerary_id }}</td>
+                        <td>{{ itinerary.itinerary_id }}</td>
 
-                            <td>{{ itinerary.trip_id }}</td>
+                        <td>{{ itinerary.trip_id }}</td>
 
-                            <td>{{ itinerary.date }}</td>
+                        <td>{{ itinerary.date }}</td>
 
-                            <td>{{ itinerary.time }}</td>
+                        <td>{{ itinerary.time }}</td>
 
-                            <td>{{ itinerary.activity }}</td>
+                        <td>{{ itinerary.activity }}</td>
 
-                            <td>{{ itinerary.location }}</td>
+                        <td>{{ itinerary.location }}</td>
 
-                            <td>{{ itinerary.notes }}</td>
+                        <td>{{ itinerary.notes }}</td>
 
-                            <td>
+                        <td>
 
-                                <!-- Edit -->
-                                <button type="button" onclick="openEditModal(
+                            <!-- Edit -->
+                            <button type="button" onclick="openEditModal(
                             '{{ itinerary.itinerary_id }}',
                             '{{ itinerary.trip_id }}',
                             '{{ itinerary.date }}',
@@ -103,189 +104,191 @@
                             '{{ itinerary.location }}',
                             '{{ itinerary.notes }}'
                         )">
-                                    Edit
+                                Edit
+                            </button>
+
+
+                            <!-- Delete -->
+                            <form method="POST" action="/itinerary/delete/{{ itinerary.itinerary_id }}"
+                                style="display:inline;">
+
+                                <button type="submit">
+                                    Delete
                                 </button>
 
+                            </form>
 
-                                <!-- Delete -->
-                                <form method="POST" action="/itinerary/delete/{{ itinerary.itinerary_id }}"
-                                    style="display:inline;">
+                        </td>
 
-                                    <button type="submit">
-                                        Delete
-                                    </button>
+                    </tr>
 
-                                </form>
+                    {% endfor %}
 
-                            </td>
+                </tbody>
 
-                        </tr>
+            </table>
+        </div>
 
-                        {% endfor %}
 
-                    </tbody>
 
-                </table>
-            </div>
+        <!-- ========================= -->
+        <!-- Add Itinerary Modal -->
+        <!-- ========================= -->
 
+        <div id="addModal" style="display:none;">
 
+            <h2>Add Itinerary</h2>
 
-            <!-- ========================= -->
-            <!-- Add Itinerary Modal -->
-            <!-- ========================= -->
+            <form method="POST" action="/itinerary/add">
 
-            <div id="addModal" style="display:none;">
+                <label>Trip ID</label>
+                <input type="number" name="trip_id" required>
 
-                <h2>Add Itinerary</h2>
+                <br>
 
-                <form method="POST" action="/itinerary/add">
+                <label>Date</label>
+                <input type="date" name="date" required>
 
-                    <label>Trip ID</label>
-                    <input type="number" name="trip_id" required>
+                <br>
 
-                    <br>
+                <label>Time</label>
+                <input type="time" name="time" required>
 
-                    <label>Date</label>
-                    <input type="date" name="date" required>
+                <br>
 
-                    <br>
+                <label>Activity</label>
+                <input type="text" name="activity" required>
 
-                    <label>Time</label>
-                    <input type="time" name="time" required>
+                <br>
 
-                    <br>
+                <label>Location</label>
+                <input type="text" name="location" required>
 
-                    <label>Activity</label>
-                    <input type="text" name="activity" required>
+                <br>
 
-                    <br>
+                <label>Notes</label>
+                <input type="text" name="notes">
 
-                    <label>Location</label>
-                    <input type="text" name="location" required>
+                <br><br>
 
-                    <br>
+                <button type="submit">
+                    Submit
+                </button>
 
-                    <label>Notes</label>
-                    <input type="text" name="notes">
+                <button type="button" onclick="closeAddModal()">
+                    Cancel
+                </button>
 
-                    <br><br>
+            </form>
 
-                    <button type="submit">
-                        Submit
-                    </button>
+        </div>
 
-                    <button type="button" onclick="closeAddModal()">
-                        Cancel
-                    </button>
 
-                </form>
 
-            </div>
+        <!-- ========================= -->
+        <!-- Edit Itinerary Modal -->
+        <!-- ========================= -->
 
+        <div id="editModal" style="display:none;">
 
+            <h2>Edit Itinerary</h2>
 
-            <!-- ========================= -->
-            <!-- Edit Itinerary Modal -->
-            <!-- ========================= -->
+            <form id="editForm" method="POST">
 
-            <div id="editModal" style="display:none;">
+                <label>Trip ID</label>
+                <input id="editTripId" type="number" name="trip_id" required>
 
-                <h2>Edit Itinerary</h2>
+                <br>
 
-                <form id="editForm" method="POST">
+                <label>Date</label>
+                <input id="editDate" type="date" name="date" required>
 
-                    <label>Trip ID</label>
-                    <input id="editTripId" type="number" name="trip_id" required>
+                <br>
 
-                    <br>
+                <label>Time</label>
+                <input id="editTime" type="time" name="time" required>
 
-                    <label>Date</label>
-                    <input id="editDate" type="date" name="date" required>
+                <br>
 
-                    <br>
+                <label>Activity</label>
+                <input id="editActivity" type="text" name="activity" required>
 
-                    <label>Time</label>
-                    <input id="editTime" type="time" name="time" required>
+                <br>
 
-                    <br>
+                <label>Location</label>
+                <input id="editLocation" type="text" name="location" required>
 
-                    <label>Activity</label>
-                    <input id="editActivity" type="text" name="activity" required>
+                <br>
 
-                    <br>
+                <label>Notes</label>
+                <input id="editNotes" type="text" name="notes">
 
-                    <label>Location</label>
-                    <input id="editLocation" type="text" name="location" required>
+                <br><br>
 
-                    <br>
+                <button type="submit">
+                    Update
+                </button>
 
-                    <label>Notes</label>
-                    <input id="editNotes" type="text" name="notes">
+                <button type="button" onclick="closeEditModal()">
+                    Cancel
+                </button>
 
-                    <br><br>
+            </form>
 
-                    <button type="submit">
-                        Update
-                    </button>
+        </div>
+    </div>
 
-                    <button type="button" onclick="closeEditModal()">
-                        Cancel
-                    </button>
 
-                </form>
 
-            </div>
+    <script>
 
+        function openAddModal() {
+            document.getElementById("addModal").style.display = "block";
+        }
 
 
-            <script>
+        function closeAddModal() {
+            document.getElementById("addModal").style.display = "none";
+        }
 
-                function openAddModal() {
-                    document.getElementById("addModal").style.display = "block";
-                }
 
+        function openEditModal(
+            id,
+            tripId,
+            date,
+            time,
+            activity,
+            location,
+            notes
+        ) {
 
-                function closeAddModal() {
-                    document.getElementById("addModal").style.display = "none";
-                }
+            document.getElementById("editTripId").value = tripId;
 
+            document.getElementById("editDate").value = date;
 
-                function openEditModal(
-                    id,
-                    tripId,
-                    date,
-                    time,
-                    activity,
-                    location,
-                    notes
-                ) {
+            document.getElementById("editTime").value = time;
 
-                    document.getElementById("editTripId").value = tripId;
+            document.getElementById("editActivity").value = activity;
 
-                    document.getElementById("editDate").value = date;
+            document.getElementById("editLocation").value = location;
 
-                    document.getElementById("editTime").value = time;
+            document.getElementById("editNotes").value = notes;
 
-                    document.getElementById("editActivity").value = activity;
 
-                    document.getElementById("editLocation").value = location;
+            document.getElementById("editForm").action =
+                "/itinerary/update/" + id;
 
-                    document.getElementById("editNotes").value = notes;
 
+            document.getElementById("editModal").style.display = "block";
+        }
 
-                    document.getElementById("editForm").action =
-                        "/itinerary/update/" + id;
 
+        function closeEditModal() {
+            document.getElementById("editModal").style.display = "none";
+        }
 
-                    document.getElementById("editModal").style.display = "block";
-                }
 
-
-                function closeEditModal() {
-                    document.getElementById("editModal").style.display = "none";
-                }
-
-            </script>
+    </script>
 
 
 </body>
