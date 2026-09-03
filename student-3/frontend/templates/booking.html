@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Booking</title>
+</head>
+
+<body>
+
+    <h1>Booking</h1>
+
+    <button type="button" onclick="openAddModal()">
+        Create Booking </button>
+
+
+    <table>
+        <thead>
+            <tr>
+                <th>Booking ID</th>
+                <th>Trip ID</th>
+                <th>Provider ID</th>
+                <th>Booking Date</th>
+                <th>Status</th>
+                <th>Cost</th>
+                <th>Create Time</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for booking in bookings %}
+
+            <tr>
+                <td>{{ booking.booking_id }}</td>
+                <td>{{ booking.trip_id }}</td>
+                <td>{{ booking.provider_id }}</td>
+                <td>{{ booking.booking_date }}</td>
+                <td>{{ booking.status }}</td>
+                <td>${{ booking.cost }}</td>
+                <td>{{ booking.create_time }}</td>
+
+                <td>
+                    <button type="button" onclick="openEditModal(
+                        '{{ booking.booking_id }}',
+                        '{{ booking.trip_id }}',
+                        '{{ booking.provider_id }}',
+                        '{{ booking.booking_date }}',
+                         '{{ booking.status }}',
+                         '{{ booking.cost }}',
+                         '{{ booking.create_time }}'
+                         )">
+                        Edit
+                    </button>
+                    <form method="POST" action="/booking/delete/{{ booking.booking_id }}" style="display:inline;">
+                        <button type="submit">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+    </table>
+
+    <div id="addModal" style="display:none;">
+
+        <h2>Create Booking</h2>
+
+        <form method="POST" action="/booking/add">
+
+            <label>Itinerary</label>
+            <select id="addItineraryId" name="itinerary_id" required>
+                {% for itinerary in itineraries %}
+                <option value="{{ itinerary.itinerary_id }}">
+                    {{ itinerary.activity }} - {{ itinerary.date }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <br>
+
+            <label>Trip ID</label>
+            <input type="number" name="trip_id" required>
+
+            <br>
+
+            <label>Provider</label>
+            <select id="addProviderId" name="provider_id" required>
+                {% for provider in providers %}
+                <option value="{{ provider.provider_id }}">
+                    {{ provider.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <br>
+
+            <label>Booking Date</label>
+            <input type="date" name="booking_date" required>
+
+            <br>
+
+            <label>Status</label>
+            <select name="status" required>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+
+            <br>
+
+            <label>Cost</label>
+            <input type="number" step="0.01" name="cost" required>
+
+            <br>
+
+            <label>Create Time</label>
+            <input type="date" name="create_time" required>
+
+            <br>
+
+            <label>Quantity</label>
+            <input type="number" name="quantity" min="1" required>
+
+            <br><br>
+
+            <button type="submit">Submit</button>
+
+            <button type="button" onclick="closeAddModal()">
+                Cancel
+            </button>
+
+        </form>
+
+    </div>
+
+    <div id="editModal" style="display:none;">
+
+        <h2>Edit Booking</h2>
+
+        <form id="editForm" method="POST">
+
+            <label>Trip ID</label>
+            <input id="editTripId" type="number" name="trip_id" required>
+
+            <br>
+
+            <label>Provider</label>
+            <select id="editProviderId" name="provider_id" required>
+
+                {% for provider in providers %}
+
+                <option value="{{ provider.provider_id }}">
+                    {{ provider.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+            <br>
+
+            <label>Booking Date</label>
+            <input id="editBookingDate" type="date" name="booking_date" required>
+
+            <br>
+
+            <label>Status</label>
+            <select id="editStatus" name="status" required>
+
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+
+            </select>
+
+            <br>
+
+            <label>Cost</label>
+            <input id="editCost" type="number" step="0.01" name="cost" required>
+
+            <br>
+
+            <label>Create Time</label>
+            <input id="editCreateTime" type="date" name="create_time" required>
+
+            <br><br>
+
+            <button type="submit">Update</button>
+
+            <button type="button" onclick="closeEditModal()">
+                Cancel
+            </button>
+
+        </form>
+
+    </div>
+
+    <section>
+        <h2>AI Booking Assistant</h2>
+
+        <form hx-post="/booking/ai-match" hx-target="#ai-result" hx-swap="innerHTML">
+            <label>Select Itinerary:</label>
+
+            <select name="itinerary_id" required>
+                {% for itinerary in itineraries %}
+                <option value="{{ itinerary.itinerary_id }}">
+                    {{ itinerary.activity }}
+                    - {{ itinerary.location }}
+                    - {{ itinerary.date }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">
+                Find Provider with AI
+            </button>
+        </form>
+
+        <div id="ai-result"></div>
+    </section>
+
+
+    <script>
+
+        function openAddModal() {
+            document.getElementById("addModal").style.display = "block";
+        }
+
+        function closeAddModal() {
+            document.getElementById("addModal").style.display = "none";
+        }
+
+        function openEditModal(
+            id,
+            tripId,
+            providerId,
+            bookingDate,
+            status,
+            cost,
+            createTime
+        ) {
+
+            document.getElementById("editTripId").value = tripId;
+            document.getElementById("editProviderId").value = providerId;
+            document.getElementById("editBookingDate").value = bookingDate;
+            document.getElementById("editStatus").value = status;
+            document.getElementById("editCost").value = cost;
+            document.getElementById("editCreateTime").value = createTime;
+
+            document.getElementById("editForm").action =
+                "/booking/update/" + id;
+
+            document.getElementById("editModal").style.display = "block";
+        }
+
+        function closeEditModal() {
+            document.getElementById("editModal").style.display = "none";
+        }
+
+        function useAIProvider(itineraryId, providerId) {
+
+            console.log("AI itinerary ID:", itineraryId);
+            console.log("AI provider ID:", providerId);
+
+            const itinerarySelect =
+                document.getElementById("addItineraryId");
+
+            const providerSelect =
+                document.getElementById("addProviderId");
+
+            console.log("Itinerary select:", itinerarySelect);
+            console.log("Provider select:", providerSelect);
+
+            if (itinerarySelect) {
+                itinerarySelect.value = String(itineraryId);
+            }
+
+            if (providerSelect) {
+                providerSelect.value = String(providerId);
+            }
+
+            openAddModal();
+        }
+
+    </script>
+
+
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+
+</body>
+
+</html>
