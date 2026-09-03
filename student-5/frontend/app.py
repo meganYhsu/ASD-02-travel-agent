@@ -188,6 +188,7 @@ def create_app() -> Flask:
     app = Flask(__name__)
 
     @app.get("/")
+    @app.get("/dashboard")
     def dashboard():
         return render_template("dashboard.html")
 

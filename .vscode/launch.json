@@ -41,17 +41,15 @@
         "PORT": "8505",
         "BACKEND_URL": "http://127.0.0.1:5505"
       }
-    }
-  ],
-  "compounds": [
+    },
     {
-      "name": "Student-5: All services",
-      "configurations": [
-        "Student-5: Database",
-        "Student-5: Backend",
-        "Student-5: Frontend"
-      ],
-      "stopAll": true
+      "name": "Student-5: Run all",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/student-5/run_all.py",
+      "cwd": "${workspaceFolder}/student-5",
+      "console": "integratedTerminal",
+      "justMyCode": true
     }
   ]
 }

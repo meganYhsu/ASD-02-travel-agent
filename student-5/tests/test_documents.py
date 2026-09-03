@@ -1,3 +1,8 @@
+import importlib.util
+import sys
+from pathlib import Path
+
+
 def test_seed_documents_count(client):
     response = client.get("/api/documents")
     assert response.status_code == 200
@@ -70,3 +75,16 @@ def test_malformed_json_document(client):
         content_type="application/json",
     )
     assert response.status_code == 400
+
+
+def test_frontend_dashboard_alias():
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("student5_frontend_app", root / "frontend" / "app.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec is not None and spec.loader is not None
+    sys.modules["student5_frontend_app"] = module
+    spec.loader.exec_module(module)
+
+    client = module.create_app().test_client()
+    assert client.get("/").status_code == 200
+    assert client.get("/dashboard").status_code == 200
