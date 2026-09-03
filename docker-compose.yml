@@ -28,6 +28,7 @@ services:
     depends_on:
       - shared-app
       - student3-frontend
+      - student5-frontend
 
     networks:
       - travel-net
