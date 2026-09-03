@@ -9,9 +9,9 @@ import requests
 
 load_dotenv()
 
-DB_API_URL = os.getenv("DB_API_URL", "http://localhost:6003")
-TRIP_DB_API_URL = os.getenv("TRIP_DB_API_URL", "http://localhost:6004")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+DB_API_URL = os.getenv("DB_API_URL", "http://127.0.0.1:6003")
+TRIP_DB_API_URL = os.getenv("TRIP_DB_API_URL", "http://127.0.0.1:6004")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
 
 PROMPT_DIR = Path(__file__).with_name("prompts")

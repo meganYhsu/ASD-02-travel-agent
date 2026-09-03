@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 import os
 import requests
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5003")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:5003")
 
 app = Flask(__name__)
 
