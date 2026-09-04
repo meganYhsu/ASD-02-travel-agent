@@ -1,0 +1,237 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #111111;
+    background-color: #f7f8fa;
+}
+
+
+/* Navigation */
+
+nav {
+    height: 70px;
+    background-color: white;
+    border-bottom: 1px solid #dddddd;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 50px;
+}
+
+.nav-title {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #111111;
+    font-size: 14px;
+}
+
+.nav-links a:hover {
+    color: #2563eb;
+}
+
+
+/* Page */
+
+.page {
+    min-height: calc(100vh - 70px);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 40px;
+}
+
+
+/* Home / Welcome card */
+
+.hero-card {
+    width: 650px;
+
+    background-color: white;
+
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+
+    padding: 60px;
+
+    text-align: center;
+}
+
+.hero-card h1 {
+    font-size: 42px;
+    margin-bottom: 20px;
+}
+
+.hero-card h2 {
+    font-size: 24px;
+    font-weight: normal;
+}
+
+.hero-card p {
+    line-height: 1.7;
+    margin-bottom: 35px;
+    color: #444444;
+}
+
+
+/* Forms */
+
+.form-card {
+    width: 420px;
+
+    background-color: white;
+
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+
+    padding: 40px;
+}
+
+.form-card h2 {
+    font-size: 28px;
+    text-align: center;
+}
+
+.form-card p {
+    text-align: center;
+    color: #555555;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-top: 15px;
+    margin-bottom: 6px;
+}
+
+input,
+select {
+    padding: 10px;
+
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+
+    font-size: 14px;
+}
+
+
+/* Buttons */
+
+.primary-button {
+    display: inline-block;
+
+    background-color: #2563eb;
+    color: white;
+
+    border: none;
+    border-radius: 6px;
+
+    padding: 11px 22px;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    margin-top: 20px;
+}
+
+.primary-button:hover {
+    background-color: #1d4ed8;
+}
+
+/* Management Pages */
+
+.management-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+
+    display: block;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 32px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #555555;
+}
+
+.section-card,
+.ai-assistant {
+    background-color: white;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.management-page table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.management-page th,
+.management-page td {
+    padding: 12px;
+    border-bottom: 1px solid #dddddd;
+    text-align: left;
+    font-size: 14px;
+}
+
+.management-page th {
+    background-color: #f7f8fa;
+}
+
+.management-page button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 16px;
+    cursor: pointer;
+}
+
+.management-page button:hover {
+    background-color: #1d4ed8;
+}
+
+.ai-assistant select {
+    width: 100%;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+#ai-result {
+    margin-top: 20px;
+}
