@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <title>Budget & Expense Tracking</title>
+
+    <link rel="stylesheet" href="./css/style.css">
+
+    <meta name="htmx-config" content='{"selfRequestsOnly": false}'>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    
+</head>
+<body>
+<main>
+    <h1>Budget & Expense Tracking</h1>
+
+    <section>
+        <h2>Dashboard</h2>
+        <button hx-get="/api/dashboard/1" hx-target="#dashboard">
+            Load trip 1 dashboard
+        </button>
+        <div id="dashboard"></div>
+        <div id="edit-form"></div>
+    </section>
+
+    <section>
+        <h2>Add expense</h2>
+        <form hx-post="/api/expenses" hx-target="#dashboard">
+            <input type="hidden" name="trip_id" value="1">
+            <label>Description <input name="description" required></label>
+            <label>Amount (AUD) <input name="amount" type="number" step="0.01" min="0" required></label>
+            <label>Category
+                <select name="category_id">
+                    <option value="1">Accommodation</option>
+                    <option value="2">Food</option>
+                    <option value="3">Transport</option>
+                    <option value="4">Activities</option>
+                    <option value="5">Shopping</option>
+                </select>
+            </label>
+            <label>Date <input name="expense_date" type="date"></label>
+            <button type="submit">Save expense</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>AI budget analysis</h2>
+        <button hx-post="/api/analyse/1" hx-target="#ai-result"
+                hx-indicator="#ai-loading">
+            Analyse budget
+        </button>
+        <span id="ai-loading" class="htmx-indicator">Analysing…</span>
+        <div id="ai-result"></div>
+    </section>
+</main>
+</body>
+</html>
