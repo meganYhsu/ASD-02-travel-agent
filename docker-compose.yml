@@ -27,7 +27,7 @@ services:
 
     depends_on:
       - shared-app
-      - student3-frontend
+      - student2-frontend
       - student5-frontend
 
     networks:
@@ -44,9 +44,9 @@ services:
   #-------------------
   # student 3
   #-------------------
-  student3-database:
+  student2-database:
     build:
-      context: ./student-3/database
+      context: ./student-2/database
 
     ports:
       - "5000:5000"
@@ -54,12 +54,12 @@ services:
     networks:
       - travel-net
 
-  student3-backend:
+  student2-backend:
     build:
-      context: ./student-3/backend
+      context: ./student-2/backend
 
     environment:
-      DATABASE_URL: http://student3-database:5000
+      DATABASE_URL: http://student2-database:5000
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
 
@@ -67,25 +67,25 @@ services:
       - "5001:5001"
 
     depends_on:
-      - student3-database
+      - student2-database
       - ollama
 
     networks:
       - travel-net
 
-  student3-frontend:
+  student2-frontend:
 
     build:
-      context: ./student-3/frontend
+      context: ./student-2/frontend
 
     environment:
-      BACKEND_URL: http://student3-backend:5001
+      BACKEND_URL: http://student2-backend:5001
 
     ports:
       - "5002:5002"
 
     depends_on:
-      - student3-backend
+      - student2-backend
 
     networks:
       - travel-net
