@@ -1,0 +1,88 @@
+name: Student 4 - Build and Validate Microservices
+
+on:
+  push:
+    paths:
+      - "student-4/**"
+      - ".github/workflows/student-4.yml"
+
+  pull_request:
+    paths:
+      - "student-4/**"
+      - ".github/workflows/student-4.yml"
+
+jobs:
+  validate-student-4:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Get repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+
+      # BACKEND
+
+
+      - name: Install backend dependencies
+        working-directory: student-4/backend
+        run: npm ci
+
+      - name: Validate backend
+        working-directory: student-4/backend
+        run: npm run build --if-present
+
+      - name: Run backend tests
+        working-directory: student-4/backend
+        run: npm test --if-present
+
+
+      # DATABASE
+
+
+      - name: Install database dependencies
+        working-directory: student-4/database
+        run: npm ci
+
+      - name: Validate database service
+        working-directory: student-4/database
+        run: npm run build --if-present
+
+      - name: Run database tests
+        working-directory: student-4/database
+        run: npm test --if-present
+
+
+      # FRONTEND
+
+
+      - name: Install frontend dependencies
+        working-directory: student-4/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: student-4/frontend
+        run: npm run build
+
+      - name: Run frontend tests
+        working-directory: student-4/frontend
+        run: npm test --if-present
+
+
+      # DOCKER VALIDATION
+
+
+      - name: Build backend Docker image
+        run: docker build -t student-4-backend ./student-4/backend
+
+      - name: Build database Docker image
+        run: docker build -t student-4-database ./student-4/database
+
+      - name: Build frontend Docker image
+        run: docker build -t student-4-frontend ./student-4/frontend
