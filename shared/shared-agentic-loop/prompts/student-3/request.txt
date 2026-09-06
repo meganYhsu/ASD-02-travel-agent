@@ -1,0 +1,30 @@
+Feature:
+Booking and Itinerary Management
+
+Review objective:
+Review the earlier implementation of the Booking and Itinerary Management feature and identify implementation problems that may affect its reliability or functionality.
+
+Code files:
+student-3/backend/app.py
+student-3/backend/llm_client.py
+student-3/backend/prompts/booking_assistant_prompt.txt
+student-3/database/app.py
+student-3/database/init_db.py
+student-3/database/seed_data.py
+student-3/frontend/app.py
+student-3/frontend/templates/booking.html
+student-3/frontend/templates/itinerary.html
+student-3/docker-compose.yml
+
+
+Review focus:
+- frontend, backend and database API interactions
+- CRUD implementation
+- input validation and error handling
+- SQLite database operations
+- AI provider matching implementation
+- handling of invalid AI responses
+- consistency between frontend, backend and database services
+
+Only identify problems that can be verified from the supplied code.
+Prefer minimal changes instead of redesigning the whole feature.

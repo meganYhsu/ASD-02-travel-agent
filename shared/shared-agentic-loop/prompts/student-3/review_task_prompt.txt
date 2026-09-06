@@ -1,0 +1,32 @@
+Review task:
+{{TASK}}
+
+Implementation Agent recommendation:
+{{IMPLEMENTATION_RECOMMENDATION}}
+
+Source code:
+{{EVIDENCE}}
+
+Review the Implementation Agent recommendation using only the supplied source code.
+
+Check:
+
+1. Does the recommendation identify an exact source file?
+2. Is the stated problem directly supported by code in that file?
+3. Is the problem inside the defined review focus?
+4. Does the proposed change address that specific problem?
+5. Is the proposed change minimal and practical?
+
+Do not assume that code is tested, correct, well-documented,
+or follows best practices unless this is directly shown in the supplied evidence.
+
+If the Implementation Agent makes a general claim without specific
+source code evidence, reject the recommendation.
+
+Use this output format:
+
+Result: Accept / Partially Accept / Reject
+Verified file:
+Evidence check:
+Recommendation check:
+Reason:
