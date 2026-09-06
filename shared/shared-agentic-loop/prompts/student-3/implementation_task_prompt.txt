@@ -1,0 +1,36 @@
+Review task:
+{{TASK}}
+
+Source code:
+{{EVIDENCE}}
+
+Previous human feedback:
+{{CARRY_FORWARD}}
+
+Review only the areas listed in the review focus.
+
+Identify exactly ONE verified implementation problem.
+
+A problem is verified only if you can identify:
+1. the exact source file
+2. the relevant code or implementation behaviour in that file
+3. why that code creates the problem
+
+Do not make general comments about UI design, code quality, usability,
+testing, documentation, or best practices unless the supplied code
+directly proves the problem and it is part of the review focus.
+
+Use this output format:
+
+File:
+Problem:
+Code evidence:
+Impact:
+Minimal recommendation:
+
+If no problem can be verified from the supplied source code,
+respond with:
+
+No verified problem found.
+
+If previous human feedback is provided, use it to improve the next recommendation.
