@@ -2,3 +2,7 @@
 .vs/
 node_module/
 dist/
+
+.venv/
+
+__pycache__/
