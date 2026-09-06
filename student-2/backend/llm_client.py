@@ -1,22 +1,15 @@
 import os
-
-from openai import OpenAI
+import requests
 
 
 OLLAMA_BASE_URL = os.getenv(
     "OLLAMA_BASE_URL",
-    "http://localhost:11434/v1"
+    "http://ollama:11434"
 )
 
 OLLAMA_MODEL = os.getenv(
     "OLLAMA_MODEL",
     "qwen2.5:0.5b"
-)
-
-
-client = OpenAI(
-    base_url=OLLAMA_BASE_URL,
-    api_key="ollama"
 )
 
 
@@ -26,12 +19,22 @@ def create_chat_completion(
     temperature=0.2,
     model=None
 ):
-
-    response = client.chat.completions.create(
-        model=model or OLLAMA_MODEL,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature
+    response = requests.post(
+        f"{OLLAMA_BASE_URL}/api/chat",
+        json={
+            "model": model or OLLAMA_MODEL,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens
+            }
+        },
+        timeout=60
     )
 
-    return response.choices[0].message.content
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["message"]["content"]

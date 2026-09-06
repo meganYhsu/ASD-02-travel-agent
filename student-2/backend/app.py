@@ -274,6 +274,42 @@ def create_booking_from_itinerary():
     return jsonify({"message": "Booking and booking item created successfully", "booking_id": booking_id}), 201
 
 
+
+
+#A helpfuntion 
+def is_provider_suitable(selected_itinerary, recommended_provider, providers):
+
+    activity = selected_itinerary['activity'].lower()
+
+    recommended_name = recommended_provider['name'].lower()
+    recommended_type = recommended_provider['type'].lower()
+
+    # Current provider directly matches the activity
+    if recommended_name in activity or activity in recommended_name:
+        return True
+
+    if recommended_type in activity:
+        return True
+
+    # Check whether another provider is a clearly better match
+    for provider in providers:
+
+        provider_name = provider['name'].lower()
+        provider_type = provider['type'].lower()
+
+        if provider['provider_id'] == recommended_provider['provider_id']:
+            continue
+
+        if provider_name in activity or activity in provider_name:
+            return False
+
+        if provider_type in activity:
+            return False
+
+    # No clearly better provider found
+    return True
+
+
 #AI assistant endpoint
 @app.route('/ai/match-provider', methods=['POST'])
 def match_provider():
@@ -336,10 +372,7 @@ def match_provider():
             "error": "No providers available"
         }), 404
 
-
-    # ACT
-    print("[ACT] Send booking context to Qwen.")
-
+# ACT
 
     system_prompt = BOOKING_PROMPT_FILE.read_text(
         encoding="utf-8"
@@ -358,106 +391,181 @@ def match_provider():
 
 
     user_prompt = f"""
-Selected Itinerary:
+    Selected Itinerary:
+    Activity: {selected_itinerary['activity']}
+    Location: {selected_itinerary['location']}
+    Date: {selected_itinerary['date']}
+    Time: {selected_itinerary.get('time', '')}
+    Notes: {selected_itinerary.get('notes', '')}
 
-Activity: {selected_itinerary['activity']}
-Location: {selected_itinerary['location']}
-Date: {selected_itinerary['date']}
-Time: {selected_itinerary.get('time', '')}
-Notes: {selected_itinerary.get('notes', '')}
-
-Available Providers:
-
-{provider_context}
-"""
+    Available Providers:
+    {provider_context}"""
 
 
-    try:
-        answer = create_chat_completion(
-            [
-                {
-                    "role": "system",
-                    "content": system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt
-                }
-            ],
-            max_tokens=150,
-            temperature=0.2,
-            model=OLLAMA_MODEL
-        )
-
-    except Exception as exc:
-        return jsonify({
-            "error": "AI request failed",
-            "details": str(exc)
-        }), 503
-
-
-    # OBSERVE
-    print("[OBSERVE] Validate AI provider recommendation.")
-
-
-    provider_id = None
-    reason = ""
-
-
-    for line in answer.splitlines():
-
-        if line.lower().startswith("provider id:"):
-            value = line.split(":", 1)[1].strip()
-
-            try:
-                provider_id = int(value)
-            except ValueError:
-                provider_id = None
-
-
-        if line.lower().startswith("reason:"):
-            reason = line.split(":", 1)[1].strip()
-
-
-    recommended_provider = None
-
-    for provider in providers:
-        if provider['provider_id'] == provider_id:
-            recommended_provider = provider
-            break
-
-
-    # ADAPT
-    if recommended_provider is None:
+    # Maximum two recommendation attempts
+    for attempt in range(2):
 
         print(
-            "[ADAPT] Invalid AI provider recommendation."
+            f"[ACT] Attempt {attempt + 1}: "
+            "Send booking context to Qwen."
         )
 
-        return jsonify({
-            "error": "AI returned an invalid provider",
-            "ai_response": answer
-        }), 500
+        try:
+            answer = create_chat_completion(
+                [
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    }
+                ],
+                max_tokens=150,
+                temperature=0.2,
+                model=OLLAMA_MODEL
+            )
+
+        except Exception as exc:
+            return jsonify({
+                "error": "AI request failed",
+                "details": str(exc)
+            }), 503
 
 
+        # OBSERVE
+        print(
+            "[OBSERVE] Validate AI provider recommendation."
+        )
+
+        provider_id = None
+        reason = ""
+        reading_reason = False
+
+        for line in answer.splitlines():
+
+            line = line.strip()
+
+            if line.lower().startswith("provider id:"):
+
+                value = line.split(":", 1)[1].strip()
+
+                try:
+                    provider_id = int(value)
+
+                except ValueError:
+                    provider_id = None
+
+            elif line.lower().startswith("reason:"):
+
+                reason = line.split(":", 1)[1].strip()
+                reading_reason = True
+
+            elif reading_reason and line:
+
+                reason += " " + line
+
+
+        recommended_provider = None
+
+        for provider in providers:
+
+            if provider['provider_id'] == provider_id:
+
+                recommended_provider = provider
+                break
+
+
+        # Check whether provider exists
+        if recommended_provider is None:
+
+            print(
+                "[ADAPT] Provider ID is invalid. "
+                "Retry recommendation."
+            )
+
+            user_prompt += f"""
+            The previous recommendation was invalid because the provider
+            does not exist in the supplied provider list.
+            Previous AI response:
+            {answer}
+            
+            Choose another provider using only the supplied provider data.
+            """
+
+            continue
+
+
+        # OBSERVE provider suitability using live application data
+        print(
+            "[OBSERVE] Compare recommendation "
+            "with live provider data."
+        )
+
+        is_suitable = is_provider_suitable(
+            selected_itinerary,
+            recommended_provider,
+            providers
+        )
+
+
+        # ADAPT
+        if is_suitable:
+
+            print(
+                "[ADAPT] Provider recommendation accepted."
+            )
+
+            return jsonify({
+                "itinerary": selected_itinerary,
+                "recommended_provider": recommended_provider,
+                "reason": reason,
+                "agentic_loop": {
+                    "plan":
+                        "Retrieve itinerary and provider information",
+                    "act":
+                        f"Ask Qwen for a provider recommendation "
+                        f"(attempt {attempt + 1})",
+                    "observe":
+                        "Compare the recommendation with "
+                        "live provider data",
+                    "adapt":
+                        "Accept a suitable provider or retry "
+                        "with the previous recommendation excluded"
+                }
+            }), 200
+
+
+        print(
+            "[ADAPT] A more relevant provider exists. "
+            "Refine context and retry."
+        )
+
+        user_prompt += f"""
+        The previous provider recommendation was not suitable.
+        
+        Previous provider:
+        {recommended_provider['name']}
+        
+        Provider type:
+        {recommended_provider['type']}
+        
+        Do not recommend this provider again.
+        Review the supplied provider names and types again and choose
+        a provider that more directly matches the selected itinerary activity:
+        
+        {selected_itinerary['activity']} """
+
+# Both attempts failed
     print(
-        "[ADAPT] Valid provider recommendation accepted."
-    )
-
+        "[ADAPT] No suitable provider found after two attempts."
+        )
 
     return jsonify({
-        "itinerary": selected_itinerary,
-        "recommended_provider": recommended_provider,
-        "reason": reason,
-        "agentic_loop": {
-            "plan": "Retrieve itinerary and provider information",
-            "act": "Send application context to Qwen",
-            "observe": "Validate the recommended provider",
-            "adapt": "Accept only a provider that exists in the database"
-        }
-    }), 200
-
-    
+        "error":
+        "AI could not find a suitable provider after two attempts."
+        }), 422
 
     
 

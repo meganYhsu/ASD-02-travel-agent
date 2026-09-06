@@ -61,7 +61,8 @@
                     <tr>
                         <th>Booking ID</th>
                         <th>Trip ID</th>
-                        <th>Provider ID</th>
+                        <th>Provider</th>
+                        <th>Activity </th>
                         <th>Booking Date</th>
                         <th>Status</th>
                         <th>Cost</th>
@@ -77,7 +78,8 @@
                     <tr>
                         <td>{{ booking.booking_id }}</td>
                         <td>{{ booking.trip_id }}</td>
-                        <td>{{ booking.provider_id }}</td>
+                        <td>{{ provider_names.get(booking.provider_id, 'Unknown Provider') }}</td>
+                        <td>{{ booking_activities.get(booking.booking_id, 'Unknown Activity') }}</td>
                         <td>{{ booking.booking_date }}</td>
                         <td>{{ booking.status }}</td>
                         <td>${{ booking.cost }}</td>
@@ -89,9 +91,9 @@
                         '{{ booking.trip_id }}',
                         '{{ booking.provider_id }}',
                         '{{ booking.booking_date }}',
-                         '{{ booking.status }}',
-                         '{{ booking.cost }}',
-                         '{{ booking.create_time }}'
+                        '{{ booking.status }}',
+                        '{{ booking.cost }}',
+                        '{{ booking.create_time }}'
                          )">
                                 Edit
                             </button>
@@ -255,9 +257,7 @@
                     <select name="itinerary_id" required>
                         {% for itinerary in itineraries %}
                         <option value="{{ itinerary.itinerary_id }}">
-                            {{ itinerary.activity }}
-                            - {{ itinerary.location }}
-                            - {{ itinerary.date }}
+                            {{ itinerary.activity }} - {{ itinerary.location }}
                         </option>
                         {% endfor %}
                     </select>

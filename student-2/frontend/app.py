@@ -6,6 +6,8 @@ app = Flask(__name__)
 
 BACKEND_URL = os.getenv("BACKEND_URL") or "http://127.0.0.1:5001"
 
+print("BACKEND_URL =", BACKEND_URL)
+
 
 @app.route('/itinerary')
 def itinerary():
@@ -78,12 +80,42 @@ def booking():
     itinerary_response = requests.get(f"{BACKEND_URL}/itineraries")
     itineraries = itinerary_response.json()
 
+    booking_item_response = requests.get( f"{BACKEND_URL}/booking_items")
+    booking_items = booking_item_response.json()
+
+    provider_names = {
+    provider['provider_id']: provider['name']
+    for provider in providers
+    }
+
+    itinerary_activities = {
+    itinerary['itinerary_id']: itinerary['activity']
+    for itinerary in itineraries
+    }
+
+    booking_activities = {}
+
+    for item in booking_items:
+        booking_id = item['booking_id']
+        itinerary_id = item['itinerary_id']
+
+        booking_activities[booking_id] = (
+            itinerary_activities.get (
+                itinerary_id,
+                'Unknown Activity'
+            )
+        )
+
     return render_template(
         'booking.html',
         bookings=bookings,
         providers=providers,
-        itineraries=itineraries
+        itineraries=itineraries,
+        provider_names=provider_names,
+        booking_activities=booking_activities
     )
+
+
 
 @app.route('/booking/add', methods=['POST'])
 def add_booking():
@@ -172,6 +204,18 @@ def ai_match_provider():
                 <strong>Error:</strong> AI service is unavailable.
             </div>
         """, 503
+
+    if response.status_code == 422:
+            return """
+            <div>
+            <h3>AI Booking Recommendation</h3>
+            <p><strong>No suitable provider found.</strong></p>
+            <p>
+                The AI could not find a suitable provider for this itinerary
+                from the currently available providers.
+            </p>
+            </div>
+            """
 
     if response.status_code != 200:
         error_message = data.get(
