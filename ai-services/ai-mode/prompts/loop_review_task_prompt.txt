@@ -1,0 +1,25 @@
+Implementation Recommendation:
+{{IMPLEMENTATION_RECOMMENDATION}}
+
+Validation Evidence:
+{{VALIDATION_EVIDENCE}}
+
+Task:
+Review only the implementation-agent recommendation above and identify
+evidence-backed risks or corrections.
+
+Format:
+Risk: <one short sentence>
+Correction: <one short sentence>
+Retest: <one short sentence>
+
+If the Implementation Recommendation is "No evidence-backed improvement
+identified", or the evidence shows all checks passed, you MUST return:
+Risk: No evidence-backed risk identified.
+Correction: No correction required.
+Retest: Repeat validation after future changes.
+
+Output rules:
+- Return exactly three lines.
+- Maximum 35 words total.
+- Do not invent a risk to fill the format.

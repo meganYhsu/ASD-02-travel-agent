@@ -120,10 +120,38 @@ def update_booking(booking_id):
 @app.route('/bookings/<int:booking_id>', methods=['DELETE'])
 def delete_booking(booking_id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM Bookings WHERE booking_id=?', (booking_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"message": "Booking deleted successfully"}), 200
+
+    try:
+        conn.execute(
+            'DELETE FROM BookingItems WHERE booking_id=?',
+            (booking_id,)
+        )
+        cursor = conn.execute(
+            'DELETE FROM Bookings WHERE booking_id=?',
+            (booking_id,)
+        )
+
+        if cursor.rowcount == 0:
+            conn.rollback()
+            return jsonify({
+                "error": "Booking not found"
+            }), 404
+
+        conn.commit()
+
+        return jsonify({
+            "message": "Booking and related booking items deleted successfully"
+        }), 200
+
+    except sqlite3.Error as e:
+        conn.rollback()
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+    finally:
+        conn.close()
 
 
 #BookingItems endpoints

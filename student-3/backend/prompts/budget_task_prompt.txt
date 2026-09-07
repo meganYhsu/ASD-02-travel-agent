@@ -1,0 +1,12 @@
+Trip: {{TRIP}}
+Total budget: {{BUDGET}}
+Spent so far: {{SPENT}}
+Days remaining: {{DAYS_LEFT}}
+
+Expenses:
+{{EXPENSES}}
+
+Task:
+Assess whether the traveller can finish the trip within budget at the
+current spend rate. If not, recommend up to two specific adjustments
+based only on the expenses and days listed above.

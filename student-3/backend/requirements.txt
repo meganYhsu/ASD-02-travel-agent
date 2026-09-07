@@ -1,3 +1,5 @@
-Flask
-requests
+flask
+python-dotenv
 openai
+requests
+markupsafe

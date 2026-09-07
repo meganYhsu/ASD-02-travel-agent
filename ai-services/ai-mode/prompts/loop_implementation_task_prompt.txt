@@ -1,0 +1,12 @@
+Service scope:
+- database API (port 6003) owns Budgets, Expenses, ExpenseCategories and
+  AdjustmentRecommendations
+- backend API (port 5003) aggregates the dashboard and calls the AI analysis
+- the Trip Planning service is owned by another student and is read over HTTP
+
+Validation Evidence:
+{{VALIDATION_EVIDENCE}}
+
+Task:
+Review the Budget & Expense Tracking services using the evidence above and
+identify at most two evidence-backed improvements.
