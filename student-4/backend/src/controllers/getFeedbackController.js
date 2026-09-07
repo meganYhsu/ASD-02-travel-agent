@@ -312,15 +312,44 @@ async function updateItineraryFromFeedback(req, res) {
             return res.status(400).json({ error: "Feedback is required" });
         }
 
-        const sourceItinerary = details.currentItinerary || details.selectedItinerary || {};
-        const finalPrompt = buildFeedbackPrompt(details);
-        const content = await updateItineraryWithOllama(sourceItinerary, finalPrompt);
+        const sourceItinerary =
+            details.currentItinerary ||
+            details.selectedItinerary ||
+            {};
+
+        const userRequest = String(
+            details.feedback ||
+            details.improvementPrompt ||
+            ""
+        ).trim();
+
+        const content =
+            await updateItineraryWithOllama(
+                sourceItinerary,
+                userRequest
+            );
+
+
 
         if (!content) {
-            return res.status(500).json({ error: "Ollama returned an empty response" });
+            return res.status(500).json({
+                error: "Ollama returned an empty response"
+            });
         }
 
-        return res.status(200).json(normalizeUpdatedItinerary(JSON.parse(content), sourceItinerary));
+        const parsedContent =
+            typeof content === "string"
+                ? JSON.parse(content)
+                : content;
+
+        return res.status(200).json(
+            normalizeUpdatedItinerary(
+                parsedContent,
+                sourceItinerary
+            )
+        );
+
+
     } catch (error) {
         console.error("Feedback update error:", error);
         return res.status(500).json({ error: "Could not update itinerary" });

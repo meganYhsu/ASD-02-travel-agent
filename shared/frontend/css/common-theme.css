@@ -1,0 +1,547 @@
+/* =========================
+   GLOBAL THEME
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #111111;
+    background-color: #f7f8fa;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: Arial, sans-serif;
+}
+
+
+/* =========================
+   GENERAL PAGE
+========================= */
+
+.travel-page,
+.itinerary-page,
+.saved-itinerary-page {
+    min-height: 100vh;
+    background-color: #f7f8fa;
+    padding: 40px;
+}
+
+.travel-page__shell,
+.itinerary-page__shell,
+.saved-itinerary-page__shell {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+
+/* =========================
+   HERO / HEADINGS
+========================= */
+
+.travel-page__hero,
+.itinerary-page__hero,
+.saved-itinerary-page__hero {
+    margin-bottom: 30px;
+}
+
+.travel-page__eyebrow,
+.itinerary-page__eyebrow,
+.saved-itinerary-page__eyebrow,
+.itinerary-page__section-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2563eb;
+    margin-bottom: 8px;
+}
+
+.travel-page__title,
+.itinerary-page__title,
+.saved-itinerary-page__title {
+    font-size: 36px;
+    margin: 0 0 15px;
+    color: #111111;
+}
+
+.travel-page__intro,
+.itinerary-page__intro,
+.saved-itinerary-page__intro {
+    color: #555555;
+    line-height: 1.7;
+    max-width: 750px;
+}
+
+
+/* =========================
+   PANELS / CARDS
+========================= */
+
+.travel-panel,
+.option-card,
+.itinerary-page__refine-panel,
+.itinerary-page__summary,
+.itinerary-page__day,
+.itinerary-page__save-panel,
+.itinerary-page__review-panel,
+.saved-itinerary-page__panel,
+.saved-itinerary-page__card,
+.saved-itinerary-page__day {
+    background-color: white;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+}
+
+.travel-panel {
+    padding: 35px;
+}
+
+.option-card {
+    padding: 30px;
+}
+
+.itinerary-page__refine-panel,
+.itinerary-page__summary,
+.itinerary-page__save-panel,
+.itinerary-page__review-panel,
+.saved-itinerary-page__panel {
+    padding: 30px;
+    margin-bottom: 25px;
+}
+
+
+/* =========================
+   FORMS
+========================= */
+
+.travel-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.travel-form__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.travel-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+}
+
+.travel-form__field span {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.travel-form input,
+.travel-form select,
+.travel-input,
+.itinerary-page__input {
+    width: 100%;
+    padding: 10px;
+
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+
+    font-size: 14px;
+    background-color: white;
+    color: #111111;
+}
+
+.travel-form input:focus,
+.travel-form select:focus,
+.travel-input:focus,
+.itinerary-page__input:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.travel-button,
+.itinerary-page__button,
+.saved-itinerary-page__button {
+    display: inline-block;
+
+    background-color: #2563eb;
+    color: white;
+
+    border: none;
+    border-radius: 6px;
+
+    padding: 11px 22px;
+
+    font-size: 14px;
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s ease;
+}
+
+.travel-button:hover,
+.itinerary-page__button:hover,
+.saved-itinerary-page__button:hover {
+    background-color: #1d4ed8;
+}
+
+.travel-button:disabled,
+.itinerary-page__button:disabled,
+.saved-itinerary-page__button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.travel-button--secondary {
+    background-color: white;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.travel-button--secondary:hover {
+    background-color: #eff6ff;
+}
+
+.saved-itinerary-page__button--danger {
+    background-color: #b91c1c;
+}
+
+.saved-itinerary-page__button--danger:hover {
+    background-color: #991b1b;
+}
+
+
+/* =========================
+   CITY SELECTION
+========================= */
+
+.city-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.city-chip {
+    margin: 0;
+
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+
+    padding: 10px 14px;
+
+    cursor: pointer;
+}
+
+.city-chip:has(input:checked) {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.city-chip input {
+    margin-right: 7px;
+}
+
+.travel-form__inline {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+
+/* =========================
+   ITINERARY OPTIONS
+========================= */
+
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 25px;
+}
+
+.option-card__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.option-card__title {
+    margin-top: 5px;
+    font-size: 24px;
+}
+
+.option-card__tag {
+    background-color: #eff6ff;
+    color: #2563eb;
+
+    border-radius: 6px;
+    padding: 6px 10px;
+
+    font-size: 13px;
+    height: fit-content;
+}
+
+.option-card__summary {
+    color: #555555;
+    line-height: 1.6;
+}
+
+.option-card__cost {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.option-card__section {
+    margin: 20px 0;
+}
+
+.option-card__label {
+    font-size: 15px;
+}
+
+.option-card__list {
+    color: #444444;
+    line-height: 1.6;
+}
+
+.option-day {
+    border-top: 1px solid #eeeeee;
+    padding: 15px 0;
+}
+
+.option-day__meta {
+    font-size: 13px;
+    color: #555555;
+    margin-top: 4px;
+}
+
+.option-day__title {
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+
+/* =========================
+   COMPLETE ITINERARY
+========================= */
+
+.itinerary-page__meta-grid,
+.itinerary-page__facts,
+.saved-itinerary-page__summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.itinerary-page__meta-card,
+.itinerary-page__fact {
+    background-color: white;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    padding: 18px;
+}
+
+.itinerary-page__meta-label,
+.saved-itinerary-page__label {
+    display: block;
+    font-size: 12px;
+    color: #555555;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.itinerary-page__timeline {
+    margin-top: 30px;
+}
+
+.itinerary-page__day {
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.itinerary-page__day-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.itinerary-page__day-title {
+    margin: 4px 0 0;
+}
+
+.itinerary-page__day-meta {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+
+    font-size: 13px;
+    color: #555555;
+}
+
+.itinerary-page__activity {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 20px;
+
+    padding: 18px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.itinerary-page__activity-time {
+    color: #2563eb;
+    font-weight: bold;
+}
+
+.itinerary-page__activity-title {
+    margin: 0 0 5px;
+}
+
+.itinerary-page__activity-copy {
+    margin: 0;
+    color: #555555;
+    line-height: 1.6;
+}
+
+
+/* =========================
+   RESTAURANTS
+========================= */
+
+.itinerary-page__restaurants {
+    margin-top: 20px;
+}
+
+.itinerary-page__restaurant-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.itinerary-page__restaurant {
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.itinerary-page__restaurant-meal {
+    color: #555555;
+    font-size: 12px;
+    margin-top: 0;
+}
+
+
+/* =========================
+   SAVED ITINERARY
+========================= */
+
+.saved-itinerary-page__activities {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.saved-itinerary-page__day {
+    padding: 20px;
+}
+
+.saved-itinerary-page__day-head {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.saved-itinerary-page__activity {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 20px;
+
+    padding: 15px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.saved-itinerary-page__activity-time {
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.saved-itinerary-page__actions,
+.itinerary-page__save-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 20px;
+}
+
+
+/* =========================
+   REVIEW / ERRORS
+========================= */
+
+.travel-form__error,
+.travel-state--error,
+.saved-itinerary-page__state--error,
+.itinerary-page__save-status--error {
+    color: #b91c1c;
+}
+
+.itinerary-page__review-panel h3 {
+    margin-top: 0;
+}
+
+.itinerary-page__review-panel ul {
+    line-height: 1.7;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+
+    .travel-page,
+    .itinerary-page,
+    .saved-itinerary-page {
+        padding: 20px;
+    }
+
+    .travel-form__grid,
+    .option-grid,
+    .itinerary-page__meta-grid,
+    .itinerary-page__facts,
+    .saved-itinerary-page__summary,
+    .itinerary-page__restaurant-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .travel-form__inline {
+        flex-direction: column;
+    }
+
+    .itinerary-page__day-head {
+        flex-direction: column;
+    }
+
+    .itinerary-page__day-meta {
+        text-align: left;
+    }
+}

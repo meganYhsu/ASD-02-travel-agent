@@ -72,7 +72,7 @@ jobs:
 
       - name: Run frontend tests
         working-directory: student-4/frontend
-        run: npm test --if-present
+        run: npm run test --if-present
 
 
       # DOCKER VALIDATION

@@ -90,6 +90,10 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
+@app.route('/trip-planning')
+def trip_planning():
+    return redirect("http://127.0.0.1:5174/")
+
 
 if __name__ == '__main__':
     app.run(
