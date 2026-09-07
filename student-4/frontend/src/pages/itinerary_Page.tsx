@@ -8,6 +8,8 @@ function ItineraryPage(){
     // making a list of all the important and required data:
     const location = useLocation();
     const navigate = useNavigate();
+    const [itineraryReview, setItineraryReview] = useState<any>(null);
+    const [reviewLoading, setReviewLoading] = useState(false);
     const [loading , setLoading] = useState(false);
     const [refinePrompt, setRefinePrompt] = useState("");
     const [saving, setSaving] = useState(false);
@@ -37,7 +39,7 @@ function ItineraryPage(){
         }
         try{
             setLoading(true);
-            const res = await fetch("http://localhost:5001/api/generate_complete_selected_itinerary" ,
+            const res = await fetch("http://localhost:5003/api/generate_complete_selected_itinerary" ,
                 {
                     method:"POST",
                     headers:{
@@ -58,6 +60,8 @@ function ItineraryPage(){
 
             setItinerary(parsedData);
 
+
+
         }
         catch (error) {
             console.error("Error generating itineraries:", error);
@@ -74,6 +78,8 @@ function ItineraryPage(){
         updateItineraryFromPrompt(refinePrompt);
     }
 
+
+
     async function updateItineraryFromPrompt(prompt: string) {
         if (!itinerary) {
             return;
@@ -81,7 +87,7 @@ function ItineraryPage(){
 
         try {
             setLoading(true);
-            const res = await fetch("http://localhost:5001/api/update_itinerary_from_prompt", {
+            const res = await fetch("http://localhost:5003/api/update_itinerary_from_prompt", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -129,7 +135,7 @@ function ItineraryPage(){
             setSaveError("");
             setSaveMessage("");
 
-            const res = await fetch("http://localhost:5001/api/save_itinerary", {
+            const res = await fetch("http://localhost:5003/api/save_itinerary", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -185,19 +191,135 @@ function ItineraryPage(){
         setSavedItineraryId(null);
     }, [itinerary]);
 
+    async function reviewGeneratedItinerary(
+        generatedItinerary: any,
+        tripDetails: any
+    ) {
+        try {
+            setReviewLoading(true);
+
+            const response = await fetch(
+                "http://localhost:5003/api/agentic/review",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        requirements: {
+                            destination: tripDetails.destination,
+                            startDate: tripDetails.startDate,
+                            endDate: tripDetails.endDate,
+                            budget: tripDetails.budget,
+                            travelGroup: tripDetails.group,
+                            travelStyle: tripDetails.travelStyle,
+                            cities: tripDetails.cities,
+                            additionalRequirements: tripDetails.travelPreference
+                        },
+
+                        itinerary:
+                        generatedItinerary
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    "Itinerary review failed"
+                );
+            }
+
+            setItineraryReview(result.data);
+
+        } catch (error) {
+
+            console.error(
+                "Review failed:",
+                error
+            );
+
+        } finally {
+            setReviewLoading(false);
+        }
+    }
+
+    async function applyRecommendedChanges() {
+
+        if (
+            !itinerary ||
+            !itineraryReview
+        ) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const response = await fetch(
+                "http://localhost:5003/api/agentic/apply",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        itinerary: itinerary,
+
+                        recommendedChanges:
+                        (itineraryReview as any)
+                            .recommendedChanges
+                    })
+                }
+            );
+
+            const result =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    "Could not apply changes"
+                );
+            }
+
+            // Replace Groq itinerary with
+            // the human-approved Ollama version.
+            setItinerary(result.data);
+
+            // Review is finished.
+            setItineraryReview(null);
+
+        } catch (error) {
+
+            console.error(
+                "Applying changes failed:",
+                error
+            );
+
+        } finally {
+            setLoading(false);
+        }
+    }
+
 
     return(
         <div className="itinerary-page">
             <div className="itinerary-page__backdrop" />
             <div className="itinerary-page__shell">
                 <header className="itinerary-page__hero">
-                    <div className="itinerary-page__eyebrow">Norwegian-inspired travel planner</div>
+                    <div className="itinerary-page__eyebrow">Trip Planner</div>
                     <h1 className="itinerary-page__title">
                         {itinerary?.title || "Your Nordic itinerary is being prepared"}
                     </h1>
                     <p className="itinerary-page__intro">
-                        A calm, fjord-toned travel brief for your trip to {destination || "your destination"}.
-                        Once generated, you can refine it for slower mornings, better food stops, or a more scenic pace.
+                        Your complete travel plan is ready:
                     </p>
 
                     <div className="itinerary-page__meta-grid">
@@ -358,7 +480,116 @@ function ItineraryPage(){
                                         </p>
                                     )}
                                 </div>
+
                             </div>
+                        {/*</div>*/}
+                            <button
+                                className="itinerary-page__button"
+                                type="button"
+                                onClick={() =>
+                                    reviewGeneratedItinerary(
+                                        itinerary,
+                                        {
+                                            destination,
+                                            startDate,
+                                            endDate,
+                                            cities,
+                                            budget,
+                                            group,
+                                            travelStyle,
+                                            travelPreference
+                                        }
+                                    )
+                                }
+                                disabled={reviewLoading || loading || !itinerary}
+                            >
+                                {reviewLoading
+                                    ? "Reviewing..."
+                                    : "Review itinerary"}
+                            </button>
+
+                            {itineraryReview && (
+                                <div className="itinerary-page__review-panel">
+
+                                    <h3>AI Review</h3>
+
+                                    <p>
+                                        {(itineraryReview as any).summary}
+                                    </p>
+
+                                    {(itineraryReview as any).issues?.length > 0 && (
+                                        <>
+                                            <h4>Issues found</h4>
+
+                                            <ul>
+                                                {(itineraryReview as any).issues.map(
+                                                    (issue: string, index: number) => (
+                                                        <li key={index}>
+                                                            {issue}
+                                                        </li>
+                                                    )
+                                                )}
+                                            </ul>
+                                        </>
+                                    )}
+
+                                    {(itineraryReview as any)
+                                        .recommendedChanges?.length > 0 && (
+                                        <>
+                                            <h4>Recommended changes</h4>
+
+                                            <ul>
+                                                {(itineraryReview as any)
+                                                    .recommendedChanges.map(
+                                                        (
+                                                            change: string,
+                                                            index: number
+                                                        ) => (
+                                                            <li key={index}>
+                                                                {change}
+                                                            </li>
+                                                        )
+                                                    )}
+                                            </ul>
+                                        </>
+                                    )}
+
+                                    {(itineraryReview as any).valid ? (
+                                        <p>
+                                            ✓ The itinerary matches your requirements.
+                                        </p>
+                                    ) : (
+                                        <div className="itinerary-page__save-actions">
+
+                                            <button
+                                                className="itinerary-page__button"
+                                                type="button"
+                                                onClick={applyRecommendedChanges}
+                                                disabled={loading}
+                                            >
+                                                {loading
+                                                    ? "Applying changes..."
+                                                    : "Apply Changes"}
+                                            </button>
+
+                                            <button
+                                                className="itinerary-page__button"
+                                                type="button"
+                                                onClick={() => {
+                                                    setItineraryReview(null);
+                                                }}
+                                                disabled={loading}
+                                            >
+                                                Keep Original
+                                            </button>
+
+
+
+                                        </div>
+                                    )}
+
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>
