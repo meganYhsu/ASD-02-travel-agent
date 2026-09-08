@@ -37,7 +37,7 @@ services:
     build:
       context: ./shared/frontend
     ports:
-      - "5003:5003"
+      - "3000:3000"
     networks:
       - travel-net
 
@@ -135,5 +135,45 @@ services:
       - "8505:8505"
     depends_on:
       - student5-backend
+    networks:
+      - travel-net
+  
+  #--------------------
+  #student 3
+  #--------------------
+
+  student3-database:
+    build:
+      context: ./student-3/database
+    ports:
+      - "6003:6003"
+    networks:
+      - travel-net
+
+  student3-backend:
+    build:
+      context: ./student-3/backend
+    environment:
+      DB_API_URL: http://student3-database:6003
+      TRIP_API_URL: http://student4-database:6004
+      OLLAMA_BASE_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: qwen2.5:0.5b
+    ports:
+      - "5003:5003"
+    depends_on:
+      - student3-database
+      - ollama
+    networks:
+      - travel-net
+
+  student3-frontend:
+    build:
+      context: ./student-3/frontend
+    environment:
+      BACKEND_URL: http://student3-backend:5003
+    ports:
+      - "3003:3003"
+    depends_on:
+      - student3-backend
     networks:
       - travel-net

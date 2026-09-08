@@ -1,0 +1,94 @@
+:root {
+    --bg: #f4f7fb;
+    --ink: #1c2a39;
+    --muted: #5b6b7c;
+    --card: #ffffff;
+    --line: #d7e0ea;
+    --accent: #0f6c8c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+h1 {
+    margin-bottom: 0.4rem;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.card {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.card:hover {
+    border-color: var(--accent);
+}
+
+.card h2 {
+    margin-top: 0;
+    color: var(--accent);
+}
+
+.muted {
+    color: var(--muted);
+}
+
+
+
+nav {
+    height: 70px;
+    background-color: white;
+    border-bottom: 1px solid #dddddd;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 50px;
+}
+
+.nav-title {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #111111;
+    font-size: 14px;
+}
+
+.nav-links a:hover {
+    color: #2563eb;
+}

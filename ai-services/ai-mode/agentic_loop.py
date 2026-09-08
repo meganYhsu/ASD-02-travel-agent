@@ -10,12 +10,12 @@ load_dotenv()
 PROMPT_DIR = Path(__file__).with_name("prompts")
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
-IMPLEMENTATION_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
-REVIEW_MODEL = os.getenv("OLLAMA_REVIEW_MODEL", "qwen2.5:3b")
+IMPLEMENTATION_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
+REVIEW_MODEL = os.getenv("OLLAMA_REVIEW_MODEL", "qwen2.5:0.5b")
 
 DB_API_URL = os.getenv("DB_API_URL", "http://127.0.0.1:6003")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:5003")
-TRIP_DB_API_URL = os.getenv("TRIP_DB_API_URL", "http://127.0.0.1:6004")
+TRIP_API_URL = os.getenv("TRIP_API_URL", "http://127.0.0.1:6004")
 
 PLAN = {
     "goal": "Validate the Budget & Expense Tracking microservices before release",
@@ -28,7 +28,7 @@ PLAN = {
         "GET /expenses?trip_id=1 - list expenses for a trip",
         "GET /budgets/1 - budget for a trip",
         "GET /dashboard/1 - backend aggregation",
-        "GET /trips/1 - cross-service trip lookup",
+        "GET /itineraries/1 - cross-service trip lookup",
     ],
 }
 
@@ -87,7 +87,7 @@ def observe_live_endpoints():
         ("/expenses?trip_id=1", f"{DB_API_URL}/expenses?trip_id=1"),
         ("/budgets/1", f"{DB_API_URL}/budgets/1"),
         ("/dashboard/1", f"{BACKEND_URL}/dashboard/1"),
-        ("/trips/1 (cross-service)", f"{TRIP_DB_API_URL}/trips/1"),
+        ("/itineraries/1 (cross-service)", f"{TRIP_API_URL}/itineraries/1"),
     ]
 
     for label, url in checks:
