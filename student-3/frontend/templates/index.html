@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-<main class="management-page">
+<main class="wrap">
     <div class="page-header">
         <div>
             <h1>Budget &amp; Expense Tracking</h1>
@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    <section class="section-card">
+    <section class="card">
         <h2>Dashboard</h2>
         <button hx-get="/api/dashboard/1" hx-target="#dashboard">
             Load trip 1 dashboard
@@ -30,7 +30,7 @@
         <div id="edit-form"></div>
     </section>
 
-    <section class="section-card">
+    <section class="card">
         <h2>Add expense</h2>
         <form hx-post="/api/expenses" hx-target="#dashboard">
             <input type="hidden" name="trip_id" value="1">
@@ -52,7 +52,7 @@
         </form>
     </section>
 
-    <section class="ai-assistant">
+    <section class="card">
         <h2>AI budget analysis</h2>
         <button hx-post="/api/analyse/1" hx-target="#ai-result"
                 hx-indicator="#ai-loading">
