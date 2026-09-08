@@ -20,6 +20,149 @@ const DEFAULT_DATABASE_BASE_URL = "http://127.0.0.1:5002";
 const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5001";
 const DEFAULT_LLM_BASE_URL = "http://localhost:11434/v1";
 
+
+const { execFileSync } = require("child_process");
+
+// If PROJECT_ROOT = student-4
+// and .github is in the main group repository:
+const REPO_ROOT = path.resolve(PROJECT_ROOT, "..");
+
+const DEVOPS_FILES = {
+    workflow: path.join(REPO_ROOT, ".github", "workflows", "student-4.yml"),
+
+    compose: path.join(REPO_ROOT, "docker-compose.yml"),
+
+    frontendDockerfile: path.join(PROJECT_ROOT, "frontend", "Dockerfile"),
+    backendDockerfile: path.join(PROJECT_ROOT, "backend", "Dockerfile"),
+    databaseDockerfile: path.join(PROJECT_ROOT, "database", "Dockerfile")
+};
+
+function inspectDockerfile(label, filePath) {
+    if (!fs.existsSync(filePath)) {
+        return {
+            label,
+            exists: false,
+            issues: [`${label} does not exist`]
+        };
+    }
+
+    const content = fs.readFileSync(filePath, "utf8");
+
+    const requiredInstructions = [
+        "FROM",
+        "WORKDIR",
+        "COPY",
+        "RUN",
+        "CMD"
+    ];
+
+    const missingInstructions = requiredInstructions.filter(
+        (instruction) =>
+            !new RegExp(`^\\s*${instruction}\\s+`, "mi").test(content)
+    );
+
+    return {
+        label,
+        exists: true,
+        missingInstructions,
+        ok: missingInstructions.length === 0
+    };
+}
+
+// const dockerfiles = [
+//     inspectDockerfile(
+//         "Frontend Dockerfile",
+//         DEVOPS_FILES.frontendDockerfile
+//     ),
+//
+//     inspectDockerfile(
+//         "Backend Dockerfile",
+//         DEVOPS_FILES.backendDockerfile
+//     ),
+//
+//     inspectDockerfile(
+//         "Database Dockerfile",
+//         DEVOPS_FILES.databaseDockerfile
+//     )
+// ];
+
+
+
+function inspectDockerCompose() {
+    const filePath = DEVOPS_FILES.compose;
+
+    if (!fs.existsSync(filePath)) {
+        return {
+            exists: false,
+            ok: false,
+            issues: ["docker-compose.yml does not exist"]
+        };
+    }
+
+    const content = fs.readFileSync(filePath, "utf8");
+
+    const requiredServices = [
+        "frontend",
+        "backend",
+        "database"
+    ];
+
+    const missingServices = requiredServices.filter(
+        (service) =>
+            !new RegExp(`^\\s*${service}:`, "m").test(content)
+    );
+
+    return {
+        exists: true,
+        missingServices,
+        ok: missingServices.length === 0
+    };
+}
+
+function validateDockerCompose() {
+    if (!fs.existsSync(DEVOPS_FILES.compose)) {
+        return {
+            ok: false,
+            error: "docker-compose.yml does not exist"
+        };
+    }
+
+    try {
+        const output = execFileSync(
+            "docker",
+            [
+                "compose",
+                "-f",
+                DEVOPS_FILES.compose,
+                "config"
+            ],
+            {
+                cwd: REPO_ROOT,
+                encoding: "utf8",
+                stdio: ["ignore", "pipe", "pipe"]
+            }
+        );
+
+        return {
+            ok: true,
+            output: output.slice(0, 500)
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            error:
+                error.stderr?.toString() ||
+                error.message
+        };
+    }
+}
+
+
+
+
+
+
+
 dotenv.config({
     path: path.resolve(BACKEND_ROOT, ".env")
 });
@@ -646,6 +789,11 @@ function buildVerifiedIssues(observation) {
             const detail = check.error ? ` (${check.error})` : "";
             issues.push(`LIVE CHECK: ${check.label} -> ${status}${expected}${detail}`);
         });
+    if (observation.devops) {
+        observation.devops.issues.forEach((issue) => {
+            issues.push(`DEVOPS: ${issue}`);
+        });
+    }
 
     return issues;
 }
@@ -659,10 +807,124 @@ function buildValidationBlockers(observation) {
         .map((check) => `LIVE CHECK BLOCKED: ${check.label} (${check.error})`);
 }
 
+function inspectGithubWorkflow() {
+    const filePath = DEVOPS_FILES.workflow;
+
+    // Check whether student-4.yml exists
+    if (!fs.existsSync(filePath)) {
+        return {
+            exists: false,
+            ok: false,
+            issues: [
+                "student-4.yml does not exist"
+            ]
+        };
+    }
+
+    const content =
+        fs.readFileSync(filePath, "utf8");
+
+    const issues = [];
+
+    // Check checkout action
+    if (!content.includes("actions/checkout")) {
+        issues.push(
+            "student-4.yml does not checkout the repository"
+        );
+    }
+
+    // Check Node setup
+    if (!content.includes("actions/setup-node")) {
+        issues.push(
+            "student-4.yml does not configure Node.js"
+        );
+    }
+
+    // Check frontend
+    if (!content.includes("frontend")) {
+        issues.push(
+            "student-4.yml does not reference the frontend"
+        );
+    }
+
+    // Check backend
+    if (!content.includes("backend")) {
+        issues.push(
+            "student-4.yml does not reference the backend"
+        );
+    }
+
+    // Check database
+    if (!content.includes("database")) {
+        issues.push(
+            "student-4.yml does not reference the database"
+        );
+    }
+
+    // Check that some validation/build command exists
+    const validationCommands = [
+        "npm test",
+        "npm run test",
+        "npm run build",
+        "docker compose build",
+        "docker build"
+    ];
+
+    const hasValidationCommand =
+        validationCommands.some(
+            (command) => content.includes(command)
+        );
+
+    if (!hasValidationCommand) {
+        issues.push(
+            "student-4.yml does not appear to run build or validation commands"
+        );
+    }
+
+    return {
+        exists: true,
+        ok: issues.length === 0,
+        issues
+    };
+}
+
+
+
+
 function buildAllowedRecommendationScope(observation) {
     const files = new Set([
-        ...observation.sourceContracts.map((report) => report.file),
-        ...observation.frontendPayloadContracts.map((report) => report.file)
+        ...observation.sourceContracts.map(
+            (report) => report.file
+        ),
+
+        ...observation.frontendPayloadContracts.map(
+            (report) => report.file
+        ),
+
+        path.relative(
+            PROJECT_ROOT,
+            DEVOPS_FILES.frontendDockerfile
+        ),
+
+        path.relative(
+            PROJECT_ROOT,
+            DEVOPS_FILES.backendDockerfile
+        ),
+
+        path.relative(
+            PROJECT_ROOT,
+            DEVOPS_FILES.databaseDockerfile
+        ),
+
+        path.relative(
+            PROJECT_ROOT,
+            DEVOPS_FILES.compose
+        ),
+
+        path.relative(
+            PROJECT_ROOT,
+            DEVOPS_FILES.workflow
+        )
     ]);
     const endpoints = new Set([
         "/api/cities",
@@ -696,51 +958,130 @@ function buildAllowedRecommendationScope(observation) {
 function buildEvidenceText(observation) {
     const dbObservation = observation.db;
     const mismatches = observation.mismatches;
-    const verifiedIssues = observation.verifiedIssues || buildVerifiedIssues(observation);
-    const validationBlockers = observation.validationBlockers || buildValidationBlockers(observation);
+
+    const verifiedIssues =
+        observation.verifiedIssues ||
+        buildVerifiedIssues(observation);
+
+    const validationBlockers =
+        observation.validationBlockers ||
+        buildValidationBlockers(observation);
 
     return [
         "VERIFIED ISSUES:",
-        ...(verifiedIssues.length ? verifiedIssues : ["none"]),
+        ...(verifiedIssues.length
+            ? verifiedIssues
+            : ["none"]),
+
         "",
+
         "VALIDATION BLOCKERS:",
-        ...(validationBlockers.length ? validationBlockers : ["none"]),
+        ...(validationBlockers.length
+            ? validationBlockers
+            : ["none"]),
+
         "",
-        "ALLOWED FILES:",
-        ...buildAllowedRecommendationScope(observation).files,
-        "",
-        "ALLOWED ENDPOINTS:",
-        ...buildAllowedRecommendationScope(observation).endpoints,
-        "",
+
+        "DB:",
         `DB SUMMARY: ${dbObservation.summary}`,
-        `DB ISSUES: ${dbObservation.issues.length ? dbObservation.issues.join(" | ") : "none"}`,
-        `SAMPLE ITINERARY: ${dbObservation.sampleItinerary ? JSON.stringify(dbObservation.sampleItinerary) : "none"}`,
-        `SAMPLE ACTIVITY: ${dbObservation.sampleActivity ? JSON.stringify(dbObservation.sampleActivity) : "none"}`,
+        `DB ISSUES: ${
+            dbObservation.issues.length
+                ? dbObservation.issues.join(" | ")
+                : "none"
+        }`,
+
         "",
+
         "SOURCE CONTRACTS:",
-        ...observation.sourceContracts.map((report) => {
-            const header = `${report.file} :: ${report.exists ? "exists" : "missing"}`;
-            const missing = report.missingSnippets.length ? `missing -> ${report.missingSnippets.join(" ; ")}` : "missing -> none";
-            const matches = report.matchedLines.length ? report.matchedLines.join(" | ") : "matches -> none";
-            return `${header}\n${missing}\n${matches}`;
-        }),
+        ...observation.sourceContracts.map(
+            (report) => {
+                return `${report.file} -> ${
+                    report.missingSnippets.length
+                        ? `missing: ${report.missingSnippets.join(", ")}`
+                        : "PASS"
+                }`;
+            }
+        ),
+
         "",
+
         "FRONTEND PAYLOAD CONTRACTS:",
-        ...observation.frontendPayloadContracts.map((report) => {
-            const header = `${report.file} :: ${report.exists ? "exists" : "missing"}`;
-            const expected = `expected -> ${report.expectedKeys.join(", ")}`;
-            const actual = `actual -> ${report.actualKeys.length ? report.actualKeys.join(", ") : "none"}`;
-            const missing = `missing -> ${report.missingKeys.length ? report.missingKeys.join(", ") : "none"}`;
-            const extra = `extra -> ${report.extraKeys.length ? report.extraKeys.join(", ") : "none"}`;
-            return `${header}\n${expected}\n${actual}\n${missing}\n${extra}`;
-        }),
+        ...observation.frontendPayloadContracts.map(
+            (report) => {
+                return `${report.file} ${report.objectName} -> ${
+                    report.missingKeys.length
+                        ? `missing: ${report.missingKeys.join(", ")}`
+                        : "PASS"
+                }`;
+            }
+        ),
+
         "",
+
         "LIVE CHECKS:",
-        ...observation.live.databaseChecks.map((check) => `${check.label} -> ${check.status ?? "ERR"} ${check.expectedStatuses?.length ? `expected ${check.expectedStatuses.join("/")}` : ""} ${check.error ? `(${check.error})` : ""} ${check.bodyPreview ? `| ${check.bodyPreview}` : ""}`),
-        ...observation.live.backendChecks.map((check) => `${check.label} -> ${check.status ?? "ERR"} ${check.expectedStatuses?.length ? `expected ${check.expectedStatuses.join("/")}` : ""} ${check.error ? `(${check.error})` : ""} ${check.bodyPreview ? `| ${check.bodyPreview}` : ""}`),
+
+        ...observation.live.databaseChecks.map(
+            (check) =>
+                `${check.label} -> ${
+                    check.ok ? "PASS" : "FAIL"
+                }`
+        ),
+
+        ...observation.live.backendChecks.map(
+            (check) =>
+                `${check.label} -> ${
+                    check.ok ? "PASS" : "FAIL"
+                }`
+        ),
+
         "",
-        `MISSING FRONTEND ENDPOINTS: ${mismatches.missingFromFrontend.length ? mismatches.missingFromFrontend.join(", ") : "none"}`,
-        `MISSING SOURCE CONTRACTS: ${mismatches.missingFromContracts.length ? mismatches.missingFromContracts.join(" | ") : "none"}`
+
+        // DEVOPS ADDED HERE
+        "DEVOPS:",
+        `GITHUB WORKFLOW student-4.yml -> ${
+            observation.devops.workflow.ok
+                ? "PASS"
+                : "FAIL"
+        }`,
+
+        `DEVOPS STATUS: ${
+            observation.devops.ok
+                ? "PASS"
+                : "FAIL"
+        }`,
+
+        `DEVOPS ISSUES: ${
+            observation.devops.issues.length
+                ? observation.devops.issues.join(" | ")
+                : "none"
+        }`,
+
+        ...observation.devops.dockerfiles.map(
+            (file) =>
+                `${file.label} Dockerfile -> ${
+                    file.ok ? "PASS" : "FAIL"
+                }`
+        ),
+
+        `DOCKER COMPOSE -> ${
+            observation.devops.compose.ok
+                ? "PASS"
+                : "FAIL"
+        }`,
+
+        `DOCKER COMPOSE CONFIG -> ${
+            observation.devops.composeValidation.ok
+                ? "PASS"
+                : "FAIL"
+        }`,
+
+        "",
+
+        `MISSING FRONTEND ENDPOINTS: ${
+            mismatches.missingFromFrontend.length
+                ? mismatches.missingFromFrontend.join(", ")
+                : "none"
+        }`
     ].join("\n");
 }
 
@@ -836,6 +1177,87 @@ function parseJsonObject(text) {
             return null;
         }
     }
+}
+
+// checking for devops
+function observeDevOps() {
+    const workflow = inspectGithubWorkflow();
+    const dockerfiles = [
+        inspectDockerfile(
+            "frontend",
+            DEVOPS_FILES.frontendDockerfile
+        ),
+
+        inspectDockerfile(
+            "backend",
+            DEVOPS_FILES.backendDockerfile
+        ),
+
+        inspectDockerfile(
+            "database",
+            DEVOPS_FILES.databaseDockerfile
+        )
+    ];
+
+    const compose = inspectDockerCompose();
+    const composeValidation = validateDockerCompose();
+
+    const issues = [];
+    if (!workflow.ok) {
+        workflow.issues.forEach((issue) => {
+            issues.push(
+                `GitHub Actions: ${issue}`
+            );
+        });
+    }
+
+    for (const dockerfile of dockerfiles) {
+        if (!dockerfile.exists) {
+            issues.push(
+                `${dockerfile.label} Dockerfile does not exist`
+            );
+            continue;
+        }
+
+        if (!dockerfile.ok) {
+            issues.push(
+                `${dockerfile.label} Dockerfile missing: ` +
+                dockerfile.missingInstructions.join(", ")
+            );
+        }
+    }
+
+    if (!compose.exists) {
+        issues.push("docker-compose.yml does not exist");
+    } else if (!compose.ok) {
+        issues.push(
+            `docker-compose.yml missing services: ${
+                compose.missingServices.join(", ")
+            }`
+        );
+    }
+
+    if (!composeValidation.ok) {
+        issues.push(
+            `Docker Compose validation failed: ${
+                composeValidation.error
+            }`
+        );
+    }
+
+    return {
+        ok: issues.length === 0,
+
+        workflow,
+
+        dockerfiles,
+
+        compose,
+
+        composeValidation,
+
+        issues
+    };
 }
 
 function findUnsupportedRecommendationClaims(content, observation) {
@@ -956,24 +1378,42 @@ async function humanReview({ observation, implementation, review, round }) {
 
 async function observe({ databaseBaseUrl, backendBaseUrl }) {
     const dbObservation = observeDatabaseState();
-    const sourceContracts = buildSourceContracts();
-    const frontendPayloadContracts = buildFrontendPayloadContracts();
+
+    const sourceContracts =
+        buildSourceContracts();
+
+    const frontendPayloadContracts =
+        buildFrontendPayloadContracts();
+
     const live = await observeLiveServices({
         databaseBaseUrl,
         backendBaseUrl,
         sampleItinerary: dbObservation.sampleItinerary,
         sampleActivity: dbObservation.sampleActivity
     });
-    const mismatches = findExpectedEndpointMismatches({ sourceContracts });
+
+    const mismatches =
+        findExpectedEndpointMismatches({
+            sourceContracts
+        });
+
+    // DEVOPS OBSERVATION
+    const devops = observeDevOps();
+
     const partialObservation = {
         db: dbObservation,
         sourceContracts,
         frontendPayloadContracts,
         live,
-        mismatches
+        mismatches,
+        devops
     };
-    const verifiedIssues = buildVerifiedIssues(partialObservation);
-    const validationBlockers = buildValidationBlockers(partialObservation);
+
+    const verifiedIssues =
+        buildVerifiedIssues(partialObservation);
+
+    const validationBlockers =
+        buildValidationBlockers(partialObservation);
 
     return {
         ...partialObservation,
@@ -1101,6 +1541,8 @@ async function main() {
     console.log();
     console.log("Reached the maximum number of rounds without an accept decision.");
 }
+
+
 
 main().catch((error) => {
     console.error(error);

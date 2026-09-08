@@ -1,6 +1,6 @@
 .env
 .vs/
-node_module/
+node_modules/
 dist/
 
 .venv/
