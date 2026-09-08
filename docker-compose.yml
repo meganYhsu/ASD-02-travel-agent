@@ -206,7 +206,7 @@ services:
       - student4_data:/app/data
 
     ports:
-      - "5004:5002"
+      - "6004:5002"
 
     networks:
       - travel-net
@@ -225,7 +225,7 @@ services:
       OLLAMA_MODEL: llama3.2:3b
 
     ports:
-      - "5003:5001"
+      - "5004:5001"
 
     depends_on:
       - student4-database
@@ -240,7 +240,7 @@ services:
       context: ./student-4/frontend
 
     ports:
-      - "5174:80"
+      - "3004:80"
 
     depends_on:
       - student4-backend
@@ -258,7 +258,8 @@ services:
       context: ./student-3/database
 
     ports:
-      - "5010:5000"
+#      - "5010:5000"
+       - "6003:5000"
 
     networks:
       - travel-net
@@ -274,7 +275,8 @@ services:
       OLLAMA_MODEL: qwen2.5:0.5b
 
     ports:
-      - "5001:5001"
+       - "5003:5001"
+#      - "5001:5001"
 
     depends_on:
       - student3-database
@@ -292,7 +294,8 @@ services:
       BACKEND_URL: http://student3-backend:5001
 
     ports:
-      - "5002:5002"
+      - "3003:3003"
+#      - "5002:3003"
 
     depends_on:
       - student3-backend
