@@ -3,9 +3,14 @@ const path = require("path");
 const Database = require("better-sqlite3");
 
 const dataDir = path.resolve(__dirname, "../data");
-const dbPath = path.join(dataDir, "traveller-itinerary-details.sqlite");
+const dbPath = path.join(
+    dataDir,
+    "traveller-itinerary-details.sqlite"
+);
 
-fs.mkdirSync(dataDir, { recursive: true });
+fs.mkdirSync(dataDir, {
+    recursive: true
+});
 
 const db = new Database(dbPath);
 
@@ -33,10 +38,10 @@ db.exec(`
     time TEXT NOT NULL,
     cost TEXT,
     note TEXT,
-    FOREIGN KEY (itinerary_id) REFERENCES itinerary(itinerary_id)
+    FOREIGN KEY (itinerary_id)
+      REFERENCES itinerary(itinerary_id)
   );
 `);
 
 module.exports = db;
 module.exports.dbPath = dbPath;
-

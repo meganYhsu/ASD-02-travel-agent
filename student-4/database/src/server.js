@@ -12,6 +12,10 @@ app.get("/health", (req, res) => {
   });
 });
 
+const routes = require("./routes");
+
+app.use("/", routes);
+
 app.post("/api/itineraries", (req, res) => {
   const {
     destination,
