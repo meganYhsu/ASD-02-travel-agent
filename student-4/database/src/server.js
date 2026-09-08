@@ -145,6 +145,89 @@ app.delete("/api/itineraries/:id", (req, res) => {
   });
 });
 
+app.put("/api/itineraries/:id", (req, res) => {
+  const itineraryId = Number(req.params.id);
+
+  if (!Number.isInteger(itineraryId)) {
+    return res.status(400).json({
+      error: "Invalid itinerary id"
+    });
+  }
+
+  const {
+    destination,
+    startDate,
+    endDate,
+    budget,
+    travelGroup,
+    travelStyle,
+    requirements
+  } = req.body;
+
+  if (
+      !destination ||
+      !startDate ||
+      !endDate ||
+      !budget ||
+      !travelStyle
+  ) {
+    return res.status(400).json({
+      error: "Missing required itinerary details"
+    });
+  }
+
+  const existingItinerary = db.prepare(`
+    SELECT itinerary_id
+    FROM itinerary
+    WHERE itinerary_id = ?
+  `).get(itineraryId);
+
+  if (!existingItinerary) {
+    return res.status(404).json({
+      error: "Itinerary not found"
+    });
+  }
+
+  const requirementsValue =
+      typeof requirements === "string"
+          ? requirements
+          : requirements !== undefined
+              ? JSON.stringify(requirements)
+              : null;
+
+  db.prepare(`
+    UPDATE itinerary
+    SET
+      destination = ?,
+      start_date = ?,
+      end_date = ?,
+      budget = ?,
+      travel_group = ?,
+      travel_style = ?,
+      requirements = ?
+    WHERE itinerary_id = ?
+  `).run(
+      destination,
+      startDate,
+      endDate,
+      budget,
+      travelGroup ?? null,
+      travelStyle,
+      requirementsValue,
+      itineraryId
+  );
+
+  const updatedItinerary = db.prepare(`
+    SELECT *
+    FROM itinerary
+    WHERE itinerary_id = ?
+  `).get(itineraryId);
+
+  return res.status(200).json(updatedItinerary);
+});
+
+
+
 app.listen(5002, () => {
   console.log("Database service running on port 5002");
 });
