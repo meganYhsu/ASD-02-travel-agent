@@ -28,7 +28,7 @@ def load_prompt(filename):
 def get_trip(trip_id):
     try:
         resp = requests.get(
-            f"{TRIP_API_URL}/itineraries/{trip_id}", timeout=5
+            f"{TRIP_API_URL}/api/itineraries/{trip_id}", timeout=5
         )
         resp.raise_for_status()
         data = resp.json()
@@ -38,10 +38,12 @@ def get_trip(trip_id):
             "Budget analysis needs live trip data - try again later.</p>"
         )
 
+    itinerary = data.get("itinerary") or data
+
     trip = {
-        "destination": data.get("destination") or "the destination",
-        "start_date": data.get("start_date") or data.get("startDate"),
-        "end_date": data.get("end_date") or data.get("endDate"),
+        "destination": itinerary.get("destination") or "the destination",
+        "start_date": itinerary.get("start_date") or itinerary.get("startDate"),
+        "end_date": itinerary.get("end_date") or itinerary.get("endDate"),
     }
 
     if not trip["start_date"] or not trip["end_date"]:

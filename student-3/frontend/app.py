@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request ,send_from_directory  
+
 import os
 import requests
 
@@ -10,6 +11,10 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/css/<path:filename>")
+def css(filename):
+    return send_from_directory("static", filename)
 
 
 @app.route("/api/<path:subpath>", methods=["GET", "POST"])
