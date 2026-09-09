@@ -113,6 +113,9 @@ def logout():
 
 
 
+@app.route('/budget')
+def budget():
+    return redirect("http://127.0.0.1:3003/")
 
 if __name__ == '__main__':
     app.run(
