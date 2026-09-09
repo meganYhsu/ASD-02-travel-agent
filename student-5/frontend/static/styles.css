@@ -58,8 +58,14 @@ main {
 .tab {
     border: 1px solid var(--line);
     background: #fff;
+    color: var(--ink);
     padding: 0.55rem 0.9rem;
     cursor: pointer;
+}
+
+.tab:hover {
+    background: #eaf1f5;
+    color: var(--accent-dark);
 }
 
 .tab.active {
@@ -194,28 +200,68 @@ tr.expiring {
 
 
 
-nav {
-    height: 70px;
-    background: white;
-    border-bottom: 1px solid #ddd;
+.shared-nav {
+    min-height: 70px;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 50px;
+    padding: 0 40px;
 }
 
-.nav-title {
+.shared-nav .nav-title {
     font-size: 22px;
     font-weight: bold;
+    color: var(--ink);
 }
 
-.nav-links {
+.shared-nav .nav-links {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
+    flex-wrap: wrap;
 }
 
-.nav-links a {
+.shared-nav .nav-links a {
     text-decoration: none;
-    color: #333;
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.shared-nav .nav-links a:hover {
+    color: var(--accent);
+}
+
+@media (max-width: 760px) {
+    .shared-nav {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .shared-nav .nav-links {
+        gap: 0.55rem 1rem;
+    }
+
+    .hero,
+    main {
+        padding: 1.25rem;
+    }
+
+    .tabs {
+        padding: 0 1.25rem;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .inline {
+        align-items: stretch;
+        flex-direction: column;
+    }
 }
