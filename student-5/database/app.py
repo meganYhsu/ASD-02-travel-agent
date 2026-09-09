@@ -51,6 +51,17 @@ def create_app(db_path: str | None = None) -> Flask:
     def path() -> str:
         return app.config["DB_PATH"]
 
+    @app.get("/")
+    def index():
+        return json_ok(
+            {
+                "service": "student5-database",
+                "status": "ok",
+                "health": "/health",
+                "resources": sorted(TABLES),
+            }
+        )
+
     @app.get("/health")
     def health():
         return json_ok({"status": "ok", "service": "student5-database"})

@@ -64,6 +64,10 @@ class OllamaClient:
             "prompt": prompt,
             "stream": False,
             "format": "json",
+            "options": {
+                "temperature": 0.2,
+                "num_predict": 512,
+            },
         }
         try:
             response = requests.post(url, json=payload, timeout=self.timeout)
