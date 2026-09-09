@@ -39,7 +39,7 @@ function ItineraryPage(){
         }
         try{
             setLoading(true);
-            const res = await fetch("http://localhost:5003/api/generate_complete_selected_itinerary" ,
+            const res = await fetch("http://localhost:5004/api/generate_complete_selected_itinerary" ,
                 {
                     method:"POST",
                     headers:{
@@ -87,7 +87,7 @@ function ItineraryPage(){
 
         try {
             setLoading(true);
-            const res = await fetch("http://localhost:5003/api/update_itinerary_from_prompt", {
+            const res = await fetch("http://localhost:5004/api/update_itinerary_from_prompt", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -135,7 +135,7 @@ function ItineraryPage(){
             setSaveError("");
             setSaveMessage("");
 
-            const res = await fetch("http://localhost:5003/api/save_itinerary", {
+            const res = await fetch("http://localhost:5004/api/save_itinerary", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -199,7 +199,7 @@ function ItineraryPage(){
             setReviewLoading(true);
 
             const response = await fetch(
-                "http://localhost:5003/api/agentic/review",
+                "http://localhost:5004/api/agentic/review",
                 {
                     method: "POST",
 
@@ -261,7 +261,7 @@ function ItineraryPage(){
             setLoading(true);
 
             const response = await fetch(
-                "http://localhost:5003/api/agentic/apply",
+                "http://localhost:5004/api/agentic/apply",
                 {
                     method: "POST",
 
