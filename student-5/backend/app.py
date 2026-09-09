@@ -37,6 +37,11 @@ from validation import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
 
+AI_GUIDANCE_DISCLAIMER = (
+    "AI-generated travel preparation and compliance guidance should be independently verified "
+    "against official government, immigration and travel sources."
+)
+
 
 def json_ok(data: Any, status: int = 200):
     return jsonify({"success": True, "data": data}), status
@@ -331,10 +336,9 @@ def create_app(
             payload.get("departure_date") or payload.get("start_date"),
             payload.get("return_date") or payload.get("end_date"),
         )
-        result["disclaimer"] = (
-            "Release 0 entry requirements are demonstration data only. "
-            "Verify official government sources before real travel."
-        )
+        result["disclaimer"] = AI_GUIDANCE_DISCLAIMER
+        result["human_verification_required"] = True
+        result["ai_assistance_only"] = True
         return documents, requirements, result
 
     @app.post("/api/alerts/compliance")
@@ -373,7 +377,18 @@ def create_app(
                 merged["recommended_actions"] = list(
                     dict.fromkeys(merged["recommended_actions"] + [str(item) for item in ai_data["recommended_actions"]])
                 )
+            merged["disclaimer"] = AI_GUIDANCE_DISCLAIMER
+            merged["human_verification_required"] = True
+            merged["ai_assistance_only"] = True
             merged["phase"] = "PLAN"
+            merged["recommended_actions"] = list(
+                dict.fromkeys(
+                    [
+                        "Verify all findings against official government, immigration and travel sources before departure.",
+                        *merged.get("recommended_actions", []),
+                    ]
+                )
+            )
             return json_ok(merged)
         except ValidationError as exc:
             return json_error(exc.message, exc.status)
@@ -418,6 +433,9 @@ def create_app(
                 "persisted": False,
                 "review_required": True,
                 "phase": "PLAN",
+                "disclaimer": AI_GUIDANCE_DISCLAIMER,
+                "human_verification_required": True,
+                "ai_assistance_only": True,
             }
             return json_ok(suggestions)
         except ValidationError as exc:

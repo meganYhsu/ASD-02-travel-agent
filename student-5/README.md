@@ -107,6 +107,14 @@ python student-5/frontend/app.py
 - Database: http://localhost:5405
 - Homepage: http://localhost:8080 (Docker shared frontend)
 
+Quick feature demo:
+
+```
+python student-5/demo_features.py
+```
+
+Add `--ai` to demonstrate Ollama-backed compliance and checklist generation after Ollama is running.
+
 Optional local Ollama:
 
 ```

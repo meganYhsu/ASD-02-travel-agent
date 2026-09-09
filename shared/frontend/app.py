@@ -22,11 +22,32 @@ def home():
 
 @app.route('/booking')
 def booking():
-    return redirect("http://127.0.0.1:3003/")
+    return redirect("http://127.0.0.1:3002/booking")
 
 @app.route('/itinerary')
 def itinerary():
-    return redirect("http://127.0.0.1:5002/itinerary")
+    return redirect("http://127.0.0.1:3002/itinerary")
+
+@app.route('/budget')
+def budget():
+    return redirect("http://127.0.0.1:3003/")
+
+
+@app.route('/pre-trip')
+def pre_trip():
+    return redirect("http://127.0.0.1:8505/")
+
+
+
+@app.route('/traveler-preferences')
+def traveler_preferences():
+    return redirect("http://127.0.0.1:xxxx/")
+
+
+
+@app.route('/trip-planning')
+def trip_planning():
+    return redirect("http://127.0.0.1:3004/")
 
 
 
@@ -89,11 +110,6 @@ def welcome():
 def logout():
     session.clear()
     return redirect(url_for('home'))
-
-@app.route('/trip-planning')
-def trip_planning():
-    return redirect("http://127.0.0.1:3004/")
-
 
 if __name__ == '__main__':
     app.run(
