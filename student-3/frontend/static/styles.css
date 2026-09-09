@@ -6,16 +6,35 @@
     --line: #d7e0ea;
     --accent: #0f6c8c;
 }
-* { box-sizing: border-box; }
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     font-family: Georgia, "Times New Roman", serif;
     background: var(--bg);
     color: var(--ink);
 }
-.wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
-h1 { margin-bottom: 0.4rem; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+
+.wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+h1 {
+    margin-bottom: 0.4rem;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
 .card {
     display: block;
     background: var(--card);
@@ -25,9 +44,19 @@ h1 { margin-bottom: 0.4rem; }
     text-decoration: none;
     color: inherit;
 }
-.card:hover { border-color: var(--accent); }
-.card h2 { margin-top: 0; color: var(--accent); }
-.muted { color: var(--muted); }
+
+.card:hover {
+    border-color: var(--accent);
+}
+
+.card h2 {
+    margin-top: 0;
+    color: var(--accent);
+}
+
+.muted {
+    color: var(--muted);
+}
 
 
 
@@ -468,10 +497,8 @@ h1 { margin-bottom: 0.4rem; }
 
 .city-grid {
     display: grid;
-    grid-template-columns: repeat(
-        auto-fit,
-        minmax(140px, 1fr)
-    );
+    grid-template-columns: repeat(auto-fit,
+            minmax(140px, 1fr));
 
     gap: 12px;
     margin-bottom: 18px;
@@ -494,10 +521,8 @@ h1 { margin-bottom: 0.4rem; }
 
 .option-grid {
     display: grid;
-    grid-template-columns: repeat(
-        2,
-        minmax(0, 1fr)
-    );
+    grid-template-columns: repeat(2,
+            minmax(0, 1fr));
 
     gap: 1rem;
 
@@ -588,10 +613,8 @@ h1 { margin-bottom: 0.4rem; }
 
 .itinerary-page__meta-grid {
     display: grid;
-    grid-template-columns: repeat(
-        4,
-        minmax(0, 1fr)
-    );
+    grid-template-columns: repeat(4,
+            minmax(0, 1fr));
 
     gap: 14px;
 
@@ -615,8 +638,7 @@ h1 { margin-bottom: 0.4rem; }
     display: grid;
 
     grid-template-columns:
-        minmax(0, 0.9fr)
-        minmax(0, 1.1fr);
+        minmax(0, 0.9fr) minmax(0, 1.1fr);
 
     gap: 22px;
 
@@ -629,8 +651,7 @@ h1 { margin-bottom: 0.4rem; }
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr)
-        auto;
+        minmax(0, 1fr) auto;
 
     gap: 12px;
 
@@ -644,8 +665,7 @@ h1 { margin-bottom: 0.4rem; }
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1.45fr)
-        minmax(240px, 0.65fr);
+        minmax(0, 1.45fr) minmax(240px, 0.65fr);
 
     gap: 18px;
 }
@@ -706,7 +726,7 @@ h1 { margin-bottom: 0.4rem; }
     padding: 20px;
 
     border-bottom:
-            1px solid var(--line);
+        1px solid var(--line);
 }
 
 .itinerary-page__day-title {
@@ -733,15 +753,14 @@ h1 { margin-bottom: 0.4rem; }
     display: grid;
 
     grid-template-columns:
-        100px
-        minmax(0, 1fr);
+        100px minmax(0, 1fr);
 
     gap: 20px;
 
     padding: 18px 0;
 
     border-bottom:
-            1px solid var(--line);
+        1px solid var(--line);
 }
 
 .itinerary-page__activity:last-child {
@@ -767,7 +786,7 @@ h1 { margin-bottom: 0.4rem; }
     padding-top: 20px;
 
     border-top:
-            1px solid var(--line);
+        1px solid var(--line);
 }
 
 .itinerary-page__restaurant-grid {
@@ -800,7 +819,7 @@ h1 { margin-bottom: 0.4rem; }
     padding-top: 22px;
 
     border-top:
-            1px solid var(--line);
+        1px solid var(--line);
 }
 
 .itinerary-page__save-actions {
@@ -878,7 +897,7 @@ h1 { margin-bottom: 0.4rem; }
     padding-bottom: 12px;
 
     border-bottom:
-            1px solid var(--line);
+        1px solid var(--line);
 }
 
 .saved-itinerary-page__day-head h3 {
@@ -905,8 +924,7 @@ h1 { margin-bottom: 0.4rem; }
     display: grid;
 
     grid-template-columns:
-        90px
-        minmax(0, 1fr);
+        90px minmax(0, 1fr);
 
     gap: 12px;
 
@@ -969,4 +987,441 @@ h1 { margin-bottom: 0.4rem; }
     .saved-itinerary-page__activity {
         grid-template-columns: 1fr;
     }
+}
+
+
+
+
+
+/* =========================================================
+   STUDENT 2 - BOOKING & ITINERARY MANAGEMENT
+========================================================= */
+
+.management-page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+
+/* Page Header */
+
+.management-page .page-header {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.management-page .page-header h1 {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-size: 2.2rem;
+    line-height: 1.2;
+}
+
+.management-page .page-header p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+
+/*  Cards*/
+
+.management-page .section-card,
+.management-page .ai-assistant {
+    background: var(--card);
+
+    border: 1px solid var(--line);
+    border-radius: 10px;
+
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.management-page .section-card h2,
+.management-page .ai-assistant h2 {
+    margin-top: 0;
+    color: var(--ink);
+}
+
+
+/*Tables */
+
+.management-page table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.management-page th,
+.management-page td {
+    padding: 12px;
+
+    border-bottom: 1px solid var(--line);
+
+    text-align: left;
+    vertical-align: middle;
+
+    font-size: 14px;
+}
+
+.management-page th {
+    background: var(--bg);
+    color: var(--ink);
+    font-weight: bold;
+}
+
+.management-page tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* Forms */
+
+.management-page form {
+    display: flex;
+    flex-direction: column;
+}
+
+.management-page label {
+    margin-top: 15px;
+    margin-bottom: 7px;
+
+    color: var(--ink);
+}
+
+.management-page input,
+.management-page select {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    background: var(--card);
+    color: var(--ink);
+
+    border: 1px solid var(--line);
+    border-radius: 6px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 14px;
+}
+
+.management-page input:focus,
+.management-page select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+
+/* Buttons */
+
+.management-page button {
+    background: var(--accent);
+    color: white;
+
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+
+    padding: 10px 18px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 14px;
+
+    cursor: pointer;
+}
+
+.management-page button:hover {
+    filter: brightness(0.9);
+}
+
+
+/*Table Action Buttons*/
+
+.management-page td form {
+    display: inline;
+}
+
+.management-page td button {
+    padding: 8px 12px;
+    margin: 2px;
+}
+
+
+/*AI Assistant */
+
+.management-page .ai-assistant select {
+    width: 100%;
+
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.management-page #ai-result {
+    margin-top: 20px;
+    color: var(--ink);
+}
+
+
+/* Add / Edit Panels*/
+
+.management-page #addModal,
+.management-page #editModal {
+    background: var(--card);
+
+    border: 1px solid var(--line);
+    border-radius: 10px;
+
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.management-page #addModal h2,
+.management-page #editModal h2 {
+    margin-top: 0;
+    color: var(--ink);
+}
+
+
+@media (max-width: 900px) {
+
+    .management-page {
+        padding: 1.5rem 1rem;
+    }
+
+    .management-page .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .management-page .section-card {
+        overflow-x: auto;
+    }
+}
+
+
+
+
+
+
+/* -------------------------------------------------
+   Shared home page css style
+---------------------------------------------------- */
+
+.shared-nav {
+    min-height: 70px;
+
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 40px;
+}
+
+.shared-nav .nav-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--ink);
+}
+
+.shared-nav .nav-links {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+
+    flex-wrap: wrap;
+}
+
+.shared-nav .nav-links a {
+    color: var(--ink);
+
+    text-decoration: none;
+
+    font-size: 14px;
+}
+
+.shared-nav .nav-links a:hover {
+    color: var(--accent);
+}
+
+.page {
+    min-height: calc(100vh - 70px);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 40px 24px;
+}
+
+
+.hero-card {
+    width: 650px;
+    max-width: 100%;
+
+    background: var(--card);
+
+    border: 1px solid var(--line);
+    border-radius: 10px;
+
+    padding: 50px;
+
+    text-align: center;
+}
+
+.hero-card h1 {
+    margin: 0 0 20px;
+
+    color: var(--ink);
+
+    font-size: 42px;
+    line-height: 1.2;
+}
+
+.hero-card h2 {
+    color: var(--ink);
+
+    font-size: 24px;
+    font-weight: normal;
+}
+
+.hero-card p {
+    margin-bottom: 35px;
+
+    color: var(--muted);
+
+    line-height: 1.7;
+}
+
+.form-card {
+    width: 420px;
+    max-width: 100%;
+
+    background: var(--card);
+
+    border: 1px solid var(--line);
+    border-radius: 10px;
+
+    padding: 40px;
+}
+
+.form-card h2 {
+    margin-top: 0;
+
+    color: var(--ink);
+
+    font-size: 28px;
+    text-align: center;
+}
+
+.form-card p {
+    color: var(--muted);
+
+    text-align: center;
+}
+
+.form-card form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-card label {
+    margin-top: 15px;
+    margin-bottom: 7px;
+
+    color: var(--ink);
+}
+
+.form-card input,
+.form-card select {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    background: var(--card);
+    color: var(--ink);
+
+    border: 1px solid var(--line);
+    border-radius: 6px;
+
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 14px;
+}
+
+.form-card input:focus,
+.form-card select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.primary-button {
+    display: inline-block;
+
+    margin-top: 20px;
+
+    padding: 10px 18px;
+
+    background: var(--accent);
+    color: white;
+
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+
+    font-family: Georgia, "Times New Roman", serif;
+
+    text-decoration: none;
+
+    cursor: pointer;
+}
+
+.primary-button:hover {
+    filter: brightness(0.9);
+}
+
+
+@media (max-width: 900px) {
+
+    .shared-nav {
+        padding: 15px 20px;
+
+        align-items: flex-start;
+
+        gap: 15px;
+    }
+
+    .shared-nav .nav-links {
+        gap: 12px;
+    }
+
+    .hero-card {
+        padding: 35px 25px;
+    }
+
+    .form-card {
+        padding: 30px 25px;
+    }
+}
+
+
+/* Budget loading indicator */
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    display: inline;
 }
