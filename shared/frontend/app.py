@@ -41,7 +41,7 @@ def pre_trip():
 
 @app.route('/traveler-preferences')
 def traveler_preferences():
-    return redirect("http://127.0.0.1:xxxx/")
+    return redirect("http://127.0.0.1:3001/")
 
 
 
