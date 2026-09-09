@@ -4,6 +4,18 @@ Student 4's Plan Itinerary component uses the Groq API to generate itineraries.
 
 The Groq API key is not committed to GitHub for security reasons.
 
+### Student 4 environment setup
+
+Create the Student 4 backend environment file:
+
+cp student-4/backend/.env.example student-4/backend/.env
+
+Then add the required API key to:
+
+student-4/backend/.env
+
+
+
 ### 1. Configure the Groq API key
 
 The `.env` file is not included in the repository because it contains a private API key.

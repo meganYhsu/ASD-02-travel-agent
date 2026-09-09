@@ -216,8 +216,11 @@ services:
     build:
       context: ./student-4/backend
 
+#    env_file:
+#      - ./student-4/backend/.env
     env_file:
-      - ./student-4/backend/.env
+      - path: ./student-4/backend/.env
+        required: false
 
     environment:
       DATABASE_BASE_URL: http://student4-database:5002
@@ -250,16 +253,15 @@ services:
 
 
   # ====================
-  # Student 3
-  # ====================
+# Student 3
+# ====================
 
   student3-database:
     build:
       context: ./student-3/database
 
     ports:
-#      - "5010:5000"
-       - "6003:5000"
+      - "6003:6003"
 
     networks:
       - travel-net
@@ -270,16 +272,17 @@ services:
       context: ./student-3/backend
 
     environment:
-      DATABASE_URL: http://student3-database:5000
+      DB_API_URL: http://student3-database:6003
+      TRIP_API_URL: http://student4-database:5002
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
 
     ports:
-       - "5003:5001"
-#      - "5001:5001"
+      - "5003:5003"
 
     depends_on:
       - student3-database
+      - student4-database
       - ollama
 
     networks:
@@ -291,11 +294,10 @@ services:
       context: ./student-3/frontend
 
     environment:
-      BACKEND_URL: http://student3-backend:5001
+      BACKEND_URL: http://student3-backend:5003
 
     ports:
       - "3003:3003"
-#      - "5002:3003"
 
     depends_on:
       - student3-backend

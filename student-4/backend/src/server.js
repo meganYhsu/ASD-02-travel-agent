@@ -12,7 +12,7 @@ const {
 
 
 
-const Groq = require("groq-sdk");
+// const Groq = require("groq-sdk");
 const express = require("express");
 const cors = require("cors");
 
@@ -21,9 +21,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-});
+// require("dotenv").config();
+
+// let groq = null;
+
+// function getGroqClient() {
+//     const apiKey = process.env.GROQ_API_KEY;
+//
+//     if (!apiKey) {
+//         return null;
+//     }
+//
+//     if (!groq) {
+//         groq = new Groq({
+//             apiKey
+//         });
+//     }
+//
+//     return groq;
+// }
 
 const cityRoutes = require("./routes/citiesRoutes");
 
