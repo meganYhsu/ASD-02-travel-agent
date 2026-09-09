@@ -21,6 +21,7 @@ services:
       - "8080:5003"
 
     depends_on:
+      - student1-frontend
       - student2-frontend
       - student3-frontend
       - student4-frontend
@@ -41,6 +42,55 @@ services:
 
     volumes:
       - ollama_data:/root/.ollama
+
+    networks:
+      - travel-net
+
+  # ====================
+  # Student 1
+  # ====================
+
+  student1-database:
+    build:
+      context: ./student-1/database
+
+    ports:
+      - "6001:6001"
+
+    networks:
+      - travel-net
+
+  student1-backend:
+    build:
+      context: ./student-1/backend
+
+    environment:
+      DB_API_URL: http://student1-database:6001
+      OLLAMA_BASE_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: qwen2.5:0.5b
+
+    ports:
+      - "5001:5001"
+
+    depends_on:
+      - student1-database
+      - ollama
+
+    networks:
+      - travel-net
+
+  student1-frontend:
+    build:
+      context: ./student-1/frontend
+
+    environment:
+      BACKEND_URL: http://student1-backend:5001
+
+    ports:
+      - "3001:3001"
+
+    depends_on:
+      - student1-backend
 
     networks:
       - travel-net
