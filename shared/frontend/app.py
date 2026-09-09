@@ -111,12 +111,6 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
-
-
-@app.route('/budget')
-def budget():
-    return redirect("http://127.0.0.1:3003/")
-
 if __name__ == '__main__':
     app.run(
         host="0.0.0.0",
