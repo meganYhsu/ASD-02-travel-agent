@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traveler Preferences</title>
+    <meta name="htmx-config" content='{"selfRequestsOnly": false}'>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .error { color: #b00020; }
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator { display: inline; }
+        .management-page { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .section-card {
+            background: var(--card, #ffffff);
+            border: 1px solid var(--line, #d7e0ea);
+            border-radius: 10px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+        .section-card table { width: 100%; border-collapse: collapse; margin-top: .75rem; }
+        .section-card th, .section-card td {
+            padding: .5rem .7rem;
+            border-bottom: 1px solid var(--line, #d7e0ea);
+            text-align: left;
+            font-size: 14px;
+        }
+        .section-card form { display: flex; flex-direction: column; max-width: 420px; }
+        .traveler-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .traveler-bar select { max-width: 260px; }
+        .nav-links a {
+            background: var(--accent, #0f6c8c);
+            color: #ffffff;
+            border-radius: 6px;
+            padding: 8px 14px;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .nav-links a:hover {
+            opacity: 0.85;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<nav class="shared-nav">
+    <div class="nav-title">
+        Travel Agent
+    </div>
+    <div class="nav-links">
+        <a href="http://127.0.0.1:8080/welcome">Welcome</a>
+        <a href="http://127.0.0.1:8080/traveler-preferences">Traveler Preferences</a>
+        <a href="http://127.0.0.1:8080/booking">Booking</a>
+        <a href="http://127.0.0.1:8080/itinerary">Itinerary</a>
+        <a href="http://127.0.0.1:8080/budget">Budget &amp; Expense</a>
+        <a href="http://127.0.0.1:8080/trip-planning">Trip Planning</a>
+        <a href="http://127.0.0.1:8080/pre-trip">Travel Preparation</a>
+        <a href="http://127.0.0.1:8080/logout">Log Out</a>
+    </div>
+</nav>
+
+<main class="management-page">
+    <h1>Traveler Preferences</h1>
+    <p class="muted">
+        Build a traveller profile - budget range, travel style, interests,
+        dietary and accessibility needs - so the other travel services can
+        personalise their planning.
+    </p>
+
+    <section class="section-card">
+        <h2>Traveller profile</h2>
+        <div class="traveler-bar">
+            <label for="traveler-picker">Traveller</label>
+            <select id="traveler-picker" name="traveler_id"
+                    hx-get="/api/travelers" hx-trigger="load"
+                    hx-target="#traveler-picker" hx-swap="innerHTML">
+            </select>
+            <button class="primary-button"
+                    hx-get="/api/profile" hx-target="#profile"
+                    hx-include="#traveler-picker">
+                Load profile
+            </button>
+            <button class="primary-button"
+                    hx-get="/api/travelers/edit" hx-target="#edit-form"
+                    hx-include="#traveler-picker">
+                Edit traveller
+            </button>
+        </div>
+        <div id="profile"></div>
+        <div id="edit-form"></div>
+    </section>
+
+    <section class="section-card">
+        <h2>Add traveller</h2>
+        <form hx-post="/api/travelers" hx-target="#profile">
+            <label>Name</label>
+            <input name="name" required>
+            <label>Email</label>
+            <input name="email" type="email" required>
+            <label>Home location</label>
+            <input name="home_location" required>
+            <label>Travel style</label>
+            <select name="travel_style">
+                <option value="budget">budget</option>
+                <option value="mid-range" selected>mid-range</option>
+                <option value="luxury">luxury</option>
+            </select>
+            <button type="submit" class="primary-button">Save traveller</button>
+        </form>
+    </section>
+
+    <section class="section-card">
+        <h2>Budget range and pace</h2>
+        <form hx-post="/api/preferences" hx-target="#profile"
+              hx-include="#traveler-picker">
+            <label>Minimum budget</label>
+            <input name="budget_min" type="number" step="1" min="0" required>
+            <label>Maximum budget</label>
+            <input name="budget_max" type="number" step="1" min="0" required>
+            <label>Pace</label>
+            <select name="pace">
+                <option value="relaxed">relaxed</option>
+                <option value="balanced" selected>balanced</option>
+                <option value="packed">packed</option>
+            </select>
+            <label>Currency</label>
+            <input name="currency" value="AUD">
+            <button type="submit" class="primary-button">Save preferences</button>
+        </form>
+    </section>
+
+    <section class="section-card">
+        <h2>Add interest</h2>
+        <form hx-post="/api/interests" hx-target="#profile"
+              hx-include="#traveler-picker">
+            <label>Interest category</label>
+            <input name="interest_category" placeholder="Food and dining" required>
+            <label>Priority (5 = highest)</label>
+            <select name="priority">
+                <option value="5">5</option>
+                <option value="4">4</option>
+                <option value="3" selected>3</option>
+                <option value="2">2</option>
+                <option value="1">1</option>
+            </select>
+            <button type="submit" class="primary-button">Add interest</button>
+        </form>
+    </section>
+
+    <section class="section-card">
+        <h2>Add accessibility or dietary need</h2>
+        <form hx-post="/api/accessibility-needs" hx-target="#profile"
+              hx-include="#traveler-picker">
+            <label>Requirement</label>
+            <input name="requirement" placeholder="Step-free access" required>
+            <label>Dietary restriction</label>
+            <input name="dietary_restriction" placeholder="Vegetarian">
+            <button type="submit" class="primary-button">Add requirement</button>
+        </form>
+    </section>
+
+    <section class="section-card">
+        <h2>AI preference summary</h2>
+        <p class="muted">
+            Turns the saved profile into the structured preference set the Trip
+            Planning, Booking and Budget services consume.
+        </p>
+        <button class="primary-button" hx-target="#ai-summary"
+                hx-indicator="#summary-loading"
+                hx-post="/api/summarise" hx-include="#traveler-picker">
+            Summarise preferences
+        </button>
+        <span id="summary-loading" class="htmx-indicator">Summarising...</span>
+        <div id="ai-summary"></div>
+    </section>
+
+    <section class="section-card">
+        <h2>AI profile completeness check</h2>
+        <p class="muted">
+            Validates the profile before trip planning can start, then explains
+            anything still missing.
+        </p>
+        <button class="primary-button" hx-target="#ai-completeness"
+                hx-indicator="#completeness-loading"
+                hx-post="/api/completeness" hx-include="#traveler-picker">
+            Check completeness
+        </button>
+        <span id="completeness-loading" class="htmx-indicator">Checking...</span>
+        <div id="ai-completeness"></div>
+    </section>
+</main>
+</body>
+</html>
