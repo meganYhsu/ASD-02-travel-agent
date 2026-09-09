@@ -135,24 +135,42 @@ Only report an issue when there is a meaningful conflict.
 Do NOT rewrite the itinerary.
 Do NOT generate a replacement itinerary.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON using this structure:
 
 {
-    "valid": true,
-    "summary": "",
-    "issues": [],
-    "recommendedChanges": []
+  "valid": true,
+  "summary": "Brief assessment of the itinerary",
+  "issues": [],
+  "recommendedChanges": []
 }
 
-If no meaningful changes are needed:
+The arrays may contain items depending on the review.
+Do not copy example values literally.
+
+If the itinerary satisfies the user's core requirements:
 - valid must be true
 - issues must be []
-- recommendedChanges must be []
+- summary must briefly explain why the itinerary is valid
+- recommendedChanges may still contain useful optional improvements
 
-If meaningful changes are needed:
+Even when valid is true, review the itinerary for possible improvements in:
+- pacing
+- travel efficiency
+- activity variety
+- overloaded or underutilised days
+- excessive travel between activities
+- alignment with the selected travel style
+- suitability for the travel group
+- schedule practicality
+
+Only add recommendedChanges when they would genuinely improve the itinerary.
+Do not invent problems just to create recommendations.
+
+If the itinerary has genuine problems or violates the user's requirements:
 - valid must be false
-- list only genuine issues
-- provide concise recommended changes
+- issues must list the genuine problems
+- summary must briefly explain the main problems
+- recommendedChanges must contain concise fixes for those problems
 
 Do not return markdown.
 Do not return anything outside the JSON.
@@ -182,7 +200,7 @@ Review this itinerary.
                     ],
 
                     temperature: 0.1,
-                    max_tokens: 400
+                    max_tokens: 700
                 })
             }
         );

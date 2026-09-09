@@ -56,7 +56,7 @@ function ItineraryOptions() {
             setLoading(true);
             setError("");
 
-            const res = await fetch("http://localhost:5003/api/request_itineraries", {
+            const res = await fetch("http://localhost:5004/api/request_itineraries", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

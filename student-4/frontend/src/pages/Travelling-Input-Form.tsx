@@ -42,7 +42,7 @@ function TravellingInputForm(){
         try{
             setLoading(true);
             const req = await fetch(
-                "http://localhost:5003/api/cities",
+                "http://localhost:5004/api/cities",
                 {
                     method:"POST",
                     headers:{

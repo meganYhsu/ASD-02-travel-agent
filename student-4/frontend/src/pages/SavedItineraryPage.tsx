@@ -50,7 +50,7 @@ function SavedItineraryPage() {
             setLoading(true);
             setError("");
 
-            const res = await fetch(`http://localhost:5003/api/saved_itineraries/${savedItineraryId}`);
+            const res = await fetch(`http://localhost:5004/api/saved_itineraries/${savedItineraryId}`);
             const payload = await res.json();
 
             if (!res.ok) {
@@ -88,7 +88,7 @@ function SavedItineraryPage() {
 
         try {
             setDeleting(true);
-            const res = await fetch(`http://localhost:5003/api/saved_itineraries/${savedItineraryId}`, {
+            const res = await fetch(`http://localhost:5004/api/saved_itineraries/${savedItineraryId}`, {
                 method: "DELETE"
             });
             const payload = await res.json();

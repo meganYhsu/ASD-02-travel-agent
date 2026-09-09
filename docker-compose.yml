@@ -206,7 +206,7 @@ services:
       - student4_data:/app/data
 
     ports:
-      - "5004:5002"
+      - "6004:5002"
 
     networks:
       - travel-net
@@ -216,8 +216,11 @@ services:
     build:
       context: ./student-4/backend
 
+#    env_file:
+#      - ./student-4/backend/.env
     env_file:
-      - ./student-4/backend/.env
+      - path: ./student-4/backend/.env
+        required: false
 
     environment:
       DATABASE_BASE_URL: http://student4-database:5002
@@ -225,7 +228,7 @@ services:
       OLLAMA_MODEL: llama3.2:3b
 
     ports:
-      - "5003:5001"
+      - "5004:5001"
 
     depends_on:
       - student4-database
@@ -240,7 +243,7 @@ services:
       context: ./student-4/frontend
 
     ports:
-      - "5174:80"
+      - "3004:80"
 
     depends_on:
       - student4-backend
@@ -250,15 +253,15 @@ services:
 
 
   # ====================
-  # Student 3
-  # ====================
+# Student 3
+# ====================
 
   student3-database:
     build:
       context: ./student-3/database
 
     ports:
-      - "5010:5000"
+      - "6003:6003"
 
     networks:
       - travel-net
@@ -269,15 +272,17 @@ services:
       context: ./student-3/backend
 
     environment:
-      DATABASE_URL: http://student3-database:5000
+      DB_API_URL: http://student3-database:6003
+      TRIP_API_URL: http://student4-database:5002
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
 
     ports:
-      - "5001:5001"
+      - "5003:5003"
 
     depends_on:
       - student3-database
+      - student4-database
       - ollama
 
     networks:
@@ -289,10 +294,10 @@ services:
       context: ./student-3/frontend
 
     environment:
-      BACKEND_URL: http://student3-backend:5001
+      BACKEND_URL: http://student3-backend:5003
 
     ports:
-      - "5002:5002"
+      - "3003:3003"
 
     depends_on:
       - student3-backend

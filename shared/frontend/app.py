@@ -22,7 +22,7 @@ def home():
 
 @app.route('/booking')
 def booking():
-    return redirect("http://127.0.0.1:5002/booking")
+    return redirect("http://127.0.0.1:3003/")
 
 @app.route('/itinerary')
 def itinerary():
@@ -92,7 +92,7 @@ def logout():
 
 @app.route('/trip-planning')
 def trip_planning():
-    return redirect("http://127.0.0.1:5174/")
+    return redirect("http://127.0.0.1:3004/")
 
 
 if __name__ == '__main__':
