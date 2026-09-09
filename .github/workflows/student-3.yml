@@ -1,0 +1,45 @@
+name: student-3
+on:
+  push:
+    paths:
+      - "student-3/**"
+      - ".github/workflows/student-3.yml"
+  pull_request:
+    paths:
+      - "student-3/**"
+      - ".github/workflows/student-3.yml"
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: student-3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install microservice dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Validate Python syntax
+        run: python -m compileall database backend frontend tests
+      - name: Create database and validate seed data
+        run: |
+          cd database
+          python -c "from db_api import init_db; init_db()"
+          cd ..
+          python tests/check_seed.py
+      - name: Smoke test live endpoints
+        run: |
+          python database/db_api.py &
+          python backend/app.py &
+          sleep 5
+          python tests/test_endpoints.py
+      - name: Build Docker images
+        run: |
+          docker build -t student-3-db database
+          docker build -t student-3-backend backend
+          docker build -t student-3-frontend frontend

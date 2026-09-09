@@ -1,0 +1,259 @@
+networks:
+  travel-net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  student4_data:
+  student5_data:
+
+services:
+
+  # ====================
+  # Shared Home
+  # ====================
+
+  shared-home:
+    build:
+      context: ./shared/frontend
+
+    ports:
+      - "8080:5003"
+
+    depends_on:
+      - student2-frontend
+      - student3-frontend
+      - student4-frontend
+      - student5-frontend
+
+    networks:
+      - travel-net
+
+  # ====================
+  # Shared Ollama
+  # ====================
+
+  ollama:
+    image: ollama/ollama:latest
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+    networks:
+      - travel-net
+
+  # ====================
+  # Student 4
+  # ====================
+
+  student4-database:
+    build:
+      context: ./student-4/database
+
+    volumes:
+      - student4_data:/app/data
+
+    ports:
+      - "6004:5002"
+
+    networks:
+      - travel-net
+
+  student4-backend:
+    build:
+      context: ./student-4/backend
+
+    env_file:
+      - path: ./student-4/backend/.env
+        required: false
+
+    environment:
+      DATABASE_BASE_URL: http://student4-database:5002
+      OLLAMA_BASE_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: llama3.2:3b
+
+    ports:
+      - "5004:5001"
+
+    depends_on:
+      - student4-database
+      - ollama
+
+    networks:
+      - travel-net
+
+  student4-frontend:
+    build:
+      context: ./student-4/frontend
+
+    ports:
+      - "3004:80"
+
+    depends_on:
+      - student4-backend
+
+    networks:
+      - travel-net
+
+  # ====================
+  # Student 3
+  # ====================
+
+  student3-database:
+    build:
+      context: ./student-3/database
+
+    ports:
+      - "6003:6003"
+
+    networks:
+      - travel-net
+
+  student3-backend:
+    build:
+      context: ./student-3/backend
+
+    environment:
+      DB_API_URL: http://student3-database:6003
+      TRIP_API_URL: http://student4-database:5002
+      OLLAMA_BASE_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: qwen2.5:0.5b
+
+    ports:
+      - "5003:5003"
+
+    depends_on:
+      - student3-database
+      - student4-database
+      - ollama
+
+    networks:
+      - travel-net
+
+  student3-frontend:
+    build:
+      context: ./student-3/frontend
+
+    environment:
+      BACKEND_URL: http://student3-backend:5003
+
+    ports:
+      - "3003:3003"
+
+    depends_on:
+      - student3-backend
+
+    networks:
+      - travel-net
+
+  # ====================
+  # Student 5
+  # ====================
+
+  student5-database:
+    build:
+      context: ./student-5/database
+
+    environment:
+      PORT: "5405"
+      DATABASE_PATH: /data/travel_docs.db
+
+    volumes:
+      - student5_data:/data
+
+    ports:
+      - "5405:5405"
+
+    networks:
+      - travel-net
+
+  student5-backend:
+    build:
+      context: ./student-5/backend
+
+    environment:
+      PORT: "5505"
+      DATABASE_SERVICE_URL: http://student5-database:5405
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:3b
+      OLLAMA_TIMEOUT_SECONDS: "180"
+      EXPIRY_WARNING_DAYS: "90"
+
+    ports:
+      - "5505:5505"
+
+    depends_on:
+      - student5-database
+      - ollama
+
+    networks:
+      - travel-net
+
+  student5-frontend:
+    build:
+      context: ./student-5/frontend
+
+    environment:
+      PORT: "8505"
+      BACKEND_URL: http://student5-backend:5505
+
+    ports:
+      - "8505:8505"
+
+    depends_on:
+      - student5-backend
+
+    networks:
+      - travel-net
+
+  # ====================
+  # Student 2
+  # ====================
+
+  student2-database:
+    build:
+      context: ./student-2/database
+
+    ports:
+      - "6002:5000"
+
+    networks:
+      - travel-net
+
+  student2-backend:
+    build:
+      context: ./student-2/backend
+
+    environment:
+      DATABASE_URL: http://student2-database:5000
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:0.5b
+
+    ports:
+      - "5002:5001"
+
+    depends_on:
+      - student2-database
+      - ollama
+
+    networks:
+      - travel-net
+
+  student2-frontend:
+    build:
+      context: ./student-2/frontend
+
+    environment:
+      BACKEND_URL: http://student2-backend:5001
+
+    ports:
+      - "3002:5002"
+
+    depends_on:
+      - student2-backend
+
+    networks:
+      - travel-net

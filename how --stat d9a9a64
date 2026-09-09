@@ -1,0 +1,15 @@
+[33md9a9a64[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{0}: checkout: moving from megan to dev
+[33m368c95a[m[33m ([m[1;31morigin/megan[m[33m, [m[1;32mmegan[m[33m)[m HEAD@{1}: checkout: moving from dev to megan
+[33md9a9a64[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{2}: checkout: moving from megan to dev
+[33m368c95a[m[33m ([m[1;31morigin/megan[m[33m, [m[1;32mmegan[m[33m)[m HEAD@{3}: checkout: moving from dev to megan
+[33md9a9a64[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{4}: checkout: moving from megan to dev
+[33m368c95a[m[33m ([m[1;31morigin/megan[m[33m, [m[1;32mmegan[m[33m)[m HEAD@{5}: checkout: moving from dev to megan
+[33md9a9a64[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{6}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m2295e2b[m HEAD@{7}: checkout: moving from share to dev
+[33ma31616c[m HEAD@{8}: reset: moving to HEAD
+[33ma31616c[m HEAD@{9}: commit: home page
+[33m6a4b5ae[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{10}: checkout: moving from megan to share
+[33m368c95a[m[33m ([m[1;31morigin/megan[m[33m, [m[1;32mmegan[m[33m)[m HEAD@{11}: reset: moving to HEAD
+[33m368c95a[m[33m ([m[1;31morigin/megan[m[33m, [m[1;32mmegan[m[33m)[m HEAD@{12}: commit: booking and itinerary
+[33m6a4b5ae[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{13}: checkout: moving from main to megan
+[33m6a4b5ae[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{14}: clone: from https://github.com/meganYhsu/ASD-02-travel-agent.git

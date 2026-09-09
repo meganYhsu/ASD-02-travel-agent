@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget &amp; Expense Tracking</title>
+    <meta name="htmx-config" content='{"selfRequestsOnly": false}'>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .error {
+            color: #b00020;
+        }
+
+        .htmx-indicator {
+            display: none;
+        }
+
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator {
+            display: inline;
+        }
+
+        .management-page {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .section-card {
+            background: var(--card, #ffffff);
+            border: 1px solid var(--line, #d7e0ea);
+            border-radius: 10px;
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .section-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: .75rem;
+        }
+
+        .section-card th,
+        .section-card td {
+            padding: .5rem .7rem;
+            border-bottom: 1px solid var(--line, #d7e0ea);
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .section-card form {
+            display: flex;
+            flex-direction: column;
+            max-width: 420px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <nav class="shared-nav">
+
+            <div class="nav-title">
+                Travel Agent
+            </div>
+            <div class="nav-links">
+                <a href="http://127.0.0.1:8080/welcome">Welcome</a>
+
+                <a href="http://127.0.0.1:8080/traveler-preferences">
+                    Traveler Preferences
+                </a>
+
+                <a href="http://127.0.0.1:8080/booking">
+                    Booking
+                </a>
+
+                <a href="http://127.0.0.1:8080/itinerary">
+                    Itinerary
+                </a>
+
+                <a href="http://127.0.0.1:8080/budget">
+                    Budget & Expense
+                </a>
+
+                <a href="http://127.0.0.1:8080/trip-planning">
+                    Trip Planning
+                </a>
+
+                <a href="http://127.0.0.1:8080/pre-trip">
+                    Travel Preparation
+                </a>
+
+                <a href="http://127.0.0.1:8080/account">
+                    Account
+                </a>
+
+                <a href="http://127.0.0.1:8080/logout">
+                    Log Out
+                </a>
+            </div>
+        </nav>
+
+        <main class="management-page">
+            <h1>Budget &amp; Expense Tracking</h1>
+            <p class="muted">Track planned versus actual spending for a trip.</p>
+
+            <section class="section-card">
+                <h2>Dashboard</h2>
+                <button class="primary-button" hx-get="/api/dashboard/1" hx-target="#dashboard">
+                    Load trip 1 dashboard
+                </button>
+                <div id="dashboard"></div>
+                <div id="edit-form"></div>
+            </section>
+
+            <section class="section-card">
+                <h2>Add expense</h2>
+                <form hx-post="/api/expenses" hx-target="#dashboard">
+                    <input type="hidden" name="trip_id" value="1">
+                    <label>Description</label>
+                    <input name="description" required>
+                    <label>Amount (AUD)</label>
+                    <input name="amount" type="number" step="0.01" min="0" required>
+                    <label>Category</label>
+                    <select name="category_id">
+                        <option value="1">Accommodation</option>
+                        <option value="2">Food</option>
+                        <option value="3">Transport</option>
+                        <option value="4">Activities</option>
+                        <option value="5">Shopping</option>
+                    </select>
+                    <label>Date</label>
+                    <input name="expense_date" type="date">
+                    <button type="submit" class="primary-button">Save expense</button>
+                </form>
+            </section>
+
+            <section class="section-card">
+                <h2>AI budget analysis</h2>
+                <button class="primary-button" hx-post="/api/analyse/1" hx-target="#ai-result"
+                    hx-indicator="#ai-loading">
+                    Analyse budget
+                </button>
+                <span id="ai-loading" class="htmx-indicator">Analysing...</span>
+                <div id="ai-result"></div>
+            </section>
+        </main>
+</body>
+
+</html>

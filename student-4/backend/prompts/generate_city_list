@@ -1,0 +1,13 @@
+Give me the 10 most visited tourist cities in ${destination}.
+
+        Return ONLY valid JSON in this format:
+
+        {
+            "cities": [
+                "City 1",
+                "City 2",
+                "City 3"
+            ]
+        }
+
+        Do not include explanations.

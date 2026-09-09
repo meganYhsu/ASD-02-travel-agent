@@ -1,0 +1,13 @@
+Task:
+{{TASK}}
+
+Implementation recommendation:
+{{IMPLEMENTATION_RECOMMENDATION}}
+
+Validation evidence:
+{{VALIDATION_EVIDENCE}}
+
+Return:
+1. Findings, ordered by severity
+2. Open questions or assumptions
+3. Short conclusion

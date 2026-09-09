@@ -1,0 +1,28 @@
+services:
+
+  database:
+    build: ./database
+    ports:
+      - "5000:5000"
+
+  backend:
+    build: ./backend
+    ports:
+      - "5001:5001"
+    environment:
+      DATABASE_URL: http://database:5000
+      OLLAMA_BASE_URL: http://host.docker.internal:11434/v1
+      OLLAMA_MODEL: qwen2.5:0.5b
+    depends_on:
+      - database
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5002:5002"
+    environment:
+      BACKEND_URL: http://backend:5001
+    depends_on:
+      - backend

@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Folder Name="/student-5/">
+    <Project Path="student-5/student5-all.pyproj" Id="c4d81e77-2a9f-4b10-9e55-0f7c8a12b004" />
+    <Project Path="student-5/database/student5-database.pyproj" Id="7c1a4e2b-9f33-4d6a-8c11-1b2f0a77d001" />
+    <Project Path="student-5/backend/student5-backend.pyproj" Id="3e8c91d0-44aa-4f21-9b77-6c0d2e88e002" />
+    <Project Path="student-5/frontend/student5-frontend.pyproj" Id="a9f2b6c4-18de-4c55-b0aa-9e4f31c9f003" />
+  </Folder>
+</Solution>

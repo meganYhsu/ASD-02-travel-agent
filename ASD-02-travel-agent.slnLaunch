@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "Student-5: All Services",
+    "Projects": [
+      {
+        "Path": "student-5\\database\\student5-database.pyproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "student-5\\backend\\student5-backend.pyproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "student-5\\frontend\\student5-frontend.pyproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

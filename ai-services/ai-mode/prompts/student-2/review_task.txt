@@ -1,0 +1,44 @@
+Student:
+{{STUDENT}}
+
+Original development task:
+{{TASK}}
+
+Implementation Agent recommendation:
+{{IMPLEMENTATION_RECOMMENDATION}}
+
+Validation evidence:
+{{VALIDATION_EVIDENCE}}
+
+Human or reviewer carry-forward notes:
+{{CARRY_FORWARD}}
+
+Independently review the Implementation Agent's recommendation.
+
+Check whether:
+
+- the recommendation is supported by the validation evidence
+- the Implementation Agent invented any unsupported issue
+- the proposed change is technically reasonable
+- the recommendation is proportional to the evidence
+- working behaviour would be preserved
+- any important verified issue was missed
+- previous human or reviewer feedback was respected
+
+Do not automatically agree with the Implementation Agent.
+
+If the evidence is insufficient to verify a claim, state that clearly.
+
+Return exactly one JSON object and no markdown.
+
+Use this exact structure:
+
+{
+    "decision": "ACCEPT | PARTIALLY_ACCEPT | REJECT",
+    "summary": "",
+    "supportedRecommendations": [],
+    "issuesWithAdvice": [],
+    "missingConsiderations": [],
+    "recommendedCarryForward": "",
+    "humanReviewNote": ""
+}

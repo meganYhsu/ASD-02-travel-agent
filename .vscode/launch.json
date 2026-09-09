@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Student-5: Database",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/student-5/database/app.py",
+      "cwd": "${workspaceFolder}/student-5/database",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PORT": "5405",
+        "DATABASE_PATH": "${workspaceFolder}/student-5/database/data/travel_docs.db"
+      }
+    },
+    {
+      "name": "Student-5: Backend",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/student-5/backend/app.py",
+      "cwd": "${workspaceFolder}/student-5/backend",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PORT": "5505",
+        "DATABASE_SERVICE_URL": "http://127.0.0.1:5405",
+        "OLLAMA_BASE_URL": "http://127.0.0.1:11434",
+        "OLLAMA_MODEL": "qwen2.5:3b"
+      }
+    },
+    {
+      "name": "Student-5: Frontend",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/student-5/frontend/app.py",
+      "cwd": "${workspaceFolder}/student-5/frontend",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PORT": "8505",
+        "BACKEND_URL": "http://127.0.0.1:5505"
+      }
+    },
+    {
+      "name": "Student-5: Run all",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/student-5/run_all.py",
+      "cwd": "${workspaceFolder}/student-5",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
