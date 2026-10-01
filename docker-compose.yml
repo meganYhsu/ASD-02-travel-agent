@@ -96,6 +96,14 @@ services:
       DB_API_URL: http://student1-database:6001
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
+      MCP_BASE_URL: http://host.docker.internal:7004
+      MCP_ENABLED: "true"
+      RAG_BASE_URL: http://host.docker.internal:7001
+      RAG_ENABLED: "true"
+
+    # Lets host.docker.internal reach the host-run MCP and RAG servers on Linux too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5001:5001"
@@ -152,6 +160,7 @@ services:
       DATABASE_BASE_URL: http://student4-database:5002
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: llama3.2:3b
+      MCP_BASE_URL: http://host.docker.internal:7004
 
     ports:
       - "5004:5001"
