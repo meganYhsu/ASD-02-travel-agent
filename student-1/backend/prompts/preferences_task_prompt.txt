@@ -1,0 +1,15 @@
+Traveller: {{TRAVELER}}
+Travel style: {{STYLE}}
+Budget range: {{BUDGET}}
+Pace: {{PACE}}
+Interests: {{INTERESTS}}
+Accessibility and dietary needs: {{NEEDS}}
+
+Task:
+Summarise this traveller into a structured preference set. Reply with exactly
+these four lines and nothing else:
+
+BUDGET: state the stored budget range and what it allows
+STYLE: state the travel style and pace in one phrase
+PRIORITIES: list the interests above, highest priority first
+CONSTRAINTS: list the accessibility and dietary needs above

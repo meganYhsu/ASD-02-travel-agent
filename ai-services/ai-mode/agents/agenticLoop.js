@@ -20,6 +20,23 @@ const readline = require("readline/promises");
 
 
 
+// =====================
+// Student 2 URLs
+// =====================
+
+const STUDENT2_FRONTEND =
+    process.env.STUDENT2_FRONTEND_URL ||
+    "http://localhost:3002";
+
+const STUDENT2_BACKEND =
+    process.env.STUDENT2_BACKEND_URL ||
+    "http://localhost:5002";
+
+const STUDENT2_DATABASE =
+    process.env.STUDENT2_DATABASE_URL ||
+    "http://localhost:6002";
+
+
 
 // =====================
 // Student 4 URLs
@@ -55,6 +72,10 @@ const STUDENT3_DATABASE =
     "http://localhost:6003";
 
 
+// =====================
+// Student 5 URLs
+// =====================
+
 const STUDENT5_FRONTEND =
     process.env.STUDENT5_FRONTEND_URL ||
     "http://localhost:8505";
@@ -70,62 +91,6 @@ const STUDENT5_DATABASE =
 
 
 
-
-
-// const PLAN = {
-//     goal:
-//         "Validate the integrated Travel Agent application before release",
-//
-//     actions: [
-//         "Check all student microservices are reachable",
-//         "Check critical backend and database endpoints",
-//         "Check frontend/backend integration",
-//         "Check Docker Compose configuration",
-//         "Check GitHub Actions workflows",
-//         "Identify verified integration issues"
-//     ]
-// };
-
-// function buildEvidenceText(observation) {
-//
-//     const students = [
-//         observation.student1,
-//         observation.student2,
-//         observation.student3,
-//         observation.student4,
-//         observation.student5
-//     ];
-//
-//     const lines = [
-//         "INTEGRATED TRAVEL AGENT VALIDATION",
-//         ""
-//     ];
-//
-//     for (const student of students) {
-//
-//         let status;
-//
-//         if (student.skipped) {
-//             status = "NOT CONFIGURED";
-//         } else {
-//             status = student.ok ? "PASS" : "FAIL";
-//         }
-//
-//         lines.push(
-//             `${student.student}: ${status}`
-//         );
-//
-//         if (student.issues.length > 0) {
-//             for (const issue of student.issues) {
-//                 lines.push(`- ${issue}`);
-//             }
-//         }
-//
-//         lines.push("");
-//     }
-//
-//     return lines.join("\n");
-// }
 
 
 async function main() {
@@ -243,100 +208,6 @@ async function main() {
     }
 
 
-    /* =========================================================
-       BUILD EVIDENCE FOR ONE STUDENT
-    ========================================================= */
-
-    // function buildStudentEvidenceText(
-    //     observation
-    // ) {
-    //
-    //     const lines = [
-    //         "TRAVEL AGENT DEVELOPMENT VALIDATION",
-    //         "",
-    //         `Student: ${observation.student}`,
-    //         `Component: ${observation.component}`,
-    //         "",
-    //         `Overall status: ${
-    //             observation.ok
-    //                 ? "PASS"
-    //                 : observation.skipped
-    //                     ? "NOT CONFIGURED"
-    //                     : "FAIL"
-    //         }`,
-    //         ""
-    //     ];
-    //
-    //
-    //     for (
-    //         const service of
-    //     observation.services || []
-    //         ) {
-    //
-    //         lines.push(
-    //             `${service.name}: ${
-    //                 service.ok
-    //                     ? "PASS"
-    //                     : "FAIL"
-    //             }`
-    //         );
-    //
-    //
-    //         lines.push(
-    //             `URL: ${service.url}`
-    //         );
-    //
-    //
-    //         if (
-    //             service.status !== null &&
-    //             service.status !== undefined
-    //         ) {
-    //             lines.push(
-    //                 `HTTP status: ${service.status}`
-    //             );
-    //         }
-    //
-    //
-    //         if (service.error) {
-    //             lines.push(
-    //                 `Error: ${service.error}`
-    //             );
-    //         }
-    //
-    //
-    //         lines.push("");
-    //     }
-    //
-    //
-    //     if (
-    //         observation.issues?.length > 0
-    //     ) {
-    //
-    //         lines.push(
-    //             "VERIFIED ISSUES:"
-    //         );
-    //
-    //
-    //         for (
-    //             const issue of
-    //             observation.issues
-    //             ) {
-    //             lines.push(
-    //                 `- ${issue}`
-    //             );
-    //         }
-    //
-    //     } else {
-    //
-    //         lines.push(
-    //             "VERIFIED ISSUES: none"
-    //         );
-    //     }
-    //
-    //
-    //     return lines.join("\n");
-    // }
-
 
     /* =========================================================
        MAIN SHARED LOOP
@@ -344,347 +215,338 @@ async function main() {
 
     // async function main() {
 
-        const args =
-            parseArgs(
-                process.argv.slice(2)
-            );
+    const args =
+        parseArgs(
+            process.argv.slice(2)
+        );
 
 
-        const student =
-            args.student;
+    const student =
+        args.student;
 
 
-        const task =
-            args.task ||
-            `Validate ${student}'s Travel Agent microservice and identify verified development or integration issues.`;
+    const task =
+        args.task ||
+        `Validate ${student}'s Travel Agent microservice and identify verified development or integration issues.`;
 
 
-        const maxRounds =
-            args.rounds;
+    const maxRounds =
+        args.rounds;
 
 
-        let carryForward = "";
+    let carryForward = "";
 
+
+    console.log(
+        "=".repeat(60)
+    );
+
+    console.log(
+        "SHARED DEVELOPMENT AGENTIC AI LOOP"
+    );
+
+    console.log(
+        "=".repeat(60)
+    );
+
+
+    console.log(
+        `\nStudent: ${student}`
+    );
+
+    console.log(
+        `Task: ${task}`
+    );
+
+
+    console.log("\nPLAN");
+
+    console.log(
+        JSON.stringify(
+            PLAN,
+            null,
+            2
+        )
+    );
+
+
+    for (
+        let round = 1;
+        round <= maxRounds;
+        round += 1
+    ) {
+
+        console.log(
+            `\n${"=".repeat(60)}`
+        );
+
+        console.log(
+            `ROUND ${round}`
+        );
 
         console.log(
             "=".repeat(60)
         );
 
-        console.log(
-            "SHARED DEVELOPMENT AGENTIC AI LOOP"
-        );
+
+        /* =====================
+           ACT
+        ===================== */
+
+        console.log("\nACT");
 
         console.log(
-            "=".repeat(60)
-        );
-
-
-        console.log(
-            `\nStudent: ${student}`
-        );
-
-        console.log(
-            `Task: ${task}`
+            `Validate ${student}'s development implementation.`
         );
 
 
-        console.log("\nPLAN");
+        /* =====================
+           OBSERVE
+        ===================== */
+
+        console.log("\nOBSERVE");
+
+
+        const observation =
+            await observeStudent(
+                student
+            );
+
+
+        const evidenceText =
+            buildStudentEvidenceText(
+                observation
+            );
+
 
         console.log(
-            JSON.stringify(
-                PLAN,
-                null,
-                2
-            )
+            evidenceText
         );
 
 
-        for (
-            let round = 1;
-            round <= maxRounds;
-            round += 1
-        ) {
+        /* =====================
+           ADAPT
+        ===================== */
 
-            console.log(
-                `\n${"=".repeat(60)}`
-            );
-
-            console.log(
-                `ROUND ${round}`
-            );
-
-            console.log(
-                "=".repeat(60)
-            );
+        console.log("\nADAPT");
 
 
-            /* =====================
-               ACT
-            ===================== */
+        /* ---------------------
+           IMPLEMENTATION AGENT
+        --------------------- */
 
-            console.log("\nACT");
-
-            console.log(
-                `Validate ${student}'s development implementation.`
-            );
+        console.log(
+            "\nIMPLEMENTATION AGENT"
+        );
 
 
-            /* =====================
-               OBSERVE
-            ===================== */
-
-            console.log("\nOBSERVE");
-
-
-            const observation =
-                await observeStudent(
-                    student
-                );
-
-
-            const evidenceText =
-                buildStudentEvidenceText(
-                    observation
-                );
-
-
-            console.log(
-                evidenceText
-            );
-
-
-            /* =====================
-               ADAPT
-            ===================== */
-
-            console.log("\nADAPT");
-
-
-            /* ---------------------
-               IMPLEMENTATION AGENT
-            --------------------- */
-
-            console.log(
-                "\nIMPLEMENTATION AGENT"
-            );
-
-
-            const implementation =
-                await getImplementationAdvice({
-
-                    student,
-
-                    task,
-
-                    validationEvidence:
-                    evidenceText,
-
-                    carryForward
-                });
-
-
-            console.log(
-                implementation.content ||
-                implementation.error
-            );
-
-
-            if (implementation.error) {
-
-                throw new Error(
-                    `Implementation Agent failed: ${implementation.error}`
-                );
-            }
-
-
-            /* ---------------------
-               REVIEW AGENT
-            --------------------- */
-
-            console.log(
-                "\nREVIEW AGENT"
-            );
-
-
-            const review =
-                await getReview({
-
-                    student,
-
-                    task,
-
-                    implementationRecommendation:
-                    implementation.content,
-
-                    validationEvidence:
-                    evidenceText,
-
-                    carryForward
-                });
-
-
-            console.log(
-                review.content ||
-                review.error
-            );
-
-
-            if (review.error) {
-
-                throw new Error(
-                    `Review Agent failed: ${review.error}`
-                );
-            }
-
-
-            /* ---------------------
-               HUMAN REVIEW
-            --------------------- */
-
-            const decision =
-                await humanReview({
-
-                    observation,
-
-                    implementation,
-
-                    review,
-
-                    round
-                });
-
-
-            /* ---------------------
-               RECORD EVIDENCE
-            --------------------- */
-
-            await recordReview({
+        const implementation =
+            await getImplementationAdvice({
 
                 student,
 
-                round,
-
                 task,
 
-                observation,
-
                 validationEvidence:
-                evidenceText,
+                    evidenceText,
 
-                implementationRecommendation:
-                implementation.content,
-
-                review:
-                review.content,
-
-                humanDecision:
-                decision.decision,
-
-                humanNote:
-                decision.note,
-
-                carryForward,
-
-                timestamp:
-                    new Date().toISOString()
+                carryForward
             });
 
 
-            /* =====================
-               LOOP DECISION
-            ===================== */
-
-            if (
-                decision.decision ===
-                "Accept"
-            ) {
-
-                console.log(
-                    "\nRecommendation accepted."
-                );
-
-                console.log(
-                    "LOOP COMPLETE"
-                );
-
-                return;
-            }
+        console.log(
+            implementation.content ||
+            implementation.error
+        );
 
 
-            if (
-                decision.decision ===
-                "Partially Accept"
-            ) {
+        if (implementation.error) {
 
-                carryForward = [
-
-                    decision.note,
-
-                    review.content
-
-                ]
-                    .filter(Boolean)
-                    .join("\n");
+            throw new Error(
+                `Implementation Agent failed: ${implementation.error}`
+            );
+        }
 
 
-                console.log(
-                    "\nPartially accepted."
-                );
+        /* ---------------------
+           REVIEW AGENT
+        --------------------- */
 
-                console.log(
-                    "Feedback will be carried into the next round."
-                );
+        console.log(
+            "\nREVIEW AGENT"
+        );
 
 
-                continue;
-            }
+        const review =
+            await getReview({
 
+                student,
+
+                task,
+
+                implementationRecommendation:
+                    implementation.content,
+
+                validationEvidence:
+                    evidenceText,
+
+                carryForward
+            });
+
+
+        console.log(
+            review.content ||
+            review.error
+        );
+
+
+        if (review.error) {
+
+            throw new Error(
+                `Review Agent failed: ${review.error}`
+            );
+        }
+
+
+        /* ---------------------
+           HUMAN REVIEW
+        --------------------- */
+
+        const decision =
+            await humanReview({
+
+                observation,
+
+                implementation,
+
+                review,
+
+                round
+            });
+
+
+        /* ---------------------
+           RECORD EVIDENCE
+        --------------------- */
+
+        await recordReview({
+
+            student,
+
+            round,
+
+            task,
+
+            observation,
+
+            validationEvidence:
+                evidenceText,
+
+            implementationRecommendation:
+                implementation.content,
+
+            review:
+                review.content,
+
+            humanDecision:
+                decision.decision,
+
+            humanNote:
+                decision.note,
+
+            carryForward,
+
+            timestamp:
+                new Date().toISOString()
+        });
+
+
+        /* =====================
+           LOOP DECISION
+        ===================== */
+
+        if (
+            decision.decision ===
+            "Accept"
+        ) {
 
             console.log(
-                "\nRecommendation rejected."
+                "\nRecommendation accepted."
             );
 
             console.log(
-                "LOOP STOPPED"
+                "LOOP COMPLETE"
             );
 
             return;
         }
 
 
+        if (
+            decision.decision ===
+            "Partially Accept"
+        ) {
+
+            carryForward = [
+
+                decision.note,
+
+                review.content
+
+            ]
+                .filter(Boolean)
+                .join("\n");
+
+
+            console.log(
+                "\nPartially accepted."
+            );
+
+            console.log(
+                "Feedback will be carried into the next round."
+            );
+
+
+            continue;
+        }
+
+
         console.log(
-            "\nMaximum number of rounds reached."
+            "\nRecommendation rejected."
         );
+
+        console.log(
+            "LOOP STOPPED"
+        );
+
+        return;
     }
 
 
-    /* =========================================================
-       RUN
-    ========================================================= */
-
-    main().catch(
-        (error) => {
-
-            console.error(
-                "Shared agentic loop failed:",
-                error
-            );
-
-            process.exit(1);
-        }
+    console.log(
+        "\nMaximum number of rounds reached."
     );
+}
+
+
+/* =========================================================
+   RUN
+========================================================= */
+
+main().catch(
+    (error) => {
+
+        console.error(
+            "Shared agentic loop failed:",
+            error
+        );
+
+        process.exit(1);
+    }
+);
 
 
 
-// main().catch((error) => {
-//
-//     console.error(
-//         "Shared agentic loop failed:",
-//         error
-//     );
-//
-//     process.exit(1);
-// });
 
 async function observeIntegratedApplication() {
 
@@ -712,11 +574,11 @@ async function observeIntegratedApplication() {
 }
 
 async function humanReview({
-                               observation,
-                               implementation,
-                               review,
-                               round
-                           }) {
+    observation,
+    implementation,
+    review,
+    round
+}) {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -755,57 +617,6 @@ async function humanReview({
 
 
 
-
-// async function checkService(
-//     name,
-//     url,
-//     {
-//         method = "GET",
-//         body,
-//         expectedStatuses = [200]
-//     } = {}
-// ) {
-//     try {
-//
-//         const response = await fetch(url, {
-//             method,
-//
-//             headers: {
-//                 "Content-Type": "application/json"
-//             },
-//
-//             body:
-//                 body === undefined
-//                     ? undefined
-//                     : JSON.stringify(body),
-//
-//             signal: AbortSignal.timeout(5000)
-//         });
-//
-//         return {
-//             name,
-//             url,
-//             reachable: true,
-//             status: response.status,
-//
-//             ok:
-//                 expectedStatuses.includes(
-//                     response.status
-//                 )
-//         };
-//
-//     } catch (error) {
-//
-//         return {
-//             name,
-//             url,
-//             reachable: false,
-//             status: null,
-//             ok: false,
-//             error: error.message
-//         };
-//     }
-// }
 
 async function observeStudent4() {
 
@@ -851,9 +662,8 @@ async function observeStudent4() {
     const issues = services
         .filter(service => !service.ok)
         .map(service =>
-            `${service.name} failed: ${
-                service.error ||
-                `HTTP ${service.status}`
+            `${service.name} failed: ${service.error ||
+            `HTTP ${service.status}`
             }`
         );
 
@@ -926,9 +736,8 @@ async function observeStudent3() {
     const issues = services
         .filter(service => !service.ok)
         .map(service =>
-            `${service.name} failed: ${
-                service.error ||
-                `HTTP ${service.status}`
+            `${service.name} failed: ${service.error ||
+            `HTTP ${service.status}`
             }`
         );
 
@@ -1029,9 +838,8 @@ async function observeStudent5() {
     const issues = services
         .filter(service => !service.ok)
         .map(service =>
-            `${service.name} failed: ${
-                service.error ||
-                `HTTP ${service.status}`
+            `${service.name} failed: ${service.error ||
+            `HTTP ${service.status}`
             }`
         );
 
@@ -1058,16 +866,56 @@ async function observeStudent1() {
     };
 }
 
+
 async function observeStudent2() {
+
+    const frontend =
+        await checkService(
+            "Student 2 Frontend - Itinerary",
+            `${STUDENT2_FRONTEND}/itinerary`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const backend =
+        await checkService(
+            "Student 2 Backend - Itineraries",
+            `${STUDENT2_BACKEND}/itineraries`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const database =
+        await checkService(
+            "Student 2 Database - Itineraries",
+            `${STUDENT2_DATABASE}/itineraries`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const services = [
+        frontend,
+        backend,
+        database
+    ];
+
+    const issues = services
+        .filter(service => !service.ok)
+        .map(service =>
+            `${service.name} failed: ${service.error ||
+            `HTTP ${service.status}`
+            }`
+        );
+
     return {
         student: "Student 2",
-        component: "Not configured yet",
-        ok: false,
-        skipped: true,
-        services: [],
-        issues: [
-            "Validation not configured yet"
-        ]
+        component: "Booking & Itinerary Management",
+        ok: issues.length === 0,
+        services,
+        issues
     };
 }
 

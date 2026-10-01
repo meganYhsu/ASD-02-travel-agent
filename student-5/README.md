@@ -14,6 +14,8 @@ User -> HTMX frontend (port 8505) -> Flask REST API (port 5505) -> SQLite databa
 
 AI flow: User -> frontend -> Flask API -> Ollama (port 11434) -> qwen2.5:3b -> structured JSON -> frontend
 
+Shared assistant flow: User -> Travel Assistant tab -> Flask API -> shared RAG server (port 7005) -> approved Markdown retrieval -> optional Ollama grounded answer -> cited response
+
 The frontend never queries SQLite. SQL lives in `database/db.py` and uses parameterised queries.
 
 ## Frontend
@@ -60,6 +62,7 @@ SQLite tables and seed counts:
 - POST `/api/ai/check-compliance`
 - POST `/api/ai/generate-pretrip-checklist`
 - POST `/api/ai/save-pretrip-checklist`
+- POST `/api/ai/assistant`
 - POST `/api/alerts/compliance`
 - GET `/api/agentic/status`
 - GET `/health`
@@ -107,6 +110,14 @@ python student-5/frontend/app.py
 - Database: http://localhost:5405
 - Homepage: http://localhost:8080 (Docker shared frontend)
 
+Quick feature demo:
+
+```
+python student-5/demo_features.py
+```
+
+Add `--ai` to demonstrate Ollama-backed compliance and checklist generation after Ollama is running.
+
 Optional local Ollama:
 
 ```
@@ -151,10 +162,13 @@ docker compose exec ollama ollama pull qwen2.5:3b
 - `OLLAMA_MODEL` Approved local model
 - `OLLAMA_TIMEOUT_SECONDS` AI timeout
 - `EXPIRY_WARNING_DAYS` Expiry alert window
+- `RAG_SERVICE_URL` Shared RAG server, default `http://127.0.0.1:7005`
+- `RAG_TIMEOUT_SECONDS` Shared RAG request timeout
 
 ## Known limitations
 
 - Entry requirements are sample data, not live immigration rules.
 - No login/auth in Release 0; traveller and trip IDs are demo strings.
 - Live AI quality depends on the local Ollama model being pulled.
-- RAG / MCP / multi-agent features are out of scope for Release 0.
+- The shared RAG knowledge base is deliberately small and must be expanded only with reviewed sources.
+- MCP and multi-agent runtime features are not implemented; student-5 currently uses the shared RAG HTTP service.

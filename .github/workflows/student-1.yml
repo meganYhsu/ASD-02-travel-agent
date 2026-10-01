@@ -1,0 +1,66 @@
+name: Student 1 - Build and Validate Microservices
+
+on:
+  push:
+    paths:
+      - "student-1/**"
+      - "docker-compose.yml"
+      - ".github/workflows/student-1.yml"
+
+  pull_request:
+    paths:
+      - "student-1/**"
+      - "docker-compose.yml"
+      - ".github/workflows/student-1.yml"
+
+  workflow_dispatch:
+
+jobs:
+  validate-student-1:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: student-1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install microservice dependencies
+        run: |
+          pip install -r database/requirements.txt
+          pip install -r backend/requirements.txt
+          pip install -r frontend/requirements.txt
+
+      - name: Validate Python syntax
+        run: python -m compileall database backend frontend tests
+
+      - name: Create database and validate seed data
+        run: |
+          python -c "import sys; sys.path.insert(0, 'database'); from db_api import init_db; init_db()"
+          python tests/check_seed.py
+
+      - name: Start microservices
+        run: |
+          python database/db_api.py &
+          python backend/app.py &
+          python frontend/app.py &
+          sleep 8
+
+      - name: Smoke test live endpoints
+        run: python tests/test_endpoints.py
+
+      - name: Test full CRUD cycle
+        run: python tests/test_crud_cycle.py
+
+      - name: Build Docker images
+        run: |
+          docker build -t student-1-database database
+          docker build -t student-1-backend backend
+          docker build -t student-1-frontend frontend

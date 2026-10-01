@@ -1,0 +1,14 @@
+Your previous answer was rejected for these reasons:
+{{ISSUES}}
+
+Rewrite the preference set for the same traveller using the same evidence.
+Include every one of these lines exactly once, and copy the stored values
+faithfully - never write "none recorded" for a section that has evidence:
+
+BUDGET:
+STYLE:
+PRIORITIES:
+CONSTRAINTS:
+
+Evidence:
+{{EVIDENCE}}

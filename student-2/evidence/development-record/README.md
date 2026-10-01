@@ -1,0 +1,1 @@
+This folder contains screenshots of the development record for the Booking & Itinerary Management feature. They provide evidence of the development process and the changes made during Release 0.

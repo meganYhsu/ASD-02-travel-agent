@@ -9,3 +9,4 @@ __pycache__/
 
 *.db
 ai-services/mcp-server/.venv/
+.DS_Store

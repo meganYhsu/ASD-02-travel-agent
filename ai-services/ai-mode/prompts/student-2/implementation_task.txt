@@ -1,0 +1,39 @@
+Student:
+{{STUDENT}}
+
+Task:
+{{TASK}}
+
+Validation evidence:
+{{VALIDATION_EVIDENCE}}
+
+Human or reviewer carry-forward notes:
+{{CARRY_FORWARD}}
+
+Analyse Student 2's supplied development and integration evidence.
+
+Student 2 owns the Booking & Itinerary Management component.
+
+Important rules:
+
+1. Base every claim only on supplied evidence.
+2. Never invent files, routes, functions, database columns, APIs, test results, or requirements.
+3. Do not claim unseen source code contains a problem.
+4. Prefer one small and verifiable recommendation over a broad rewrite.
+5. If the evidence proves a concrete problem, identify it.
+6. If all supplied checks pass and no problem is shown, use status "NO_VERIFIED_ISSUE".
+7. If there is not enough evidence to determine whether a problem exists, use status "INSUFFICIENT_EVIDENCE".
+8. Carry-forward feedback must be considered when provided.
+9. Return exactly one JSON object and no markdown.
+
+Return:
+
+{
+    "status": "ISSUE_FOUND | NO_VERIFIED_ISSUE | INSUFFICIENT_EVIDENCE",
+    "observedProblem": "",
+    "evidence": [],
+    "recommendedChange": "",
+    "expectedBenefit": "",
+    "confidence": "high | medium | low",
+    "unknowns": []
+}

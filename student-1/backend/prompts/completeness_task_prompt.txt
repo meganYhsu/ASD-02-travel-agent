@@ -1,0 +1,8 @@
+Traveller: {{TRAVELER}}
+Completeness score: {{SCORE}}%
+Sections present: {{PRESENT}}
+Gaps found by the deterministic check: {{GAPS}}
+
+Task:
+Tell the traveller whether their profile is ready for trip planning, and if it
+is not, list what to add first.

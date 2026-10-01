@@ -20,16 +20,32 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install microservice dependencies
+
+      - name: Install Student-5 dependencies
         run: pip install -r requirements.txt
+
       - name: Validate Python syntax
         run: python -m compileall database backend frontend tests
-      - name: Run pytest
+
+      - name: Run Student-5 pytest suite
         run: pytest
         env:
           OLLAMA_BASE_URL: http://127.0.0.1:11434
           OLLAMA_MODEL: qwen2.5:3b
+
+      - name: Build Student-5 database Docker image
+        run: docker build -t student-5-database ./database
+
+      - name: Build Student-5 backend Docker image
+        run: docker build -t student-5-backend ./backend
+
+      - name: Build Student-5 frontend Docker image
+        run: docker build -t student-5-frontend ./frontend
+
+      - name: Verify Docker Compose configuration includes Student-5
+        run: docker compose -f ../docker-compose.yml config >/dev/null

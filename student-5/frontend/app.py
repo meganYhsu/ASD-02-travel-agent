@@ -340,6 +340,7 @@ def create_app() -> Flask:
         warnings = "".join(f"<li>{esc(item)}</li>" for item in data.get("warnings") or []) or "<li>None</li>"
         actions = "".join(f"<li>{esc(item)}</li>" for item in data.get("recommended_actions") or []) or "<li>None</li>"
         badge = "compliant" if data.get("compliant") else "not-compliant"
+        disclaimer = data.get("disclaimer") or "AI-generated travel preparation and compliance guidance should be independently verified against official government, immigration and travel sources."
         return (
             f"<article class='card {badge}'><h3>{'Compliant' if data.get('compliant') else 'Not compliant'}</h3>"
             f"<p>{esc(data.get('summary'))}</p>"
@@ -349,7 +350,8 @@ def create_app() -> Flask:
             f"<p><strong>Warnings</strong></p><ul>{warnings}</ul>"
             f"<p><strong>Recommended actions</strong></p><ul>{actions}</ul>"
             f"<p><strong>AI explanation</strong></p><p>{esc(data.get('reasoning'))}</p>"
-            f"<p class='disclaimer'>{esc(data.get('disclaimer'))}</p></article>"
+            f"<p><strong>Human verification required</strong></p><p>{esc(str(data.get('human_verification_required', True)).lower() == 'true' and 'Yes' or 'No')}</p>"
+            f"<p class='disclaimer'>{esc(disclaimer)}</p></article>"
         )
 
     @app.post("/ai/generate")
@@ -391,9 +393,11 @@ def create_app() -> Flask:
                 "pre_trip_tasks": tasks,
             }
         )
+        disclaimer = data.get("disclaimer") or "AI-generated travel preparation and compliance guidance should be independently verified against official government, immigration and travel sources."
         return (
             "<article class='card'><h3>Review AI suggestions before saving</h3>"
             "<p>These items are not stored until you accept them.</p>"
+            f"<p class='disclaimer'>{esc(disclaimer)}</p>"
             f"<table><thead><tr><th>Item</th><th>Category</th><th>Qty</th><th>Why</th></tr></thead>"
             f"<tbody>{packing_rows}</tbody></table>"
             f"<table><thead><tr><th>Task</th><th>Priority</th><th>Due</th><th>Why</th></tr></thead>"
@@ -409,6 +413,27 @@ def create_app() -> Flask:
         if status not in (200, 201):
             return error_banner((body or {}).get("error") or "Could not save suggestions")
         return success_banner("Accepted suggestions saved. AI-generated records are flagged.") + load_packing_view()
+
+    @app.post("/ai/assistant")
+    def ai_assistant():
+        question = (request.form.get("question") or "").strip()
+        status, body = api("POST", "/api/ai/assistant", json={"question": question})
+        if status != 200:
+            return error_banner((body or {}).get("error") or "Travel assistant unavailable")
+        data = body.get("data") or {}
+        sources = "".join(
+            f"<li><strong>{esc(item.get('section'))}</strong> — {esc(item.get('source'))}</li>"
+            for item in data.get("sources") or []
+        ) or "<li>No matching source was found.</li>"
+        return (
+            "<article class='card assistant-answer' aria-live='polite'>"
+            f"<p class='assistant-question'><strong>You asked:</strong> {esc(question)}</p>"
+            f"<div class='assistant-response'>{esc(data.get('answer'))}</div>"
+            f"<p class='retrieval-mode'>Response mode: {esc(data.get('mode'))}</p>"
+            f"<h3>Sources</h3><ul>{sources}</ul>"
+            f"<p class='disclaimer'>{esc(data.get('disclaimer'))}</p>"
+            "</article>"
+        )
 
     @app.get("/partials/agentic")
     def partial_agentic():
