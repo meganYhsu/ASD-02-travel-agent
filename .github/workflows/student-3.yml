@@ -33,6 +33,9 @@ jobs:
           cd ..
           python tests/check_seed.py
       - name: Smoke test live endpoints
+        env:
+          MCP_ENABLED: "false"
+          RAG_ENABLED: "false"
         run: |
           python database/db_api.py &
           python backend/app.py &
