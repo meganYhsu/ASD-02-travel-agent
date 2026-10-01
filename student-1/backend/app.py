@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from markupsafe import escape
 from pathlib import Path
+import json
 import os
 import requests
 
@@ -21,6 +22,18 @@ load_dotenv()
 DB_API_URL = os.getenv("DB_API_URL", "http://127.0.0.1:6001")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
+
+# Shared MCP server runs on the host, not in Docker, so in compose this is
+# http://host.docker.internal:7004. CI sets MCP_ENABLED=false.
+MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://127.0.0.1:7004").rstrip("/")
+MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() not in ("false", "0", "no")
+
+# The only shared MCP tools this feature may call - its own data, nothing else.
+MCP_TOOLS = {
+    "get_traveler_profile": "Traveller profile",
+    "get_traveler_interests": "Ranked interests",
+    "get_accessibility_needs": "Accessibility and dietary needs",
+}
 
 PROMPT_DIR = Path(__file__).with_name("prompts")
 PORT = int(os.getenv("PORT", "5001"))
@@ -750,6 +763,56 @@ def completeness(traveler_id):
     """
 
 
+# ------------------------------------------------------------ shared MCP tools
+@app.route("/mcp/tool", methods=["POST"])
+def run_mcp_tool():
+    """Frontend -> this backend -> shared MCP HTTP server -> tools.py and back.
+
+    Accepts form data (HTMX) or JSON: tool_name and traveler_id.
+    """
+    data = request.get_json(silent=True) or request.form
+    tool_name = data.get("tool_name", "")
+    try:
+        traveler_id = int(data.get("traveler_id", ""))
+    except (TypeError, ValueError):
+        traveler_id = 0
+
+    if tool_name not in MCP_TOOLS:
+        return f"<p class='error'>Unknown MCP tool: {escape(tool_name)}</p>", 400
+    if traveler_id < 1:
+        return "<p class='error'>Select a traveller first.</p>", 400
+    if not MCP_ENABLED:
+        return "<p class='muted'>MCP is disabled in this environment.</p>", 503
+
+    log_stage("MCP", f"Calling shared MCP tool {tool_name} for traveler {traveler_id}.")
+    try:
+        resp = requests.post(
+            f"{MCP_BASE_URL}/mcp/tool",
+            json={"tool_name": tool_name, "arguments": {"traveler_id": traveler_id}},
+            timeout=15,
+        )
+        payload = resp.json()
+    except (requests.RequestException, ValueError):
+        return ("<p class='error'>The shared MCP server is unavailable. "
+                "Start it with python3 ai-services/mcp-server/http_server.py.</p>"), 503
+
+    if not payload.get("ok"):
+        return ("<p class='error'>MCP tool failed.</p>"
+                f"<pre>{escape(payload.get('error', 'unknown error'))}</pre>"), 502
+
+    result = payload["result"]
+    log_stage("MCP", f"{tool_name} returned {len(json.dumps(result))} bytes.")
+    error_html = f"<p class='error'>{escape(result['error'])}</p>" if result.get("error") else ""
+    return f"""
+    <div>
+      <p><strong>{escape(MCP_TOOLS[tool_name])}</strong>
+         <span class='muted'>&middot; shared MCP tool <code>{escape(tool_name)}</code></span></p>
+      {error_html}
+      <pre>{escape(json.dumps(result, indent=2))}</pre>
+    </div>
+    """
+
+
 # ------------------------------------------------------- cross-feature contract
 @app.route("/preference-set/<int:traveler_id>")
 def preference_set(traveler_id):
@@ -768,7 +831,8 @@ def preference_set(traveler_id):
 
 @app.route("/health")
 def health():
-    return jsonify({"service": "student-1-backend", "model": OLLAMA_MODEL, "status": "ok"})
+    return jsonify({"service": "student-1-backend", "model": OLLAMA_MODEL,
+                    "mcp_enabled": MCP_ENABLED, "status": "ok"})
 
 
 if __name__ == "__main__":

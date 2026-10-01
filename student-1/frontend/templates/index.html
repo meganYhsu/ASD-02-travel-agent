@@ -190,6 +190,29 @@
         <span id="completeness-loading" class="htmx-indicator">Checking...</span>
         <div id="ai-completeness"></div>
     </section>
+
+    <section class="section-card">
+        <h2>MCP tools</h2>
+        <p class="muted">
+            Runs a tool on the shared MCP server for the selected traveller and
+            shows the structured result it returns.
+        </p>
+        <div class="traveler-bar">
+            <label for="mcp-tool">Tool</label>
+            <select id="mcp-tool" name="tool_name">
+                <option value="get_traveler_profile">Traveller profile</option>
+                <option value="get_traveler_interests">Ranked interests</option>
+                <option value="get_accessibility_needs">Accessibility and dietary needs</option>
+            </select>
+            <button class="primary-button" hx-target="#mcp-result"
+                    hx-indicator="#mcp-loading"
+                    hx-post="/api/mcp/tool" hx-include="#traveler-picker, #mcp-tool">
+                Run MCP tool
+            </button>
+            <span id="mcp-loading" class="htmx-indicator">Running...</span>
+        </div>
+        <div id="mcp-result"></div>
+    </section>
 </main>
 </body>
 </html>

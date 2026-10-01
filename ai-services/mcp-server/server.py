@@ -10,7 +10,10 @@ from tools import (
     get_trip_activities_desc as get_trip_activities_desc_tool,
     get_trip_activities_for_day_desc as get_trip_activities_for_day_desc_tool,
     get_activity_start_times as get_activity_start_times_tool,
-    get_travel_requirements as get_travel_requirements_tool
+    get_travel_requirements as get_travel_requirements_tool,
+    get_traveler_profile as get_traveler_profile_tool,
+    get_traveler_interests as get_traveler_interests_tool,
+    get_accessibility_needs as get_accessibility_needs_tool
     )
 
 
@@ -24,7 +27,10 @@ AVAILABLE_TOOLS = [
     "get_trip_activities_desc",
     "get_trip_activities_for_day_desc",
     "get_activity_start_times",
-    "get_travel_requirements"
+    "get_travel_requirements",
+    "get_traveler_profile",
+    "get_traveler_interests",
+    "get_accessibility_needs"
 ]
 
 # making MCP tools:
@@ -52,6 +58,19 @@ def get_activity_start_times(itinerary_id):
 @mcp.tool()
 def get_travel_requirements(itinerary_id):
     return get_travel_requirements_tool(itinerary_id)
+
+# student 1 - Traveler Preferences tools:
+@mcp.tool()
+def get_traveler_profile(traveler_id: int):
+    return get_traveler_profile_tool(traveler_id)
+
+@mcp.tool()
+def get_traveler_interests(traveler_id: int):
+    return get_traveler_interests_tool(traveler_id)
+
+@mcp.tool()
+def get_accessibility_needs(traveler_id: int):
+    return get_accessibility_needs_tool(traveler_id)
 
 if __name__ == "__main__":
     print("Available tools:")

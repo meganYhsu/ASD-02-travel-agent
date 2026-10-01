@@ -110,6 +110,35 @@ loop caught and corrected it:
 [AGENTIC LOOP][OBSERVE] After adapt, issues: 0. Retry accepted.
 ```
 
+## Shared MCP tools (Release 1)
+
+The **MCP tools** card on the page runs a tool on the shared MCP server for the
+selected traveller:
+
+```
+frontend (3001) -> backend POST /mcp/tool (5001) -> shared MCP HTTP server (7004)
+  -> mcp_mode.py -> tools.py -> database API GET /preference-set/<id> (6001)
+```
+
+| Tool | Returns |
+|---|---|
+| `get_traveler_profile` | name, home location, travel style, budget range, pace |
+| `get_traveler_interests` | interests ranked by priority |
+| `get_accessibility_needs` | accessibility requirements and dietary restrictions |
+
+Boundaries: the backend only forwards these three tool names (anything else is
+a 400), and each tool only accepts a positive integer `traveler_id`.
+
+The MCP server is not containerised. Start it on the host before using the card:
+
+```bash
+python3 ai-services/mcp-server/http_server.py
+```
+
+In Docker the backend reaches it at `http://host.docker.internal:7004`
+(`MCP_BASE_URL`). `MCP_ENABLED=false` switches the integration off; CI does
+this, and the route then answers `503 MCP is disabled`.
+
 ## Running it
 
 As part of the integrated application, from the repository root:
@@ -141,10 +170,11 @@ python frontend/app.py
 python tests/check_seed.py        # every table has at least 10 records
 python tests/test_endpoints.py    # 16 endpoint and validation checks
 python tests/test_crud_cycle.py   # 12 checks: create -> read -> update -> delete -> cascade
+python tests/test_mcp.py          # MCP boundaries, plus tool results (or the disabled response)
 ```
 
-`.github/workflows/student-1.yml` runs all three on every push, then builds the
-three Docker images.
+`.github/workflows/student-1.yml` runs all four on every push, with
+`MCP_ENABLED=false`, then builds the three Docker images.
 
 ## Known issues and limitations
 
