@@ -76,6 +76,7 @@
         <button class="tab" data-tab="packing">Packing</button>
         <button class="tab" data-tab="tasks">Pre-Trip Tasks</button>
         <button class="tab" data-tab="assistant">Travel Assistant</button>
+        <button class="tab" data-tab="mcp">MCP Tools</button>
         <button class="tab" data-tab="agentic">Plan → Act → Observe → Adapt</button>
     </nav>
 
@@ -212,6 +213,15 @@
             </form>
             <div id="assistant-loading" class="htmx-indicator loading">Searching approved travel guidance…</div>
             <div id="assistant-result"></div>
+        </section>
+
+        <section id="mcp" class="panel">
+            <h2>MCP Tools</h2>
+            <p>Run a shared MCP tool. Results come from the student backend, which forwards your request to the
+                shared MCP HTTP server.</p>
+            <div id="mcp-loading" class="htmx-indicator loading">Running tool…</div>
+            <div id="mcp-tools" hx-get="/partials/mcp" hx-trigger="load"></div>
+            <div id="mcp-result"></div>
         </section>
 
         <section id="agentic" class="panel">

@@ -11,6 +11,10 @@ OLLAMA_MODEL = env("OLLAMA_MODEL", "qwen2.5:3b")
 OLLAMA_TIMEOUT_SECONDS = int(env("OLLAMA_TIMEOUT_SECONDS", "180"))
 RAG_SERVICE_URL = env("RAG_SERVICE_URL", "http://127.0.0.1:7005")
 RAG_TIMEOUT_SECONDS = int(env("RAG_TIMEOUT_SECONDS", "130"))
+# Must point to the host machine (e.g. host.docker.internal) when this backend runs in a container,
+# because the shared MCP server runs on the host, not as a container on this service's network.
+MCP_BASE_URL = env("MCP_BASE_URL", "http://127.0.0.1:7100")
+MCP_TIMEOUT_SECONDS = int(env("MCP_TIMEOUT_SECONDS", "15"))
 EXPIRY_WARNING_DAYS = int(env("EXPIRY_WARNING_DAYS", "90"))
 PORT = int(env("PORT", "5505"))
 DOCUMENT_TYPES = (

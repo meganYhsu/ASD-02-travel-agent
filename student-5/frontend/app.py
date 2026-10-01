@@ -184,6 +184,26 @@ def tasks_markup(tasks: list[dict[str, Any]], progress: dict[str, Any], message:
     )
 
 
+def mcp_tools_markup(tools: list[dict[str, Any]]) -> str:
+    if not tools:
+        return "<p class='empty'>No MCP tools are currently available.</p>"
+    cards = []
+    for tool in tools:
+        name = esc(tool.get("name"))
+        description = esc(tool.get("description"))
+        fields = "".join(
+            f"<label>{esc(arg)} <input name='{esc(arg)}' required></label>"
+            for arg in tool.get("arguments") or []
+        )
+        cards.append(
+            f"<article class='card'><h3>{name}</h3><p>{description}</p>"
+            "<form class='inline' hx-post='/mcp/run' hx-target='#mcp-result' hx-indicator='#mcp-loading'>"
+            f"<input type='hidden' name='tool' value='{name}'>{fields}"
+            "<button type='submit'>Run</button></form></article>"
+        )
+    return "".join(cards)
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
 
@@ -433,6 +453,30 @@ def create_app() -> Flask:
             f"<h3>Sources</h3><ul>{sources}</ul>"
             f"<p class='disclaimer'>{esc(data.get('disclaimer'))}</p>"
             "</article>"
+        )
+
+    @app.get("/partials/mcp")
+    def partial_mcp():
+        status, body = api("GET", "/api/mcp/tools")
+        if status != 200:
+            return error_banner((body or {}).get("error") or "Unable to load MCP tools")
+        return mcp_tools_markup(body.get("data") or [])
+
+    @app.post("/mcp/run")
+    def mcp_run():
+        tool_name = (request.form.get("tool") or "").strip()
+        arguments = {key: value for key, value in request.form.items() if key != "tool"}
+        status, body = api("POST", "/api/mcp/run", json={"tool": tool_name, "arguments": arguments})
+        if status != 200:
+            return error_banner((body or {}).get("error") or "MCP tool run failed")
+        data = body.get("data") or {}
+        result = data.get("result") or {}
+        rows = "".join(
+            f"<tr><td>{esc(key)}</td><td>{esc(value)}</td></tr>" for key, value in result.items()
+        )
+        return (
+            f"<article class='card'><h3>Result: {esc(data.get('tool'))}</h3>"
+            f"<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>{rows}</tbody></table></article>"
         )
 
     @app.get("/partials/agentic")

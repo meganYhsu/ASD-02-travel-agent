@@ -16,6 +16,8 @@ AI flow: User -> frontend -> Flask API -> Ollama (port 11434) -> qwen2.5:3b -> s
 
 Shared assistant flow: User -> Travel Assistant tab -> Flask API -> shared RAG server (port 7005) -> approved Markdown retrieval -> optional Ollama grounded answer -> cited response
 
+Shared MCP flow: User -> MCP Tools tab -> Flask API (`/api/mcp/tools`, `/api/mcp/run`) -> shared MCP server on the host (port 7100) -> `mcp_mode.py` selects a tool from `tools.py` -> result returned to the frontend
+
 The frontend never queries SQLite. SQL lives in `database/db.py` and uses parameterised queries.
 
 ## Frontend
@@ -63,6 +65,8 @@ SQLite tables and seed counts:
 - POST `/api/ai/generate-pretrip-checklist`
 - POST `/api/ai/save-pretrip-checklist`
 - POST `/api/ai/assistant`
+- GET `/api/mcp/tools`
+- POST `/api/mcp/run`
 - POST `/api/alerts/compliance`
 - GET `/api/agentic/status`
 - GET `/health`
@@ -164,6 +168,8 @@ docker compose exec ollama ollama pull qwen2.5:3b
 - `EXPIRY_WARNING_DAYS` Expiry alert window
 - `RAG_SERVICE_URL` Shared RAG server, default `http://127.0.0.1:7005`
 - `RAG_TIMEOUT_SECONDS` Shared RAG request timeout
+- `MCP_BASE_URL` Shared MCP server, default `http://127.0.0.1:7100` (use `http://host.docker.internal:7100` when the backend runs in Docker)
+- `MCP_TIMEOUT_SECONDS` Shared MCP request timeout
 
 ## Known limitations
 
@@ -171,4 +177,4 @@ docker compose exec ollama ollama pull qwen2.5:3b
 - No login/auth in Release 0; traveller and trip IDs are demo strings.
 - Live AI quality depends on the local Ollama model being pulled.
 - The shared RAG knowledge base is deliberately small and must be expanded only with reviewed sources.
-- MCP and multi-agent runtime features are not implemented; student-5 currently uses the shared RAG HTTP service.
+- The shared MCP server (`ai-services/mcp-server`) provides a small deterministic tool set and must be started separately on the host; see its README for setup and verification. Multi-agent runtime features are out of scope for Release 0.

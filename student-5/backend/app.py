@@ -17,14 +17,16 @@ if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
 from compliance import compute_document_status, evaluate_compliance, trip_duration_days
-from config import DATABASE_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
+from config import DATABASE_SERVICE_URL, MCP_BASE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
 from db_client import DatabaseClient, DatabaseUnavailable
+from mcp_client import McpClient, McpError
 from ollama_client import OllamaClient, OllamaError
 from rag_client import RagClient, RagError
 from validation import (
     ValidationError,
     parse_id,
     require_bool,
+    require_non_empty,
     require_object,
     validate_checklist_item,
     validate_compliance_request,
@@ -66,11 +68,13 @@ def create_app(
     db_client: DatabaseClient | None = None,
     ollama_client: OllamaClient | None = None,
     rag_client: RagClient | None = None,
+    mcp_client: McpClient | None = None,
 ) -> Flask:
     app = Flask(__name__)
     app.config["DB_CLIENT"] = db_client or DatabaseClient(DATABASE_SERVICE_URL)
     app.config["OLLAMA"] = ollama_client or OllamaClient()
     app.config["RAG"] = rag_client or RagClient()
+    app.config["MCP"] = mcp_client or McpClient()
 
     def db() -> DatabaseClient:
         return app.config["DB_CLIENT"]
@@ -80,6 +84,9 @@ def create_app(
 
     def rag() -> RagClient:
         return app.config["RAG"]
+
+    def mcp() -> McpClient:
+        return app.config["MCP"]
 
     def forward(status: int, body: Any):
         if status == 204:
@@ -166,8 +173,31 @@ def create_app(
                 "ollama_url": OLLAMA_BASE_URL,
                 "ollama_model": OLLAMA_MODEL,
                 "rag_service_url": RAG_SERVICE_URL,
+                "mcp_service_url": MCP_BASE_URL,
             }
         )
+
+    @app.get("/api/mcp/tools")
+    def mcp_tools():
+        try:
+            return json_ok(mcp().list_tools())
+        except McpError as exc:
+            return json_error(exc.message, exc.status)
+
+    @app.post("/api/mcp/run")
+    def mcp_run():
+        try:
+            payload = require_object(request.get_json(silent=True))
+            tool_name = require_non_empty(payload, "tool")
+            arguments = payload.get("arguments") or {}
+            if not isinstance(arguments, dict):
+                raise ValidationError("arguments must be an object")
+        except ValidationError as exc:
+            return json_error(exc.message, exc.status)
+        try:
+            return json_ok(mcp().run_tool(tool_name, arguments))
+        except McpError as exc:
+            return json_error(exc.message, exc.status)
 
     @app.post("/api/ai/assistant")
     def travel_assistant():

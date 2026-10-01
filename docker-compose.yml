@@ -260,7 +260,14 @@ services:
       OLLAMA_TIMEOUT_SECONDS: "180"
       RAG_SERVICE_URL: http://rag-server:7005
       RAG_TIMEOUT_SECONDS: "130"
+      # The shared MCP server runs on the host machine, not as a container on this network,
+      # so this must resolve to the host rather than the container's own localhost.
+      MCP_BASE_URL: http://host.docker.internal:7100
+      MCP_TIMEOUT_SECONDS: "15"
       EXPIRY_WARNING_DAYS: "90"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5505:5505"
