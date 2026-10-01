@@ -139,6 +139,44 @@ In Docker the backend reaches it at `http://host.docker.internal:7004`
 (`MCP_BASE_URL`). `MCP_ENABLED=false` switches the integration off; CI does
 this, and the route then answers `503 MCP is disabled`.
 
+## Shared RAG questions (Release 1)
+
+The **Ask the travel knowledge base** card sends a question to the shared RAG
+server and shows a grounded answer:
+
+```
+frontend (3001) -> backend POST /rag/ask (5001) -> shared RAG server POST /rag/answer (7001)
+  -> ChromaDB search (nomic-embed-text) -> grounded answer (llama3.1:8b)
+```
+
+- Each answer shows a **confidence** rating and the **source chunks** it used.
+- If the server answers "Insufficient evidence", or answers without citing a
+  retrieved chunk, the page shows an **insufficient-context** message instead.
+- Questions must be 1-300 characters.
+
+Student 1's data is indexed as one chunk per traveller (`student1-traveller-<id>`),
+built from `/preference-set/<id>` in `rag-server/rag_pipeline.py`. A chunk
+covers the traveller's home, style, budget, pace, interests and needs, so a
+question that names a traveller retrieves all of it.
+
+Run the RAG server on the host, with Ollama running and both models pulled:
+
+```bash
+ollama pull nomic-embed-text
+pip install -r rag-server/requirements.txt
+BOOKING_SERVICE_URL=http://127.0.0.1:6002 TRAVEL_PLAN_SERVICE_URL=http://127.0.0.1:6004 \
+  python rag-server/rag_http_server.py
+curl -X POST http://127.0.0.1:7001/rag/refresh   # rebuild the index from live data
+```
+
+The two URLs point the student-2 and student-4 loaders at their docker-compose
+ports. In Docker the backend reaches the server at
+`http://host.docker.internal:7001` (`RAG_BASE_URL`). `RAG_ENABLED=false`
+switches it off; CI does this, and the route answers `503 RAG is disabled`.
+
+Example questions: "What dietary restriction does Traveller One have?",
+"Which travellers have a luxury travel style?"
+
 ## Running it
 
 As part of the integrated application, from the repository root:
@@ -171,10 +209,11 @@ python tests/check_seed.py        # every table has at least 10 records
 python tests/test_endpoints.py    # 16 endpoint and validation checks
 python tests/test_crud_cycle.py   # 12 checks: create -> read -> update -> delete -> cascade
 python tests/test_mcp.py          # MCP boundaries, plus tool results (or the disabled response)
+python tests/test_rag.py          # RAG input checks, grounded + insufficient-context answers (or disabled)
 ```
 
-`.github/workflows/student-1.yml` runs all four on every push, with
-`MCP_ENABLED=false`, then builds the three Docker images.
+`.github/workflows/student-1.yml` runs all five on every push, with
+`MCP_ENABLED=false` and `RAG_ENABLED=false`, then builds the three Docker images.
 
 ## Known issues and limitations
 

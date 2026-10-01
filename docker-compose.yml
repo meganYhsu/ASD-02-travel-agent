@@ -98,8 +98,10 @@ services:
       OLLAMA_MODEL: qwen2.5:0.5b
       MCP_BASE_URL: http://host.docker.internal:7004
       MCP_ENABLED: "true"
+      RAG_BASE_URL: http://host.docker.internal:7001
+      RAG_ENABLED: "true"
 
-    # Lets host.docker.internal reach the host-run MCP server on Linux too.
+    # Lets host.docker.internal reach the host-run MCP and RAG servers on Linux too.
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
