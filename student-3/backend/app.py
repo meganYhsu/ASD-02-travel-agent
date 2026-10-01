@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from openai import OpenAI
 from markupsafe import escape
@@ -13,6 +13,28 @@ DB_API_URL = os.getenv("DB_API_URL", "http://127.0.0.1:6003")
 TRIP_API_URL = os.getenv("TRIP_API_URL", "http://127.0.0.1:6004")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:7004")
+RAG_SERVER_URL = os.getenv("RAG_SERVER_URL", "http://127.0.0.1:7001")
+MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() == "true"
+RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
+RAG_CALLER = os.getenv("RAG_CALLER", "student-3-budget")
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
+RAG_TIMEOUT_SECONDS = int(os.getenv("RAG_TIMEOUT_SECONDS", "300"))
+
+ALLOWED_MCP_TOOLS = {
+    "total_activity_count":
+        "Planned activity count for a trip - gives budget per activity",
+    "total_activities_count_a_day":
+        "Planned activities on one day - gives daily budget pacing",
+    "get_trip_activities_desc":
+        "Planned activity descriptions - matches expenses to the itinerary",
+}
+
+MCP_TOOL_ARGUMENTS = {
+    "total_activity_count": ("itinerary_id",),
+    "total_activities_count_a_day": ("itinerary_id", "day_no"),
+    "get_trip_activities_desc": ("itinerary_id",),
+}
 
 PROMPT_DIR = Path(__file__).with_name("prompts")
 
@@ -23,7 +45,37 @@ client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 
 def load_prompt(filename):
     return (PROMPT_DIR / filename).read_text(encoding="utf-8").strip()
+RAG_ANSWER_KEYS = ("answer", "response", "output", "text")
+RAG_LIST_KEYS = ("citations", "results", "sources", "documents",
+                 "contexts", "chunks")
+RAG_CONFIDENCE_KEYS = ("confidence_category", "confidence", "confidence_label")
+RAG_TITLE_KEYS = ("source_id", "chunk_id", "title", "source", "document", "id")
+RAG_SNIPPET_KEYS = ("text", "snippet", "content", "chunk")
 
+
+def read_first(payload, *keys):
+    """Return the first key present in payload, or None."""
+    if not isinstance(payload, dict):
+        return None
+    for key in keys:
+        if key in payload and payload[key] not in (None, ""):
+            return payload[key]
+    return None
+
+def request_value(name, as_int=False):
+    """Read a field from a form post (htmx) or a JSON body (agentic loop)."""
+    raw = request.form.get(name)
+    if raw is None:
+        body = request.get_json(silent=True) or {}
+        raw = body.get(name)
+    if raw is None or raw == "":
+        return None
+    if as_int:
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
+    return str(raw)
 
 def get_trip(trip_id):
     try:
@@ -312,5 +364,382 @@ def decide(rec_id):
     return f"<p>Recommendation {status}. Decision recorded for human review evidence.</p>"
 
 
+# =============================================================================
+# RELEASE 1 - MCP
+# =============================================================================
+@app.route("/mcp/tools")
+def mcp_tools():
+    """Registered tools on the shared MCP server, with this feature's boundary.
+
+    Shared server contract:
+        GET {MCP_SERVER_URL}/mcp/tools -> {"ok": true, "tools": ["name", ...]}
+    """
+    if not MCP_ENABLED:
+        return ("<p class='error'>MCP mode is disabled in this environment "
+                "(MCP_ENABLED=false).</p>"), 503
+
+    try:
+        resp = requests.get(f"{MCP_SERVER_URL}/mcp/tools", timeout=5)
+        resp.raise_for_status()
+        payload = resp.json()
+    except requests.RequestException:
+        return ("<p class='error'>Shared MCP server is unavailable at "
+                f"{escape(MCP_SERVER_URL)}. Start it locally and try again.</p>"), 503
+    except ValueError:
+        return "<p class='error'>MCP server returned a non-JSON response.</p>", 502
+
+    if isinstance(payload, dict):
+        server_tools = payload.get("tools", [])
+    else:
+        server_tools = payload
+
+    names = []
+    for t in server_tools:
+        names.append(t.get("name") if isinstance(t, dict) else str(t))
+
+    rows = ""
+    for name in names:
+        if name in ALLOWED_MCP_TOOLS:
+            verdict = "permitted"
+            purpose = ALLOWED_MCP_TOOLS[name]
+        else:
+            verdict = "outside this feature's boundary"
+            purpose = "owned by another feature"
+        rows += (f"<tr><td>{escape(name)}</td><td>{escape(purpose)}</td>"
+                 f"<td>{verdict}</td></tr>")
+
+    missing = [n for n in ALLOWED_MCP_TOOLS if n not in names]
+    note = ""
+    if missing:
+        note = ("<p class='error'>Permitted but not registered on the shared "
+                f"server: {escape(', '.join(missing))}</p>")
+
+    return f"""
+    <h4>Tools on the shared MCP server ({len(names)} registered)</h4>
+    <table>
+      <tr><th>Tool</th><th>Purpose for Budget</th><th>Boundary</th></tr>
+      {rows}
+    </table>
+    {note}
+    <p class="muted">A tool outside this feature's boundary is refused by this
+       backend before the MCP server is contacted.</p>
+    """
+
+
+@app.route("/mcp/<tool_name>", methods=["POST"])
+def mcp_call(tool_name):
+    """Frontend -> backend/API -> shared local MCP server -> registered tool.
+
+    Shared server contract:
+        POST {MCP_SERVER_URL}/mcp/tool
+        <- {"tool_name": "<name>", "arguments": {...}}
+        -> {"ok": true, "tool_name": "<name>", "result": {...}}
+        -> {"ok": false, "error": "<message>"}   on failure
+    """
+    if tool_name not in ALLOWED_MCP_TOOLS:
+        return (f"<p class='error'>Tool '{escape(tool_name)}' is outside the "
+                "Budget &amp; Expense Tracking boundary and was refused by "
+                "this backend. The shared MCP server was not contacted.</p>"), 403
+
+    if not MCP_ENABLED:
+        return ("<p class='error'>MCP mode is disabled in this environment "
+                "(MCP_ENABLED=false).</p>"), 503
+
+    arguments = {}
+    for arg in MCP_TOOL_ARGUMENTS.get(tool_name, ()):
+        if arg == "itinerary_id":
+            value = request_value("trip_id", as_int=True)
+        elif arg == "day_no":
+            value = request_value("day_no", as_int=True)
+            if value is None:
+                value = 1
+        else:
+            value = request_value(arg, as_int=True)
+        if value is None:
+            return (f"<p class='error'>{escape(arg)} is required for "
+                    f"{escape(tool_name)}.</p>"), 400
+        arguments[arg] = value
+
+    try:
+        resp = requests.post(
+            f"{MCP_SERVER_URL}/mcp/tool",
+            json={"tool_name": tool_name, "arguments": arguments},
+            timeout=15,
+        )
+    except requests.RequestException:
+        return ("<p class='error'>Shared MCP server is unavailable at "
+                f"{escape(MCP_SERVER_URL)}. Start it locally and try again.</p>"), 503
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return "<p class='error'>MCP server returned a non-JSON response.</p>", 502
+
+    if resp.status_code >= 400 or not data.get("ok", True):
+        message = data.get("error", f"HTTP {resp.status_code}")
+        return f"<p class='error'>MCP tool failed: {escape(str(message))}</p>", 502
+
+    result = data.get("result", data)
+
+    rows = ""
+    if isinstance(result, dict):
+        for key, value in result.items():
+            if isinstance(value, list):
+                value = "; ".join(str(v) for v in value)
+            rows += (f"<tr><td>{escape(str(key))}</td>"
+                     f"<td>{escape(str(value))}</td></tr>")
+    elif isinstance(result, list):
+        for i, value in enumerate(result, start=1):
+            rows += f"<tr><td>{i}</td><td>{escape(str(value))}</td></tr>"
+    else:
+        rows = f"<tr><td>result</td><td>{escape(str(result))}</td></tr>"
+
+    return f"""
+    <h4>MCP tool result</h4>
+    <p>Tool: <strong>{escape(tool_name)}</strong>
+       &middot; arguments: {escape(str(arguments))}
+       &middot; purpose: {escape(ALLOWED_MCP_TOOLS[tool_name])}</p>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      {rows}
+    </table>
+    <p class="muted">Itinerary data was read through the shared MCP server, not
+       from the Trip Planning database directly.</p>
+    """
+
+
+@app.route("/mcp/provide/budget_summary/<int:trip_id>")
+def mcp_provide_budget_summary(trip_id):
+    """Tool-provider endpoint.
+
+    The shared MCP server registers 'get_budget_summary' and executes it by
+    calling this endpoint, so budget data stays behind this feature's own API
+    (Cross-Feature Database API rule). JSON, not HTML - the caller is a service.
+    """
+    try:
+        budget = requests.get(f"{DB_API_URL}/budgets/{trip_id}", timeout=5).json()
+        expenses = requests.get(
+            f"{DB_API_URL}/expenses", params={"trip_id": trip_id}, timeout=5
+        ).json()
+    except requests.RequestException:
+        return jsonify({"error": "budget database service unavailable"}), 503
+
+    if "error" in budget:
+        return jsonify({"error": f"no budget for trip {trip_id}"}), 404
+
+    spent = 0
+    for e in expenses:
+        spent += e["amount"]
+
+    per_cat = {}
+    for e in expenses:
+        per_cat[e["category_name"]] = per_cat.get(e["category_name"], 0) + e["amount"]
+    top_category = ""
+    if per_cat:
+        top_category = sorted(per_cat.items(), key=lambda x: x[1], reverse=True)[0][0]
+
+    return jsonify({
+        "trip_id": trip_id,
+        "currency": budget["currency"],
+        "total_budget": round(budget["total_budget"], 2),
+        "spent": round(spent, 2),
+        "remaining": round(budget["total_budget"] - spent, 2),
+        "expense_count": len(expenses),
+        "top_category": top_category,
+    })
+
+# =============================================================================
+# RELEASE 1 - RAG
+# =============================================================================
+@app.route("/rag/query", methods=["POST"])
+def rag_query():
+    """Frontend -> backend/API -> shared local RAG server -> grounded answer."""
+    if not RAG_ENABLED:
+        return ("<p class='error'>RAG mode is disabled in this environment "
+                "(RAG_ENABLED=false).</p>"), 503
+    
+    question = (request_value("question") or "").strip()
+    if not question:
+        return "<p class='error'>A question is required.</p>", 400
+
+    try:
+        resp = requests.post(
+            f"{RAG_SERVER_URL}/rag/answer",
+            json={
+                "query": question,
+                "k": RAG_TOP_K,
+                "caller": RAG_CALLER,
+            },
+            timeout=RAG_TIMEOUT_SECONDS,
+        )
+    except requests.Timeout:
+        return ("<p class='error'>The shared RAG server did not answer within "
+                f"{RAG_TIMEOUT_SECONDS} seconds. The local model is still "
+                "generating - try a shorter question or retry.</p>"), 504
+    except requests.RequestException:
+        return ("<p class='error'>Shared RAG server is unavailable at "
+                f"{escape(RAG_SERVER_URL)}. Start it locally and try again.</p>"), 503
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return "<p class='error'>RAG server returned a non-JSON response.</p>", 502
+
+    if resp.status_code >= 400 or data.get("status") == "error":
+        message = data.get("error", f"HTTP {resp.status_code}")
+        return f"<p class='error'>RAG query failed: {escape(str(message))}</p>", 502
+    
+    answer = str(read_first(data, *RAG_ANSWER_KEYS) or "").strip()
+    citations = read_first(data, *RAG_LIST_KEYS) or []
+    confidence = str(read_first(data, *RAG_CONFIDENCE_KEYS) or "unknown").lower()
+    summary = data.get("retrieval_summary") or {}
+    retrieved_count = summary.get("retrieved_count")
+
+    if answer.strip().lower() == "insufficient evidence." or not answer:
+        detail = ""
+        if retrieved_count:
+            detail = (f"<p class='muted'>{retrieved_count} chunks were retrieved "
+                      "but none supported an answer.</p>")
+        return f"""
+        <div class="rag-answer">
+          <p class="error"><strong>Insufficient context.</strong>
+             The shared knowledge base holds no evidence that supports an
+             answer to this question, so no grounded answer is given.</p>
+          <p>Question: {escape(question)}</p>
+          {detail}
+          <p class="muted">Confidence: {escape(confidence)}
+             &middot; Citations: 0</p>
+        </div>
+        """
+
+    if not citations:
+        return f"""
+        <div class="rag-answer">
+          <p class="error"><strong>Answer not grounded.</strong>
+             The model produced text but returned no supporting citations,
+             so it is not presented as a grounded answer.</p>
+          <p>{escape(answer)}</p>
+          <p class="muted">Confidence: {escape(confidence)}
+             &middot; Citations: 0
+             &middot; Chunks retrieved: {escape(str(retrieved_count or 0))}</p>
+        </div>
+        """
+    
+    has_text = any(
+        isinstance(c, dict) and read_first(c, *RAG_SNIPPET_KEYS)
+        for c in citations
+    )
+
+    rows = ""
+    for i, c in enumerate(citations, start=1):
+        if isinstance(c, dict):
+            source = read_first(c, *RAG_TITLE_KEYS) or f"source {i}"
+            chunk_id = c.get("chunk_id", "")
+            tier = c.get("authority_tier", "")
+            snippet = str(read_first(c, *RAG_SNIPPET_KEYS) or "")
+        else:
+            source, chunk_id, tier, snippet = str(c), "", "", ""
+        if len(snippet) > 160:
+            snippet = snippet[:160] + "..."
+        text_cell = f"<td>{escape(snippet)}</td>" if has_text else ""
+        rows += (f"<tr><td>[{i}]</td><td>{escape(str(source))}</td>"
+                 f"<td>{escape(str(chunk_id))}</td><td>{escape(str(tier))}</td>"
+                 f"{text_cell}</tr>")
+
+    text_header = "<th>Text</th>" if has_text else ""
+
+    return f"""
+    <div class="rag-answer">
+      <p>{escape(answer)}</p>
+      <p class="muted">Confidence: <strong>{escape(confidence)}</strong>
+         &middot; Citations: {len(citations)}
+         &middot; Chunks retrieved: {escape(str(retrieved_count or len(citations)))}</p>
+      <h5>Citations</h5>
+      <table>
+        <tr><th>#</th><th>Source</th><th>Chunk</th><th>Tier</th>{text_header}</tr>
+        {rows}
+      </table>
+      <p class="muted">Each citation is a retrieved chunk the answer is
+         grounded in. Use "Show retrieved context only" to read the chunk
+         text.</p>
+    </div>
+    """
+
+
+@app.route("/rag/retrieve", methods=["POST"])
+def rag_retrieve():
+    """Retrieval-only view: shows what the RAG server found, before generation.
+
+    Useful as report evidence and as a fast check when the local model is slow,
+    because it skips answer generation entirely.
+    """
+    if not RAG_ENABLED:
+        return ("<p class='error'>RAG mode is disabled in this environment "
+                "(RAG_ENABLED=false).</p>"), 503
+
+    question = (request_value("question") or "").strip()
+    if not question:
+        return "<p class='error'>A question is required.</p>", 400
+
+    try:
+        resp = requests.post(
+            f"{RAG_SERVER_URL}/rag/retrieve",
+            json={"query": question, "k": RAG_TOP_K, "caller": RAG_CALLER},
+            timeout=30,
+        )
+        data = resp.json()
+    except requests.RequestException:
+        return ("<p class='error'>Shared RAG server is unavailable at "
+                f"{escape(RAG_SERVER_URL)}.</p>"), 503
+    except ValueError:
+        return "<p class='error'>RAG server returned a non-JSON response.</p>", 502
+
+    chunks = read_first(data, *RAG_LIST_KEYS) or []
+    if not chunks:
+        return (f"<p class='error'>No context retrieved for "
+                f"{escape(question)}.</p>")
+
+    mode = data.get("retrieval_mode", "")
+    rows = ""
+    for i, c in enumerate(chunks, start=1):
+        if isinstance(c, dict):
+            source = read_first(c, *RAG_TITLE_KEYS) or f"source {i}"
+            tier = c.get("authority_tier", "")
+            snippet = str(read_first(c, *RAG_SNIPPET_KEYS) or "")
+        else:
+            source, tier, snippet = str(c), "", ""
+        if len(snippet) > 160:
+            snippet = snippet[:160] + "..."
+        rows += (f"<tr><td>{i}</td><td>{escape(str(source))}</td>"
+                 f"<td>{escape(str(tier))}</td><td>{escape(snippet)}</td></tr>")
+
+    mode_note = f" &middot; mode: {escape(str(mode))}" if mode else ""
+    return f"""
+    <h4>Retrieved context ({len(chunks)} chunks){mode_note}</h4>
+    <table>
+      <tr><th>#</th><th>Source</th><th>Tier</th><th>Text</th></tr>
+      {rows}
+    </table>
+    <p class="muted">Retrieval only - no answer generation, so this returns
+       in seconds even when the local model is slow.</p>
+    """
+
+
+@app.route("/health")
+def health():
+    """Release 1 configuration check - used by the agentic loop and CI."""
+    return jsonify({
+        "service": "student-3-backend",
+        "db_api": DB_API_URL,
+        "trip_api": TRIP_API_URL,
+        "mcp_server": MCP_SERVER_URL,
+        "rag_server": RAG_SERVER_URL,
+        "rag_caller": RAG_CALLER,
+        "rag_timeout_seconds": RAG_TIMEOUT_SECONDS,
+        "mcp_enabled": MCP_ENABLED,
+        "rag_enabled": RAG_ENABLED,
+        "allowed_mcp_tools": sorted(ALLOWED_MCP_TOOLS),
+    })
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5003, debug=True)

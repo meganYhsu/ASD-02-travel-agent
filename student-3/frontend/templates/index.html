@@ -2,151 +2,201 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Budget &amp; Expense Tracking</title>
     <meta name="htmx-config" content='{"selfRequestsOnly": false}'>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <link rel="stylesheet" href="/css/styles.css">
+    <script>
+        // Release 1 - the MCP tool boundary answers with HTTP 403 and the
+        // server-unavailable paths with 503, each carrying an explanatory
+        // message. htmx discards non-2xx responses by default, so those
+        // messages would never reach the user. The status codes stay correct
+        // for the agentic loop and the endpoint tests, and the body is shown
+        // here as well.
+        document.addEventListener("htmx:beforeSwap", function (event) {
+            if (event.detail.xhr.status >= 400) {
+                event.detail.shouldSwap = true;
+                event.detail.isError = false;
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="http://localhost:8080/css/styles.css" />
     <style>
-        .error {
-            color: #b00020;
-        }
-
-        .htmx-indicator {
-            display: none;
-        }
-
+        .error { color: #b00020; }
+        .muted { color: #5b6b7c; font-size: .9rem; }
+        .htmx-indicator { display: none; }
         .htmx-request .htmx-indicator,
-        .htmx-request.htmx-indicator {
-            display: inline;
-        }
-
-        .management-page {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-
+        .htmx-request.htmx-indicator { display: inline; }
+        .management-page { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
         .section-card {
-            background: var(--card, #ffffff);
-            border: 1px solid var(--line, #d7e0ea);
-            border-radius: 10px;
-            padding: 1.2rem 1.4rem;
-            margin-bottom: 1.2rem;
+            background: #ffffff; border: 1px solid #d7e0ea;
+            border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem;
         }
-
-        .section-card table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: .75rem;
-        }
-
-        .section-card th,
-        .section-card td {
-            padding: .5rem .7rem;
-            border-bottom: 1px solid var(--line, #d7e0ea);
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .section-card form {
-            display: flex;
-            flex-direction: column;
-            max-width: 420px;
-        }
+        .nav-links a { text-decoration: none; color: #111111; font-size: 14px; }
+        table { border-collapse: collapse; margin-top: .75rem; }
+        td, th { border: 1px solid #ccc; padding: .4rem .8rem; text-align: left; }
+        .rag-answer ol { padding-left: 1.2rem; }
     </style>
 </head>
 
 <body>
-    <nav>
-        <nav class="shared-nav">
+    <nav class="shared-nav">
+        <div class="nav-title">Travel Agent</div>
+        <div class="nav-links">
+            <a href="http://127.0.0.1:8080/welcome">Welcome</a>
+            <a href="http://127.0.0.1:8080/traveler-preferences">Traveler Preferences</a>
+            <a href="http://127.0.0.1:8080/booking">Booking</a>
+            <a href="http://127.0.0.1:8080/itinerary">Itinerary</a>
+            <a href="http://127.0.0.1:8080/budget">Budget &amp; Expense</a>
+            <a href="http://127.0.0.1:8080/trip-planning">Trip Planning</a>
+            <a href="http://127.0.0.1:8080/pre-trip">Travel Preparation</a>
+            <a href="http://127.0.0.1:8080/account">Account</a>
+            <a href="http://127.0.0.1:8080/logout">Log Out</a>
+        </div>
+    </nav>
 
-            <div class="nav-title">
-                Travel Agent
+    <main class="management-page">
+        <div class="page-header">
+            <div>
+                <h1>Budget &amp; Expense Tracking</h1>
             </div>
-            <div class="nav-links">
-                <a href="http://127.0.0.1:8080/welcome">Welcome</a>
+        </div>
 
-                <a href="http://127.0.0.1:8080/traveler-preferences">
-                    Traveler Preferences
-                </a>
+                <!-- ============================================================
+             Release 1 - shared MCP server, reached through the backend API
+             ============================================================ -->
+        <section class="section-card">
+            <h2>MCP tools</h2>
+            <p class="muted">
+                Calls the shared local MCP server through this feature's
+                backend API. The Budget feature is permitted only the
+                read-only itinerary tools it needs to put spending in the
+                context of the plan.
+            </p>
 
-                <a href="http://127.0.0.1:8080/booking">
-                    Booking
-                </a>
+            <p>
+                <label>Trip ID
+                    <input id="mcp-trip-id" name="trip_id" type="number"
+                           min="1" value="1"></label>
+                <label>Day
+                    <input id="mcp-day-no" name="day_no" type="number"
+                           min="1" value="1"></label>
+            </p>
 
-                <a href="http://127.0.0.1:8080/itinerary">
-                    Itinerary
-                </a>
-
-                <a href="http://127.0.0.1:8080/budget">
-                    Budget & Expense
-                </a>
-
-                <a href="http://127.0.0.1:8080/trip-planning">
-                    Trip Planning
-                </a>
-
-                <a href="http://127.0.0.1:8080/pre-trip">
-                    Travel Preparation
-                </a>
-
-                <a href="http://127.0.0.1:8080/account">
-                    Account
-                </a>
-
-                <a href="http://127.0.0.1:8080/logout">
-                    Log Out
-                </a>
-            </div>
-        </nav>
-
-        <main class="management-page">
-            <h1>Budget &amp; Expense Tracking</h1>
-            <p class="muted">Track planned versus actual spending for a trip.</p>
-
-            <section class="section-card">
-                <h2>Dashboard</h2>
-                <button class="primary-button" hx-get="/api/dashboard/1" hx-target="#dashboard">
-                    Load trip 1 dashboard
+            <p>
+                <button hx-get="/api/mcp/tools" hx-target="#mcp-result">
+                    Show tools and boundary
                 </button>
-                <div id="dashboard"></div>
-                <div id="edit-form"></div>
-            </section>
 
-            <section class="section-card">
-                <h2>Add expense</h2>
-                <form hx-post="/api/expenses" hx-target="#dashboard">
-                    <input type="hidden" name="trip_id" value="1">
-                    <label>Description</label>
-                    <input name="description" required>
-                    <label>Amount (AUD)</label>
-                    <input name="amount" type="number" step="0.01" min="0" required>
-                    <label>Category</label>
-                    <select name="category_id">
-                        <option value="1">Accommodation</option>
-                        <option value="2">Food</option>
-                        <option value="3">Transport</option>
-                        <option value="4">Activities</option>
-                        <option value="5">Shopping</option>
-                    </select>
-                    <label>Date</label>
-                    <input name="expense_date" type="date">
-                    <button type="submit" class="primary-button">Save expense</button>
-                </form>
-            </section>
-
-            <section class="section-card">
-                <h2>AI budget analysis</h2>
-                <button class="primary-button" hx-post="/api/analyse/1" hx-target="#ai-result"
-                    hx-indicator="#ai-loading">
-                    Analyse budget
+                <button hx-post="/api/mcp/total_activity_count"
+                        hx-target="#mcp-result" hx-include="#mcp-trip-id"
+                        hx-indicator="#mcp-loading" class="primary-button">
+                    Run total_activity_count
                 </button>
-                <span id="ai-loading" class="htmx-indicator">Analysing...</span>
-                <div id="ai-result"></div>
-            </section>
-        </main>
+
+                <button hx-post="/api/mcp/total_activities_count_a_day"
+                        hx-target="#mcp-result"
+                        hx-include="#mcp-trip-id, #mcp-day-no"
+                        hx-indicator="#mcp-loading">
+                    Run total_activities_count_a_day
+                </button>
+
+                <button hx-post="/api/mcp/get_trip_activities_desc"
+                        hx-target="#mcp-result" hx-include="#mcp-trip-id"
+                        hx-indicator="#mcp-loading">
+                    Run get_trip_activities_desc
+                </button>
+
+                <button hx-post="/api/mcp/get_travel_requirements"
+                        hx-target="#mcp-result" hx-include="#mcp-trip-id">
+                    Run a registered tool outside the boundary
+                </button>
+            </p>
+
+            <span id="mcp-loading" class="htmx-indicator">Calling MCP tool&hellip;</span>
+            <div id="mcp-result"></div>
+        </section>
+
+       
+        <section class="section-card">
+            <h2>MCP tools</h2>
+            <p class="muted">
+                Calls the shared local MCP server through this feature's
+                backend API. The Budget feature is permitted only the
+                read-only itinerary tools it needs to put spending in the
+                context of the plan.
+            </p>
+
+            <button hx-get="/api/mcp/tools" hx-target="#mcp-result">
+                Show tools and boundary
+            </button>
+
+            <form hx-post="/api/mcp/total_activity_count" hx-target="#mcp-result"
+                  hx-indicator="#mcp-loading">
+                <label>Trip ID
+                    <input name="trip_id" type="number" min="1" value="1" required></label>
+                <button type="submit" class="primary-button">
+                    Run total_activity_count
+                </button>
+            </form>
+
+            <form hx-post="/api/mcp/total_activities_count_a_day"
+                  hx-target="#mcp-result" hx-indicator="#mcp-loading">
+                <input type="hidden" name="trip_id" value="1">
+                <label>Day <input name="day_no" type="number" min="1" value="1"></label>
+                <button type="submit">Run total_activities_count_a_day</button>
+            </form>
+
+            <form hx-post="/api/mcp/get_trip_activities_desc"
+                  hx-target="#mcp-result" hx-indicator="#mcp-loading">
+                <input type="hidden" name="trip_id" value="1">
+                <button type="submit">Run get_trip_activities_desc</button>
+            </form>
+
+            <form hx-post="/api/mcp/get_travel_requirements" hx-target="#mcp-result">
+                <input type="hidden" name="trip_id" value="1">
+                <button type="submit">
+                    Run a registered tool outside the boundary
+                </button>
+            </form>
+
+            <span id="mcp-loading" class="htmx-indicator">Calling MCP tool&hellip;</span>
+            <div id="mcp-result"></div>
+        </section>
+
+        <!-- ============================================================
+             Release 1 - shared RAG server, reached through the backend API
+             ============================================================ -->
+        <section class="section-card">
+            <h2>Ask with retrieved context (RAG)</h2>
+            <p class="muted">
+                Answers are generated from retrieved project context and are
+                shown with source citations and a confidence category. When no
+                relevant context is found, an insufficient-context response is
+                shown instead.
+            </p>
+
+            <form hx-post="/api/rag/query" hx-target="#rag-result"
+                  hx-indicator="#rag-loading">
+                <label>Question
+                    <input name="question" size="60"
+                           value="What expenses are recorded for trip 1?"
+                           required></label>
+                <button type="submit" class="primary-button">Ask</button>
+            </form>
+
+            <form hx-post="/api/rag/retrieve" hx-target="#rag-result"
+                  hx-indicator="#rag-loading">
+                <input type="hidden" name="question"
+                       value="trip budget and expenses">
+                <button type="submit">Show retrieved context only</button>
+            </form>
+
+            <span id="rag-loading" class="htmx-indicator">
+                Retrieving&hellip; (llama3.1:8b generation can take a minute)
+            </span>
+            <div id="rag-result"></div>
+        </section>
+    </main>
 </body>
 
 </html>

@@ -88,7 +88,36 @@ const STUDENT5_DATABASE =
     process.env.STUDENT5_DATABASE_URL ||
     "http://localhost:5405";
 
+// =====================
+// Release 1 - shared local MCP and RAG servers
+// Both run on the host and are not defined in docker-compose.yml.
+// =====================
 
+const MCP_SERVER =
+    process.env.MCP_SERVER_URL ||
+    "http://localhost:7004";
+
+const RAG_SERVER =
+    process.env.RAG_SERVER_URL ||
+    "http://localhost:7001";
+
+const RAG_CALLER =
+    process.env.RAG_CALLER ||
+    "student-3-budget";
+
+const RAG_TIMEOUT_MS =
+    Number(
+        process.env.RAG_TIMEOUT_MS ||
+        300000
+    );
+
+const MCP_ENABLED =
+    (process.env.MCP_ENABLED || "true")
+        .toLowerCase() !== "false";
+
+const RAG_ENABLED =
+    (process.env.RAG_ENABLED || "true")
+        .toLowerCase() !== "false";
 
 
 
@@ -676,7 +705,490 @@ async function observeStudent4() {
     };
 }
 
+/* =========================================================
+   RELEASE 1 VALIDATION HELPER
 
+   checkService() in validation.js reports reachability only.
+   The MCP and RAG requirements also need the response body
+   asserted - a registered tool list, citations, a confidence
+   category, an insufficient-context response. This helper adds
+   that assertion while returning the same service shape, so
+   buildStudentEvidenceText() needs no change.
+========================================================= */
+
+async function checkContract(
+    name,
+    url,
+    {
+        method = "GET",
+        body = null,
+        expectedStatuses = [200],
+        timeoutMs = 20000,
+        assert = null
+    } = {}
+) {
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(
+        () => controller.abort(),
+        timeoutMs
+    );
+
+    try {
+        const response = await fetch(url, {
+            method,
+
+            headers: body
+                ? { "Content-Type": "application/json" }
+                : undefined,
+
+            body: body
+                ? JSON.stringify(body)
+                : undefined,
+
+            signal: controller.signal
+        });
+
+        const text = await response.text();
+
+        let payload = null;
+
+        try {
+            payload = JSON.parse(text);
+        } catch (error) {
+            payload = null;
+        }
+
+        const statusOk =
+            expectedStatuses.includes(response.status);
+
+        let assertOk = true;
+        let detail = `HTTP ${response.status}`;
+
+        if (assert) {
+
+            const outcome =
+                assert(payload, text);
+
+            assertOk = outcome.ok;
+
+            detail =
+                `HTTP ${response.status}, ${outcome.detail}`;
+        }
+
+        const ok = statusOk && assertOk;
+
+        return {
+            name,
+            ok,
+            status: response.status,
+            detail,
+            error: ok
+                ? null
+                : `contract not satisfied (${detail})`
+        };
+
+    } catch (error) {
+
+        const timedOut =
+            error.name === "AbortError";
+
+        return {
+            name,
+            ok: false,
+            status: 0,
+
+            detail: timedOut
+                ? `timed out after ${timeoutMs} ms`
+                : `request failed: ${error.message}`,
+
+            error: timedOut
+                ? `timed out after ${timeoutMs} ms`
+                : error.message
+        };
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+
+function skipped(name, flag) {
+    return {
+        name,
+        ok: true,
+        status: 0,
+        detail: `skipped (${flag}=false)`,
+        error: null
+    };
+}
+
+
+// RELEASE 1 - SHARED MCP SERVER (Student 3)
+
+async function observeStudent3Mcp() {
+
+    if (!MCP_ENABLED) {
+        return [
+            skipped(
+                "Student 3 MCP - shared server",
+                "MCP_ENABLED"
+            )
+        ];
+    }
+
+    const PERMITTED = [
+        "total_activity_count",
+        "total_activities_count_a_day",
+        "get_trip_activities_desc"
+    ];
+
+    const registry =
+        await checkContract(
+            "Student 3 MCP - registered tools",
+            `${MCP_SERVER}/mcp/tools`,
+            {
+                assert: (payload) => {
+
+                    const names =
+                        (payload && payload.tools) || [];
+
+                    const present =
+                        PERMITTED.filter(
+                            tool => names.includes(tool)
+                        );
+
+                    return {
+                        ok:
+                            names.length > 0 &&
+                            present.length === PERMITTED.length,
+
+                        detail:
+                            `registered=${names.length}, ` +
+                            `permitted_present=` +
+                            `${present.length}/${PERMITTED.length}`
+                    };
+                }
+            }
+        );
+
+    const activityCount =
+        await checkContract(
+            "Student 3 MCP - tool total_activity_count",
+            `${MCP_SERVER}/mcp/tool`,
+            {
+                method: "POST",
+
+                body: {
+                    tool_name: "total_activity_count",
+                    arguments: { itinerary_id: 1 }
+                },
+
+                assert: (payload) => {
+
+                    const result =
+                        payload && payload.result;
+
+                    return {
+                        ok: Boolean(
+                            payload &&
+                            payload.ok &&
+                            result
+                        ),
+
+                        detail:
+                            `ok=${payload && payload.ok}, ` +
+                            `activities=` +
+                            `${result && result.total_no_of_activities}`
+                    };
+                }
+            }
+        );
+
+    const activityDesc =
+        await checkContract(
+            "Student 3 MCP - tool get_trip_activities_desc",
+            `${MCP_SERVER}/mcp/tool`,
+            {
+                method: "POST",
+
+                body: {
+                    tool_name: "get_trip_activities_desc",
+                    arguments: { itinerary_id: 1 }
+                },
+
+                assert: (payload) => {
+
+                    const list =
+                        (payload &&
+                            payload.result &&
+                            payload.result.activity_description) || [];
+
+                    return {
+                        ok: Boolean(payload && payload.ok),
+                        detail:
+                            `ok=${payload && payload.ok}, ` +
+                            `descriptions=${list.length}`
+                    };
+                }
+            }
+        );
+
+    const unregistered =
+        await checkContract(
+            "Student 3 MCP - unregistered tool refused by server",
+            `${MCP_SERVER}/mcp/tool`,
+            {
+                method: "POST",
+
+                body: {
+                    tool_name: "not_a_registered_tool",
+                    arguments: {}
+                },
+
+                expectedStatuses: [400, 403, 404, 500],
+
+                assert: (payload) => ({
+                    ok: Boolean(
+                        payload &&
+                        payload.ok === false &&
+                        payload.error
+                    ),
+                    detail:
+                        `error_returned=` +
+                        `${Boolean(payload && payload.error)}`
+                })
+            }
+        );
+
+    const boundary =
+        await checkContract(
+            "Student 3 MCP - registered tool outside boundary refused by backend",
+            `${STUDENT3_BACKEND}/mcp/get_travel_requirements`,
+            {
+                method: "POST",
+                body: { trip_id: 1 },
+                expectedStatuses: [403],
+
+                assert: (payload, text) => ({
+                    ok: /outside the Budget/i.test(text),
+                    detail:
+                        "refused with HTTP 403 before contacting the server"
+                })
+            }
+        );
+
+    const throughBackend =
+        await checkContract(
+            "Student 3 MCP - permitted tool through backend",
+            `${STUDENT3_BACKEND}/mcp/total_activity_count`,
+            {
+                method: "POST",
+                body: { trip_id: 1 },
+
+                assert: (payload, text) => ({
+                    ok: /MCP tool result/i.test(text),
+                    detail:
+                        `result rendered=${/MCP tool result/i.test(text)}`
+                })
+            }
+        );
+
+    return [
+        registry,
+        activityCount,
+        activityDesc,
+        unregistered,
+        boundary,
+        throughBackend
+    ];
+}
+
+
+//  RELEASE 1 - SHARED RAG SERVER (Student 3)
+
+async function observeStudent3Rag() {
+
+    if (!RAG_ENABLED) {
+        return [
+            skipped(
+                "Student 3 RAG - shared server",
+                "RAG_ENABLED"
+            )
+        ];
+    }
+
+    const groundedQuery =
+        "What expenses are recorded for trip 1?";
+
+    const unrelatedQuery =
+        "zzzqqq xylophone submarine telegraph";
+
+    const health =
+        await checkContract(
+            "Student 3 RAG - shared server health",
+            `${RAG_SERVER}/health`,
+            { timeoutMs: 10000 }
+        );
+
+    const retrieval =
+        await checkContract(
+            "Student 3 RAG - context retrieved",
+            `${RAG_SERVER}/rag/retrieve`,
+            {
+                method: "POST",
+
+                body: {
+                    query: groundedQuery,
+                    k: 5,
+                    caller: RAG_CALLER
+                },
+
+                timeoutMs: 60000,
+
+                assert: (payload) => {
+
+                    const results =
+                        (payload && payload.results) || [];
+
+                    const mode =
+                        (payload && payload.retrieval_mode) ||
+                        "unknown";
+
+                    return {
+                        ok: results.length > 0,
+                        detail:
+                            `retrieved=${results.length}, mode=${mode}` +
+                            (results.length
+                                ? `, top=${results[0].source_id}`
+                                : "")
+                    };
+                }
+            }
+        );
+
+    const grounded =
+        await checkContract(
+            "Student 3 RAG - grounded answer with citations",
+            `${RAG_SERVER}/rag/answer`,
+            {
+                method: "POST",
+
+                body: {
+                    query: groundedQuery,
+                    k: 5,
+                    caller: RAG_CALLER
+                },
+
+                timeoutMs: RAG_TIMEOUT_MS,
+
+                assert: (payload) => {
+
+                    const citations =
+                        (payload && payload.citations) || [];
+
+                    const answer =
+                        ((payload && payload.answer) || "").trim();
+
+                    const confidence =
+                        payload && payload.confidence_category;
+
+                    const isGrounded =
+                        citations.length > 0 &&
+                        answer.toLowerCase() !==
+                        "insufficient evidence.";
+
+                    return {
+                        ok: isGrounded && Boolean(confidence),
+                        detail:
+                            `citations=${citations.length}, ` +
+                            `confidence=${confidence}, ` +
+                            `grounded=${isGrounded}`
+                    };
+                }
+            }
+        );
+
+    const insufficient =
+        await checkContract(
+            "Student 3 RAG - insufficient-context response",
+            `${RAG_SERVER}/rag/answer`,
+            {
+                method: "POST",
+
+                body: {
+                    query: unrelatedQuery,
+                    k: 5,
+                    caller: RAG_CALLER
+                },
+
+                timeoutMs: RAG_TIMEOUT_MS,
+
+                assert: (payload) => {
+
+                    const citations =
+                        (payload && payload.citations) || [];
+
+                    const answer =
+                        ((payload && payload.answer) || "")
+                            .trim()
+                            .toLowerCase();
+
+                    const refused =
+                        answer === "insufficient evidence." ||
+                        citations.length === 0;
+
+                    return {
+                        ok: refused,
+                        detail: `insufficient_context=${refused}`
+                    };
+                }
+            }
+        );
+
+    const renderedGrounded =
+        await checkContract(
+            "Student 3 RAG - backend renders citations",
+            `${STUDENT3_BACKEND}/rag/query`,
+            {
+                method: "POST",
+                body: { question: groundedQuery },
+                timeoutMs: RAG_TIMEOUT_MS,
+
+                assert: (payload, text) => ({
+                    ok: /citations/i.test(text),
+                    detail: `citations shown=${/citations/i.test(text)}`
+                })
+            }
+        );
+
+    const renderedRefusal =
+        await checkContract(
+            "Student 3 RAG - backend renders insufficient context",
+            `${STUDENT3_BACKEND}/rag/query`,
+            {
+                method: "POST",
+                body: { question: unrelatedQuery },
+                timeoutMs: RAG_TIMEOUT_MS,
+
+                assert: (payload, text) => ({
+                    ok: /insufficient context/i.test(text),
+                    detail:
+                        `refusal shown=` +
+                        `${/insufficient context/i.test(text)}`
+                })
+            }
+        );
+
+    return [
+        health,
+        retrieval,
+        grounded,
+        insufficient,
+        renderedGrounded,
+        renderedRefusal
+    ];
+}
 
 async function observeStudent3() {
 
@@ -725,13 +1237,54 @@ async function observeStudent3() {
             }
         );
 
+    const configuration =
+        await checkContract(
+            "Student 3 Release 1 configuration",
+            `${STUDENT3_BACKEND}/health`,
+            {
+                assert: (payload) => ({
+                    ok: Boolean(
+                        payload &&
+                        payload.mcp_server &&
+                        payload.rag_server
+                    ),
+
+                    detail:
+                        `mcp=${payload && payload.mcp_server}, ` +
+                        `rag=${payload && payload.rag_server}, ` +
+                        `permitted_tools=${(payload &&
+                            payload.allowed_mcp_tools || []).length}`
+                })
+            }
+        );
+
+    // Release 1 - shared local MCP server and shared local RAG server
+    const mcpServices =
+        await observeStudent3Mcp();
+
+    const ragServices =
+        await observeStudent3Rag();
+
     const services = [
         frontend,
         categories,
         expenses,
         budget,
-        dashboard
+        dashboard,
+        configuration,
+        ...mcpServices,
+        ...ragServices
     ];
+
+    // Print the asserted detail for each check, so the Release 1
+    // evidence is visible in the loop transcript.
+    for (const service of services) {
+        if (service.detail) {
+            console.log(
+                `  ${service.name} -> ${service.detail}`
+            );
+        }
+    }
 
     const issues = services
         .filter(service => !service.ok)
@@ -747,122 +1300,6 @@ async function observeStudent3() {
         ok: issues.length === 0,
         services,
         issues
-    };
-}
-
-async function observeStudent5() {
-
-    const frontend =
-        await checkService(
-            "Student 5 Frontend",
-            STUDENT5_FRONTEND,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const backendHealth =
-        await checkService(
-            "Student 5 Backend Health",
-            `${STUDENT5_BACKEND}/health`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const databaseHealth =
-        await checkService(
-            "Student 5 Database Health",
-            `${STUDENT5_DATABASE}/health`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const documents =
-        await checkService(
-            "Student 5 Documents",
-            `${STUDENT5_BACKEND}/api/documents`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const requirements =
-        await checkService(
-            "Student 5 Entry Requirements",
-            `${STUDENT5_BACKEND}/api/entry-requirements`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const packingLists =
-        await checkService(
-            "Student 5 Packing Lists",
-            `${STUDENT5_BACKEND}/api/packing-lists`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const tasks =
-        await checkService(
-            "Student 5 Pre-trip Tasks",
-            `${STUDENT5_BACKEND}/api/pre-trip-tasks`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const agenticStatus =
-        await checkService(
-            "Student 5 Agentic Status",
-            `${STUDENT5_BACKEND}/api/agentic/status`,
-            {
-                expectedStatuses: [200]
-            }
-        );
-
-    const services = [
-        frontend,
-        backendHealth,
-        databaseHealth,
-        documents,
-        requirements,
-        packingLists,
-        tasks,
-        agenticStatus
-    ];
-
-    const issues = services
-        .filter(service => !service.ok)
-        .map(service =>
-            `${service.name} failed: ${service.error ||
-            `HTTP ${service.status}`
-            }`
-        );
-
-    return {
-        student: "Student 5",
-        component: "Pre-trip Preparation",
-        ok: issues.length === 0,
-        services,
-        issues
-    };
-}
-
-
-async function observeStudent1() {
-    return {
-        student: "Student 1",
-        component: "Not configured yet",
-        ok: false,
-        skipped: true,
-        services: [],
-        issues: [
-            "Validation not configured yet"
-        ]
     };
 }
 

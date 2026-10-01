@@ -38,6 +38,7 @@ jobs:
           python backend/app.py &
           sleep 5
           python tests/test_endpoints.py
+          python tests/test_release1.py
       - name: Build Docker images
         run: |
           docker build -t student-3-db database
