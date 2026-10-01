@@ -63,6 +63,20 @@ app.post("/api/itineraries", (req, res) => {
   res.status(201).json({ itineraryId: result.lastInsertRowid });
 });
 
+app.get("/api/itineraries", (req, res) => {
+  const itineraries = db.prepare(`
+    SELECT
+      itinerary_id,
+      destination,
+      start_date,
+      end_date
+    FROM itinerary
+    ORDER BY itinerary_id
+  `).all();
+
+  res.json({ itineraries });
+});
+
 app.post("/api/itineraries/:id/activities", (req, res) => {
   const itineraryId = Number(req.params.id);
   const { dayNo, date, location, time, cost, note } = req.body;

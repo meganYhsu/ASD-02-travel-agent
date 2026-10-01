@@ -226,6 +226,7 @@ services:
       DATABASE_BASE_URL: http://student4-database:5002
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: llama3.2:3b
+      MCP_BASE_URL: http://host.docker.internal:7004
 
     ports:
       - "5004:5001"

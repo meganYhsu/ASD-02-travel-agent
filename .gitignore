@@ -8,3 +8,4 @@ dist/
 __pycache__/
 
 *.db
+ai-services/mcp-server/.venv/
