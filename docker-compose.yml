@@ -47,6 +47,34 @@ services:
       - travel-net
 
   # ====================
+  # Shared RAG
+  # ====================
+
+  rag-server:
+    build:
+      context: ./ai-services/rag-server
+
+    environment:
+      PORT: "7005"
+      RAG_DOCUMENT_PATHS: /app/knowledge:/knowledge/student-5-readme.md
+      RAG_GENERATION_ENABLED: "false"
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:3b
+      OLLAMA_TIMEOUT_SECONDS: "120"
+
+    volumes:
+      - ./student-5/README.md:/knowledge/student-5-readme.md:ro
+
+    ports:
+      - "7005:7005"
+
+    depends_on:
+      - ollama
+
+    networks:
+      - travel-net
+
+  # ====================
   # Student 1
   # ====================
 
@@ -230,6 +258,8 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: qwen2.5:3b
       OLLAMA_TIMEOUT_SECONDS: "180"
+      RAG_SERVICE_URL: http://rag-server:7005
+      RAG_TIMEOUT_SECONDS: "130"
       EXPIRY_WARNING_DAYS: "90"
 
     ports:
@@ -238,6 +268,7 @@ services:
     depends_on:
       - student5-database
       - ollama
+      - rag-server
 
     networks:
       - travel-net
