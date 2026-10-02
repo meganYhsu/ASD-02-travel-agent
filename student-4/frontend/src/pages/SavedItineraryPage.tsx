@@ -207,14 +207,30 @@ function SavedItineraryPage() {
                             </button>
 
                             <button
-                            className = "navigate-to-MCP-integration-option"
-                            type="button"
-                            onClick={()=> navigate("/MCPIntegratedPage", {
-                                state: {
-                                    itineraryId: itinerary.itinerary_id
-                                }
-                            })}>
+                                className="saved-itinerary-page__button"
+                                type="button"
+                                onClick={() => navigate("/MCPIntegratedPage", {
+                                    state: {
+                                        itineraryId: itinerary.itinerary_id
+                                    }
+                                })}
+                            >
                                 MCP Integration
+                            </button>
+
+                            <button
+                                className="saved-itinerary-page__button"
+                                type="button"
+                                onClick={() => navigate("/RAGAssistant", {
+                                    state: {
+                                        itineraryId: itinerary.itinerary_id,
+                                        destination: itinerary.destination,
+                                        startDate: itinerary.start_date,
+                                        endDate: itinerary.end_date
+                                    }
+                                })}
+                            >
+                                Ask Shared RAG
                             </button>
                         </section>
                     </>

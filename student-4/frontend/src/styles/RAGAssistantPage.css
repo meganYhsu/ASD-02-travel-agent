@@ -1,0 +1,212 @@
+.rag-assistant-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(115, 145, 162, 0.16), transparent 26%),
+    radial-gradient(circle at 90% 10%, rgba(100, 128, 102, 0.12), transparent 24%),
+    linear-gradient(180deg, #f7fafb 0%, #edf3f5 100%);
+  color: #16232d;
+}
+
+.rag-assistant-page__shell {
+  width: min(1040px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 56px;
+}
+
+.rag-assistant-page__hero,
+.rag-assistant-page__panel,
+.rag-assistant-page__actions {
+  border: 1px solid rgba(24, 53, 68, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 18px 42px rgba(18, 38, 49, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.rag-assistant-page__hero {
+  padding: 30px;
+  margin-bottom: 18px;
+}
+
+.rag-assistant-page__eyebrow {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #56707f;
+}
+
+.rag-assistant-page__title {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3.4rem);
+  line-height: 1.02;
+  color: #162d3b;
+}
+
+.rag-assistant-page__intro {
+  margin: 12px 0 0;
+  max-width: 68ch;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #4a6170;
+}
+
+.rag-assistant-page__panel {
+  padding: 24px;
+}
+
+.rag-assistant-page__section-head,
+.rag-assistant-page__result-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rag-assistant-page__section-title {
+  margin: 8px 0 0;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  color: #183042;
+}
+
+.rag-assistant-page__meta,
+.rag-assistant-page__result-head span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(66, 95, 108, 0.12);
+  color: #3e5a67;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rag-assistant-page__context {
+  margin: 16px 0 0;
+  border: 1px solid rgba(28, 59, 76, 0.1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(250, 252, 253, 0.94);
+  color: #496270;
+  line-height: 1.6;
+}
+
+.rag-assistant-page__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.rag-assistant-page__input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid rgba(28, 59, 76, 0.18);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(249, 252, 253, 0.96);
+  color: #16232d;
+  font: inherit;
+  outline: none;
+}
+
+.rag-assistant-page__input:focus {
+  border-color: rgba(46, 105, 131, 0.6);
+  box-shadow: 0 0 0 4px rgba(87, 141, 165, 0.16);
+}
+
+.rag-assistant-page__button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 14px;
+  padding: 0 20px;
+  background: #183c50;
+  color: #f6fbfd;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(24, 60, 80, 0.18);
+}
+
+.rag-assistant-page__button--secondary {
+  background: #415b68;
+}
+
+.rag-assistant-page__button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.rag-assistant-page__state,
+.rag-assistant-page__result {
+  margin-top: 18px;
+  border: 1px solid rgba(28, 59, 76, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(250, 252, 253, 0.94);
+}
+
+.rag-assistant-page__state--error {
+  color: #9b3f3f;
+  font-weight: 600;
+}
+
+.rag-assistant-page__answer {
+  max-height: 520px;
+  margin: 14px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.65;
+  color: #314853;
+}
+
+.rag-assistant-page__summary,
+.rag-assistant-page__citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.rag-assistant-page__summary span,
+.rag-assistant-page__citations span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(66, 95, 108, 0.12);
+  color: #3e5a67;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.rag-assistant-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 22px;
+}
+
+@media (max-width: 760px) {
+  .rag-assistant-page__section-head,
+  .rag-assistant-page__result-head {
+    flex-direction: column;
+  }
+
+  .rag-assistant-page__form {
+    grid-template-columns: 1fr;
+  }
+
+  .rag-assistant-page__button {
+    width: 100%;
+  }
+}

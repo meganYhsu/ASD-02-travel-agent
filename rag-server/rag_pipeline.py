@@ -439,15 +439,43 @@ def load_travel_plan_chunks():
         response.raise_for_status()
 
         plans = response.json()
+        if isinstance(plans, dict):
+            plans = plans.get("itineraries", [])
+        if not isinstance(plans, list):
+            plans = []
 
         for index, plan in enumerate(plans):
-            itinerary = plan.get("itinerary") or {}
-            activities = plan.get("activities") or []
+            if not isinstance(plan, dict):
+                continue
+
+            if "itinerary" in plan:
+                itinerary = plan.get("itinerary") or {}
+                activities = plan.get("activities") or []
+            else:
+                itinerary = plan
+                activities = []
 
             itinerary_id = itinerary.get(
                 "itinerary_id",
                 index + 1
             )
+
+            if not activities and itinerary_id:
+                try:
+                    detail_response = requests.get(
+                        f"{TRAVEL_PLAN_SERVICE_URL}/api/itineraries/{itinerary_id}",
+                        timeout=5
+                    )
+                    detail_response.raise_for_status()
+                    detail = detail_response.json()
+                    if isinstance(detail, dict):
+                        itinerary = detail.get("itinerary") or itinerary
+                        activities = detail.get("activities") or []
+                except Exception as exc:
+                    print(
+                        f"Could not load Student 4 itinerary "
+                        f"{itinerary_id} activities: {exc}"
+                    )
 
             itinerary_text = ", ".join(
                 f"{key}={value}"

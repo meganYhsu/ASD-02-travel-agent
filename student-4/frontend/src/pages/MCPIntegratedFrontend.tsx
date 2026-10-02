@@ -83,7 +83,15 @@ function MCPIntegratedFile() {
     return (
         <div className="travel-page">
             <div className="travel-page__shell">
-                <nav className="mcp-toolbar">
+                <nav
+                    className="mcp-toolbar"
+                    style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "24px",
+                        marginBottom: "28px"
+                    }}
+                >
                     <button
                         className="travel-button"
                         type="button"
@@ -147,25 +155,82 @@ function MCPIntegratedFile() {
 
 
                 <main>
-                    <section className="travel-panel">
-                        <div>
-                            <label>
+                    <section
+                        className="travel-panel mcp-result-panel"
+                        style={{
+                            display: "grid",
+                            gap: "18px",
+                            maxWidth: "100%",
+                            overflow: "hidden",
+                            borderRadius: "20px",
+                            padding: "22px",
+                            background: "rgba(255, 255, 255, 0.84)",
+                            border: "1px solid rgba(24, 53, 68, 0.12)",
+                            boxShadow: "0 18px 42px rgba(18, 38, 49, 0.08)"
+                        }}
+                    >
+                        <div
+                            className="mcp-result-panel__head"
+                            style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                alignItems: "end",
+                                justifyContent: "space-between",
+                                gap: "16px",
+                                minWidth: 0
+                            }}
+                        >
+                            <label
+                                className="mcp-day-field"
+                                style={{
+                                    display: "grid",
+                                    gap: "8px",
+                                    fontWeight: 700
+                                }}
+                            >
                                 Day no
                                 <input
                                     type="number"
                                     min="1"
                                     value={dayNo}
                                     onChange={(event) => setDayNo(event.target.value)}
+                                    style={{
+                                        width: "120px",
+                                        minHeight: "44px",
+                                        border: "1px solid rgba(28, 59, 76, 0.18)",
+                                        borderRadius: "12px",
+                                        padding: "10px 12px"
+                                    }}
                                 />
                             </label>
 
                             <div>
-                                <h2>Tool's generated output</h2>
+                                <h2 style={{ margin: 0 }}>Tool's generated output</h2>
                             </div>
 
                         </div>
 
-                        <pre>
+                        <pre
+                            className="mcp-output"
+                            style={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                maxHeight: "560px",
+                                margin: 0,
+                                overflow: "auto",
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "anywhere",
+                                wordBreak: "break-word",
+                                boxSizing: "border-box",
+                                border: "1px solid rgba(28, 59, 76, 0.1)",
+                                borderRadius: "16px",
+                                padding: "18px",
+                                background: "rgba(250, 252, 253, 0.96)",
+                                color: "#183042",
+                                fontSize: "0.92rem",
+                                lineHeight: 1.55
+                            }}
+                        >
                             {result || "Output"}
                         </pre>
                     </section>

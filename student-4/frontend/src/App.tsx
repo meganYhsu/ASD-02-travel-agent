@@ -61,6 +61,9 @@ import SavedItineraryPage
 import MCPIntegratedFile
     from "./pages/MCPIntegratedFrontend";
 
+import RAGAssistantPage
+    from "./pages/RAGAssistantPage";
+
 function App() {
     return (
         <div className="app-shell">
@@ -99,6 +102,11 @@ function App() {
                         <Route
                             path = "/MCPIntegratedPage"
                             element ={<MCPIntegratedFile/>}
+                        />
+
+                        <Route
+                            path="/RAGAssistant"
+                            element={<RAGAssistantPage />}
                         />
 
                     </Routes>

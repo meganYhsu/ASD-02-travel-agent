@@ -13,6 +13,41 @@ const {
     getGroqClient
 } = require("../services/groqClient");
 
+const RAG_SERVICE_URL =
+    process.env.RAG_SERVICE_URL ||
+    "http://127.0.0.1:7001";
+
+
+async function refreshSharedRagAfterSave(
+    itineraryId
+) {
+    try {
+        const response =
+            await fetch(
+                `${RAG_SERVICE_URL}/rag/refresh`,
+                {
+                    method: "POST"
+                }
+            );
+
+        if (!response.ok) {
+            console.error(
+                `Shared RAG refresh failed after saving itinerary ${itineraryId}: ${response.status}`
+            );
+            return;
+        }
+
+        console.log(
+            `Shared RAG refresh triggered after saving itinerary ${itineraryId}`
+        );
+    } catch (error) {
+        console.error(
+            `Shared RAG refresh unavailable after saving itinerary ${itineraryId}:`,
+            error.message
+        );
+    }
+}
+
 
 // ==================================================
 // PROMPT HELPERS
@@ -1026,6 +1061,10 @@ async function saveGeneratedItinerary(
                 activity
             );
         }
+
+        refreshSharedRagAfterSave(
+            itineraryId
+        );
 
 
         return res

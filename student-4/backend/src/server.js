@@ -15,6 +15,8 @@ const {
 } = require("./services/DBService");
 
 
+
+
 // const Groq = require("groq-sdk");
 const express = require("express");
 const cors = require("cors");
@@ -37,6 +39,9 @@ const itineraryRoutes =
     require("./routes/getItineraryRoute");
 
 app.use("/api", itineraryRoutes);
+
+const ragRoutes = require("./routes/ragRoutes");
+app.use("/api/rag", ragRoutes);
 
 const feedbackRoutes =
     require("./routes/getFeedbackRoute");
@@ -215,6 +220,9 @@ app.get("/api/agentic/status", async (req, res) => {
         });
     }
 });
+
+
+
 
 app.listen(5001, () => {
     console.log("Backend running on port 5001");
