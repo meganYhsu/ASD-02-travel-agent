@@ -284,48 +284,77 @@ TRAVELLER_SERVICE_URL = os.getenv(
     "http://127.0.0.1:6001"
 )
 
+def describe_traveller(profile):
+    """One readable paragraph per traveller, so a question that names the
+    traveller also finds their budget, interests and needs."""
+    t = profile["traveler"]
+    pref = profile.get("preferences")
+    interests = profile.get("interests") or []
+    needs = profile.get("accessibility_needs") or []
+
+    parts = [
+        f"{t['name']} (traveler id {t['traveler_id']}) is a traveller who lives in "
+        f"{t['home_location']} and prefers {t['travel_style']} travel."
+    ]
+    if pref:
+        parts.append(
+            f"Their budget is {pref['budget_min']:.0f} to {pref['budget_max']:.0f} "
+            f"{pref['currency']} with a {pref['pace']} pace."
+        )
+    else:
+        parts.append("They have not saved a budget range or pace yet.")
+    if interests:
+        parts.append("Their interests, highest priority first: " + "; ".join(
+            f"{i['interest_category']} (priority {i['priority']})" for i in interests
+        ) + ".")
+    else:
+        parts.append("They have not recorded any interests.")
+    if needs:
+        parts.append("Their accessibility and dietary needs: " + "; ".join(
+            n["requirement"] + (f", dietary restriction {n['dietary_restriction']}"
+                                if n.get("dietary_restriction") else "")
+            for n in needs
+        ) + ".")
+    else:
+        parts.append("They have no accessibility or dietary needs recorded.")
+    return " ".join(parts)
+
+
 def load_traveller_chunks():
     chunks = []
 
-    endpoints = {
-        "travellers": "/travelers",
-        "preferences": "/preferences",
-        "interests": "/interests",
-        "accessibility_needs": "/accessibility-needs",
-    }
+    try:
+        response = requests.get(f"{TRAVELLER_SERVICE_URL}/travelers", timeout=5)
+        response.raise_for_status()
+        travellers = response.json()
+    except Exception as exc:
+        print(f"Could not load Student 1 travellers: {exc}")
+        return chunks
 
-    for source_name, endpoint in endpoints.items():
+    for traveller in travellers:
+        traveler_id = traveller["traveler_id"]
         try:
             response = requests.get(
-                f"{TRAVELLER_SERVICE_URL}{endpoint}",
+                f"{TRAVELLER_SERVICE_URL}/preference-set/{traveler_id}",
                 timeout=5
             )
             response.raise_for_status()
-            records = response.json()
-
-            for index, record in enumerate(records):
-                text = (
-                    f"{source_name}: "
-                    + ", ".join(
-                        f"{key}={value}"
-                        for key, value in record.items()
-                    )
-                )
-
-                chunks.append({
-                    "chunk_id": f"student1-{source_name}-{index + 1}",
-                    "source_id": f"student1-{source_name}",
-                    "authority_tier": "tier_1",
-                    "text": text,
-                    "metadata": {
-                        "student": "student1",
-                        "source_type": source_name
-                    },
-                    "indexed_at": now_iso()
-                })
-
+            profile = response.json()
         except Exception as exc:
-            print(f"Could not load Student 1 {source_name}: {exc}")
+            print(f"Could not load Student 1 preference set {traveler_id}: {exc}")
+            continue
+
+        chunks.append({
+            "chunk_id": f"student1-traveller-{traveler_id}",
+            "source_id": "student1-preference-set",
+            "authority_tier": "tier_1",
+            "text": describe_traveller(profile),
+            "metadata": {
+                "student": "student1",
+                "source_type": "preference_set"
+            },
+            "indexed_at": now_iso()
+        })
 
     return chunks
 

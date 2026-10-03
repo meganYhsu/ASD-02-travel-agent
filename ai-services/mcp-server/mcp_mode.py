@@ -2,8 +2,11 @@ import json
 import sys
 
 from tools import (
+    get_accessibility_needs,
     get_activity_start_times,
     get_travel_requirements,
+    get_traveler_interests,
+    get_traveler_profile,
     get_trip_activities_desc,
     get_trip_activities_for_day_desc,
     total_activities_count_a_day,
@@ -18,6 +21,10 @@ MCP_TOOLS = {
     "get_trip_activities_for_day_desc": get_trip_activities_for_day_desc,
     "get_activity_start_times": get_activity_start_times,
     "get_travel_requirements": get_travel_requirements,
+    # student 1 - Traveler Preferences
+    "get_traveler_profile": get_traveler_profile,
+    "get_traveler_interests": get_traveler_interests,
+    "get_accessibility_needs": get_accessibility_needs,
 }
 
 
