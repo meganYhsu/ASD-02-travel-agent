@@ -41,7 +41,7 @@ const itineraryRoutes =
 app.use("/api", itineraryRoutes);
 
 const ragRoutes = require("./routes/ragRoutes");
-app.use("/api/rag", ragRoutes);
+app.use("/api", ragRoutes);
 
 const feedbackRoutes =
     require("./routes/getFeedbackRoute");
