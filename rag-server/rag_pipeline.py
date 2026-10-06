@@ -360,46 +360,146 @@ def load_traveller_chunks():
 
 
 #student 2  booking and itinerary chunks function
+
+
+def describe_itinerary(record):
+    activity = record.get("activity", "Unknown activity")
+    location = record.get("location", "Unknown location")
+    date = record.get("date", "Unknown date")
+    time_value = record.get("time") or "unspecified time"
+    trip_id = record.get("trip_id")
+    itinerary_id = record.get("itinerary_id")
+
+    notes = record.get("notes")
+
+    text = (
+        f"Itinerary {itinerary_id} for trip {trip_id} contains a planned "
+        f"activity called {activity} in {location} on {date} at {time_value}."
+    )
+
+    if notes:
+        text += f" Notes for this activity: {notes}."
+
+    return text
+
+
+def describe_provider(record):
+    provider_id = record.get("provider_id")
+    name = record.get("name", "Unknown provider")
+    provider_type = record.get("type", "Unknown type")
+    contact = record.get("contact_info")
+
+    text = (
+        f"Provider {provider_id}, {name}, is an available travel service "
+        f"provider of type {provider_type}."
+    )
+
+    if contact:
+        text += f" Contact information: {contact}."
+
+    return text
+
+
+def describe_booking(record):
+    booking_id = record.get("booking_id")
+    trip_id = record.get("trip_id")
+    provider_id = record.get("provider_id")
+    booking_date = record.get("booking_date", "Unknown date")
+    status = record.get("status", "Unknown")
+    cost = record.get("cost")
+    create_time = record.get("create_time")
+
+    text = (
+        f"Booking {booking_id} belongs to trip {trip_id} and uses "
+        f"provider {provider_id}. The booking date is {booking_date}. "
+        f"The current booking status is {status}."
+    )
+
+    if cost is not None:
+        text += f" The booking cost is ${cost}."
+
+    if create_time:
+        text += f" The booking was created at {create_time}."
+
+    return text
+
+
+def describe_booking_item(record):
+    booking_item_id = record.get("booking_item_id")
+    booking_id = record.get("booking_id")
+    itinerary_id = record.get("itinerary_id")
+    quantity = record.get("quantity", 1)
+
+    return (
+        f"Booking item {booking_item_id} links booking {booking_id} "
+        f"to itinerary {itinerary_id}. "
+        f"The booked quantity is {quantity}."
+    )
+
+
 def load_booking_chunks():
     chunks = []
 
     endpoints = {
-        "itineraries": "/itineraries",
-        "providers": "/provider",
-        "bookings": "/bookings",
-        "booking_items": "/booking_items",
+        "itineraries": (
+            "/itineraries",
+            describe_itinerary
+        ),
+        "providers": (
+            "/provider",
+            describe_provider
+        ),
+        "bookings": (
+            "/bookings",
+            describe_booking
+        ),
+        "booking_items": (
+            "/booking_items",
+            describe_booking_item
+        ),
     }
 
-    for source_name, endpoint in endpoints.items():
+    for source_name, (endpoint, describe_function) in endpoints.items():
+
         try:
             response = requests.get(
                 f"{BOOKING_SERVICE_URL}{endpoint}",
                 timeout=5
             )
+
             response.raise_for_status()
             records = response.json()
 
             for index, record in enumerate(records):
-                text = (
-                    f"{source_name}: "
-                    + ", ".join(
-                        f"{key}={value}"
-                        for key, value in record.items()
-                    )
-                )
+
+                text = describe_function(record)
 
                 chunks.append({
-                    "chunk_id": f"student2-{source_name}-{index + 1}",
-                    "source_id": f"student2-{source_name}",
-                    "authority_tier": "tier_1",
-                    "text": text,
-                    "metadata": {"student": "student2","source_type": source_name},
-                    "indexed_at": now_iso()
+                    "chunk_id":
+                        f"student2-{source_name}-{index + 1}",
+
+                    "source_id":
+                        f"student2-{source_name}",
+
+                    "authority_tier":
+                        "tier_1",
+
+                    "text":
+                        text,
+
+                    "metadata": {
+                        "student": "student2",
+                        "source_type": source_name
+                    },
+
+                    "indexed_at":
+                        now_iso()
                 })
 
         except Exception as exc:
             print(
-                f"Could not load {source_name}: {exc}"
+                f"Could not load Student 2 "
+                f"{source_name}: {exc}"
             )
 
     return chunks
@@ -895,32 +995,50 @@ def generate_with_ollama(query: str, context: str) -> dict[str, Any]:
     )
 
     prompt = f"""
-    
-    You are a grounded travel assistant.
-    Answer the question using ONLY the retrieved context.
-    
-    Rules:
-    1. Do not use outside knowledge.
-    2. If the context does not contain enough evidence, answer "Insufficient evidence."
-    3. Only include chunk IDs that directly support the answer.
-    4. Do not include retrieved chunks that were not actually used.
-    5. Return ONLY valid JSON. Do not use Markdown.
-    
-    Return:{{
-        "answer": "your grounded answer",
-        "used_chunk_ids": ["chunk-id-1", "chunk-id-2"]
-    }}
-    
-    If evidence is insufficient:{{
-        "answer": "Insufficient evidence.",
-        "used_chunk_ids": []
-    }}
-    
-    QUESTION:
-    {query}
-    
-    CONTEXT:
-    {context}
+You are the answer-generation component of a Retrieval-Augmented
+Generation (RAG) system.
+
+The retrieval system has already selected the context chunks that are
+most relevant to the user's question.
+
+Your job is to:
+- read the retrieved context,
+- extract facts that answer the question,
+- combine relevant facts into a concise answer,
+- identify the exact chunk IDs supporting the answer.
+
+GROUNDING RULES:
+1. Use ONLY facts contained in the RETRIEVED CONTEXT.
+2. Do not add facts from your own knowledge.
+3. Do not require exact wording matches. Interpret the normal meaning
+   of the records and fields in the context.
+4. If a retrieved record contains a fact relevant to the question,
+   use that fact as evidence.
+5. If several chunks answer the question, combine their information.
+6. Use "Insufficient evidence." ONLY if the retrieved context contains
+   no facts that can answer the question.
+7. Copy supporting chunk IDs exactly as shown.
+8. Do not cite chunks that do not support the answer.
+
+Return ONLY valid JSON in this format:
+
+{{
+  "answer": "concise grounded answer",
+  "used_chunk_ids": ["exact-chunk-id"]
+}}
+
+If no retrieved information can answer the question:
+
+{{
+  "answer": "Insufficient evidence.",
+  "used_chunk_ids": []
+}}
+
+QUESTION:
+{query}
+
+RETRIEVED CONTEXT:
+{context}
 """
 
     try:
@@ -930,10 +1048,12 @@ def generate_with_ollama(query: str, context: str) -> dict[str, Any]:
                 "model": model_name,
                 "prompt": prompt,
                 "stream": False,
-                "keep_alive": "30m"
-            },
-            timeout=300,
-        )
+                "format": "json",
+                "keep_alive": "30m",
+                "options": {
+                    "temperature": 0
+                }
+            },)
 
         resp.raise_for_status()
 

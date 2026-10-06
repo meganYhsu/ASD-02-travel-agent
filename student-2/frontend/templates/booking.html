@@ -264,6 +264,50 @@
 
 
         <div class="ai-assistant">
+            <section class="travel-plan-section">
+
+                <h2>Travel Plan</h2>
+
+                <p>
+                    View itinerary information from your connected travel plan.
+                </p>
+
+                <div class="travel-plan-controls">
+
+                    <label for="mcp-itinerary-id">
+                        Itinerary ID:
+                    </label>
+
+                    <input id="mcp-itinerary-id" type="number" name="itinerary_id" min="1" value="1" required>
+
+                    <div class="travel-plan-actions">
+
+                        <button type="button" hx-post="/booking/mcp" hx-include="#mcp-itinerary-id"
+                            hx-vals='{"action": "itinerary"}' hx-target="#mcp-result" hx-swap="innerHTML">
+                            View Itinerary
+                        </button>
+
+                        <button type="button" hx-post="/booking/mcp" hx-include="#mcp-itinerary-id"
+                            hx-vals='{"action": "schedule"}' hx-target="#mcp-result" hx-swap="innerHTML">
+                            View Schedule
+                        </button>
+
+                        <button type="button" hx-post="/booking/mcp" hx-include="#mcp-itinerary-id"
+                            hx-vals='{"action": "requirements"}' hx-target="#mcp-result" hx-swap="innerHTML">
+                            Travel Requirements
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div id="mcp-result"></div>
+
+            </section>
+        </div>
+
+
+        <div class="ai-assistant">
             <section>
                 <h2>AI Booking Assistant</h2>
 
@@ -284,6 +328,27 @@
                 </form>
 
                 <div id="ai-result"></div>
+            </section>
+        </div>
+
+        <div class="ai-assistant">
+            <section>
+                <h2>Travel Information Assistant</h2>
+
+                <p>
+                    Ask about your travel plans, bookings, trip information.
+                </p>
+
+                <form hx-post="/booking/rag" hx-target="#rag-result" hx-swap="innerHTML">
+                    <label>Ask about your trip:</label>
+
+                    <input type="text" name="query" placeholder="e.g. What activities are planned in Sydney?" required
+                        style="width:420px;">
+
+                    <button type="submit">Ask Assistant</button>
+                </form>
+
+                <div id="rag-result"></div>
             </section>
         </div>
 

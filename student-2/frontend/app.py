@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for
 import requests
+import json
 import os
 
 app = Flask(__name__)
 
+BACKEND_URL = os.getenv("BACKEND_URL") or "http://127.0.0.1:5001"
 BACKEND_URL = os.getenv("BACKEND_URL") or "http://127.0.0.1:5001"
 
 print("BACKEND_URL =", BACKEND_URL)
@@ -263,6 +265,315 @@ def ai_match_provider():
         </button>
     </div>
     """
+
+
+# Shared RAG assistant
+@app.route('/booking/rag', methods=['POST'])
+def booking_rag():
+    query = request.form.get('query', '').strip()
+
+    if not query:
+        return """
+        <div>
+            <strong>Error:</strong> Please enter a question.
+        </div>
+        """, 400
+
+    try:
+        response = requests.post(
+            f"{BACKEND_URL}/rag/answer",
+            json={
+                "query": query
+            },
+            timeout=340
+        )
+
+        data = response.json()
+
+    except requests.Timeout:
+        return """
+        <div>
+            <strong>Error:</strong> RAG answer generation timed out.
+        </div>
+        """, 504
+
+    except requests.RequestException:
+        return """
+        <div>
+            <strong>Error:</strong> Shared RAG service is unavailable.
+        </div>
+        """, 503
+
+    if response.status_code != 200:
+        error_message = data.get(
+            'error',
+            'Unable to generate RAG answer.'
+        )
+
+        return f"""
+        <div>
+            <strong>Error:</strong> {error_message}
+        </div>
+        """, response.status_code
+
+    answer = data.get(
+        'answer',
+        'Insufficient evidence.'
+    )
+
+    confidence = data.get(
+        'confidence_category',
+        'Unknown'
+    )
+
+    citations = data.get('citations', [])
+
+    citation_html = ""
+
+    if citations:
+        citation_html = "<ul>"
+
+        for citation in citations:
+            citation_html += (
+                "<li>"
+                f"{citation.get('chunk_id', 'Unknown chunk')} "
+                f"({citation.get('source_id', 'Unknown source')})"
+                "</li>"
+            )
+
+        citation_html += "</ul>"
+    else:
+        citation_html = "<p>No supporting citations.</p>"
+
+    return f"""
+    <div>
+        <h3>Shared RAG Answer</h3>
+
+        <p>
+            <strong>Answer:</strong>
+            {answer}
+        </p>
+
+        <p>
+            <strong>Confidence:</strong>
+            {confidence}
+        </p>
+
+        <p><strong>Sources:</strong></p>
+        {citation_html}
+    </div>
+    """
+
+
+@app.route('/booking/mcp', methods=['POST'])
+def booking_mcp():
+    action = request.form.get('action', '').strip()
+    itinerary_id = request.form.get('itinerary_id', '').strip()
+
+    if not itinerary_id:
+        return """
+        <div class="mcp-result error">
+            Please enter an itinerary ID.
+        </div>
+        """
+
+    try:
+        itinerary_id = int(itinerary_id)
+
+        if itinerary_id < 1:
+            raise ValueError
+
+    except ValueError:
+        return """
+        <div class="mcp-result error">
+            Itinerary ID must be a positive number.
+        </div>
+        """
+
+    # Map user-facing actions to Shared MCP tools
+    tool_map = {
+        'itinerary': 'get_trip_activities_desc',
+        'schedule': 'get_activity_start_times',
+        'requirements': 'get_travel_requirements'
+    }
+
+    tool_name = tool_map.get(action)
+
+    if not tool_name:
+        return """
+        <div class="mcp-result error">
+            Invalid travel plan action.
+        </div>
+        """
+
+    try:
+        response = requests.post(
+            f"{BACKEND_URL}/mcp/tool",
+            json={
+                "tool_name": tool_name,
+                "arguments": {
+                    "itinerary_id": itinerary_id
+                }
+            },
+            timeout=25
+        )
+
+        data = response.json()
+
+        if response.status_code != 200 or not data.get('ok'):
+            error_message = data.get('error', 'Unable to run travel tool.')
+
+            return f"""
+            <div class="mcp-result error">
+                <strong>Unable to retrieve travel information.</strong>
+                <p>{error_message}</p>
+            </div>
+            """
+
+        result = data.get('result') or {}
+
+        # -------------------------------------------------
+        # View Itinerary
+        # -------------------------------------------------
+
+        if action == 'itinerary':
+
+            if result.get('error'):
+                return f"""
+                <div class="mcp-result error">
+                    {result.get('error')}
+                </div>
+                """
+
+            activities = result.get('activity_description') or []
+
+            if not activities:
+                return """
+                <div class="mcp-result">
+                    <h3>Itinerary</h3>
+                    <p>No planned activities were found.</p>
+                </div>
+                """
+
+            activity_items = ''.join(
+                f"<li>{activity}</li>"
+                for activity in activities
+            )
+
+            return f"""
+            <div class="mcp-result">
+                <h3>Itinerary</h3>
+
+                <p>
+                    <strong>{len(activities)}</strong>
+                    planned activities
+                </p>
+
+                <ul>
+                    {activity_items}
+                </ul>
+            </div>
+            """
+
+        # -------------------------------------------------
+        # View Schedule
+        # -------------------------------------------------
+
+        if action == 'schedule':
+
+            if result.get('error'):
+                return f"""
+                <div class="mcp-result error">
+                    {result.get('error')}
+                </div>
+                """
+
+            activities = result.get('activity_start_times') or []
+
+            if not activities:
+                return """
+                <div class="mcp-result">
+                    <h3>Activity Schedule</h3>
+                    <p>No activity schedule was found.</p>
+                </div>
+                """
+
+            schedule_rows = ''
+
+            for activity in activities:
+                description = (
+                    activity.get('activity_description')
+                    or 'Activity'
+                )
+
+                start_time = (
+                    activity.get('activity_start_time')
+                    or 'Time not specified'
+                )
+
+                schedule_rows += f"""
+                <div class="schedule-item">
+                    <strong>{start_time}</strong>
+                    <span>{description}</span>
+                </div>
+                """
+
+            return f"""
+            <div class="mcp-result">
+                <h3>Activity Schedule</h3>
+                {schedule_rows}
+            </div>
+            """
+
+        # -------------------------------------------------
+        # Travel Requirements
+        # -------------------------------------------------
+
+        if action == 'requirements':
+
+            if result.get('error'):
+                return f"""
+                <div class="mcp-result error">
+                    {result.get('error')}
+                </div>
+                """
+
+            requirements = result.get('Requirements to travel')
+
+            if not requirements:
+                requirements = 'No travel requirements were provided.'
+
+            return f"""
+            <div class="mcp-result">
+                <h3>Travel Requirements</h3>
+                <p>{requirements}</p>
+            </div>
+            """
+
+    except requests.Timeout:
+
+        return """
+        <div class="mcp-result error">
+            Shared MCP request timed out.
+        </div>
+        """
+
+    except requests.RequestException:
+
+        return """
+        <div class="mcp-result error">
+            Shared MCP service is unavailable.
+        </div>
+        """
+
+    except ValueError:
+
+        return """
+        <div class="mcp-result error">
+            Invalid response from the backend.
+        </div>
+        """
+    
 
 
 if __name__ == '__main__':

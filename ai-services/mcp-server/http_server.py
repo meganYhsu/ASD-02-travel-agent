@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from mcp_mode import list_mcp_tools, run_mcp_tool
 
 
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 7004
 
 
