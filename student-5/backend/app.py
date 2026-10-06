@@ -17,9 +17,10 @@ if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
 from compliance import compute_document_status, evaluate_compliance, trip_duration_days
-from config import DATABASE_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT
+from config import DATABASE_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
 from db_client import DatabaseClient, DatabaseUnavailable
 from ollama_client import OllamaClient, OllamaError
+from rag_client import RagClient, RagError
 from validation import (
     ValidationError,
     parse_id,
@@ -64,16 +65,21 @@ def sanitise_document(document: dict[str, Any] | None) -> dict[str, Any] | None:
 def create_app(
     db_client: DatabaseClient | None = None,
     ollama_client: OllamaClient | None = None,
+    rag_client: RagClient | None = None,
 ) -> Flask:
     app = Flask(__name__)
     app.config["DB_CLIENT"] = db_client or DatabaseClient(DATABASE_SERVICE_URL)
     app.config["OLLAMA"] = ollama_client or OllamaClient()
+    app.config["RAG"] = rag_client or RagClient()
 
     def db() -> DatabaseClient:
         return app.config["DB_CLIENT"]
 
     def ollama() -> OllamaClient:
         return app.config["OLLAMA"]
+
+    def rag() -> RagClient:
+        return app.config["RAG"]
 
     def forward(status: int, body: Any):
         if status == 204:
@@ -159,8 +165,22 @@ def create_app(
                 "service": "student5-backend",
                 "ollama_url": OLLAMA_BASE_URL,
                 "ollama_model": OLLAMA_MODEL,
+                "rag_service_url": RAG_SERVICE_URL,
             }
         )
+
+    @app.post("/api/ai/assistant")
+    def travel_assistant():
+        payload = request.get_json(silent=True)
+        question = payload.get("question", "").strip() if isinstance(payload, dict) else ""
+        if not question:
+            return json_error("question is required", 400)
+        if len(question) > 2000:
+            return json_error("question must be 2000 characters or fewer", 400)
+        try:
+            return json_ok(rag().query(question))
+        except RagError as exc:
+            return json_error(exc.message, exc.status)
 
     @app.get("/api/documents")
     def list_documents():

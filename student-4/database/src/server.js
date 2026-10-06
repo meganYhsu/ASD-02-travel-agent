@@ -63,6 +63,20 @@ app.post("/api/itineraries", (req, res) => {
   res.status(201).json({ itineraryId: result.lastInsertRowid });
 });
 
+app.get("/api/itineraries", (req, res) => {
+  const itineraries = db.prepare(`
+    SELECT
+      itinerary_id,
+      destination,
+      start_date,
+      end_date
+    FROM itinerary
+    ORDER BY itinerary_id
+  `).all();
+
+  res.json({ itineraries });
+});
+
 app.post("/api/itineraries/:id/activities", (req, res) => {
   const itineraryId = Number(req.params.id);
   const { dayNo, date, location, time, cost, note } = req.body;
@@ -87,6 +101,43 @@ app.post("/api/itineraries/:id/activities", (req, res) => {
 
   res.status(201).json({ activityId: result.lastInsertRowid });
 });
+
+/* new update for RAG  */
+app.get("/api/itineraries", (req, res) => {
+  try {
+    const itineraries = db.prepare(`
+      SELECT * FROM itinerary
+      ORDER BY itinerary_id
+    `).all();
+
+    const result = itineraries.map((itinerary) => {
+      const activities = db.prepare(`
+        SELECT *
+        FROM activity
+        WHERE itinerary_id = ?
+        ORDER BY day_no
+      `).all(itinerary.itinerary_id);
+
+      return {
+        itinerary,
+        activities
+      };
+    });
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    console.error(
+      "Failed to retrieve itineraries:",
+      error
+    );
+
+    return res.status(500).json({
+      error: "Failed to retrieve itineraries"
+    });
+  }
+});
+
 
 
 app.get("/api/itineraries/:id", (req, res) => {
@@ -165,11 +216,11 @@ app.put("/api/itineraries/:id", (req, res) => {
   } = req.body;
 
   if (
-      !destination ||
-      !startDate ||
-      !endDate ||
-      !budget ||
-      !travelStyle
+    !destination ||
+    !startDate ||
+    !endDate ||
+    !budget ||
+    !travelStyle
   ) {
     return res.status(400).json({
       error: "Missing required itinerary details"
@@ -189,11 +240,11 @@ app.put("/api/itineraries/:id", (req, res) => {
   }
 
   const requirementsValue =
-      typeof requirements === "string"
-          ? requirements
-          : requirements !== undefined
-              ? JSON.stringify(requirements)
-              : null;
+    typeof requirements === "string"
+      ? requirements
+      : requirements !== undefined
+        ? JSON.stringify(requirements)
+        : null;
 
   db.prepare(`
     UPDATE itinerary
@@ -207,14 +258,14 @@ app.put("/api/itineraries/:id", (req, res) => {
       requirements = ?
     WHERE itinerary_id = ?
   `).run(
-      destination,
-      startDate,
-      endDate,
-      budget,
-      travelGroup ?? null,
-      travelStyle,
-      requirementsValue,
-      itineraryId
+    destination,
+    startDate,
+    endDate,
+    budget,
+    travelGroup ?? null,
+    travelStyle,
+    requirementsValue,
+    itineraryId
   );
 
   const updatedItinerary = db.prepare(`

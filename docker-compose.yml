@@ -47,6 +47,34 @@ services:
       - travel-net
 
   # ====================
+  # Shared RAG
+  # ====================
+
+  rag-server:
+    build:
+      context: ./ai-services/rag-server
+
+    environment:
+      PORT: "7005"
+      RAG_DOCUMENT_PATHS: /app/knowledge:/knowledge/student-5-readme.md
+      RAG_GENERATION_ENABLED: "false"
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:3b
+      OLLAMA_TIMEOUT_SECONDS: "120"
+
+    volumes:
+      - ./student-5/README.md:/knowledge/student-5-readme.md:ro
+
+    ports:
+      - "7005:7005"
+
+    depends_on:
+      - ollama
+
+    networks:
+      - travel-net
+
+  # ====================
   # Student 1
   # ====================
 
@@ -68,6 +96,14 @@ services:
       DB_API_URL: http://student1-database:6001
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
+      MCP_BASE_URL: http://host.docker.internal:7004
+      MCP_ENABLED: "true"
+      RAG_BASE_URL: http://host.docker.internal:7001
+      RAG_ENABLED: "true"
+
+    # Lets host.docker.internal reach the host-run MCP and RAG servers on Linux too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5001:5001"
@@ -124,6 +160,7 @@ services:
       DATABASE_BASE_URL: http://student4-database:5002
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: llama3.2:3b
+      MCP_BASE_URL: http://host.docker.internal:7004
 
     ports:
       - "5004:5001"
@@ -171,6 +208,15 @@ services:
       TRIP_API_URL: http://student4-database:5002
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
+      MCP_SERVER_URL: http://host.docker.internal:7004
+      RAG_SERVER_URL: http://host.docker.internal:7001
+      RAG_CALLER: student-3-budget
+      RAG_TIMEOUT_SECONDS: "300"
+      MCP_ENABLED: "true"
+      RAG_ENABLED: "true"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5003:5003"
@@ -182,7 +228,7 @@ services:
 
     networks:
       - travel-net
-
+  
   student3-frontend:
     build:
       context: ./student-3/frontend
@@ -198,7 +244,6 @@ services:
 
     networks:
       - travel-net
-
   # ====================
   # Student 5
   # ====================
@@ -230,6 +275,8 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: qwen2.5:3b
       OLLAMA_TIMEOUT_SECONDS: "180"
+      RAG_SERVICE_URL: http://rag-server:7005
+      RAG_TIMEOUT_SECONDS: "130"
       EXPIRY_WARNING_DAYS: "90"
 
     ports:
@@ -238,6 +285,7 @@ services:
     depends_on:
       - student5-database
       - ollama
+      - rag-server
 
     networks:
       - travel-net
