@@ -58,9 +58,6 @@ import ItineraryOptions
 import SavedItineraryPage
     from "./pages/SavedItineraryPage";
 
-import MCPIntegratedFile
-    from "./pages/MCPIntegratedFrontend";
-
 function App() {
     return (
         <div className="app-shell">
@@ -92,13 +89,6 @@ function App() {
                         <Route
                             path="/saved-itinerary/:id"
                             element={<SavedItineraryPage />}
-                        />
-
-                    {/*    route to the MCP integrated page*/}
-
-                        <Route
-                            path = "/MCPIntegratedPage"
-                            element ={<MCPIntegratedFile/>}
                         />
 
                     </Routes>

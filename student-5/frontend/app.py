@@ -414,27 +414,6 @@ def create_app() -> Flask:
             return error_banner((body or {}).get("error") or "Could not save suggestions")
         return success_banner("Accepted suggestions saved. AI-generated records are flagged.") + load_packing_view()
 
-    @app.post("/ai/assistant")
-    def ai_assistant():
-        question = (request.form.get("question") or "").strip()
-        status, body = api("POST", "/api/ai/assistant", json={"question": question})
-        if status != 200:
-            return error_banner((body or {}).get("error") or "Travel assistant unavailable")
-        data = body.get("data") or {}
-        sources = "".join(
-            f"<li><strong>{esc(item.get('section'))}</strong> — {esc(item.get('source'))}</li>"
-            for item in data.get("sources") or []
-        ) or "<li>No matching source was found.</li>"
-        return (
-            "<article class='card assistant-answer' aria-live='polite'>"
-            f"<p class='assistant-question'><strong>You asked:</strong> {esc(question)}</p>"
-            f"<div class='assistant-response'>{esc(data.get('answer'))}</div>"
-            f"<p class='retrieval-mode'>Response mode: {esc(data.get('mode'))}</p>"
-            f"<h3>Sources</h3><ul>{sources}</ul>"
-            f"<p class='disclaimer'>{esc(data.get('disclaimer'))}</p>"
-            "</article>"
-        )
-
     @app.get("/partials/agentic")
     def partial_agentic():
         status, body = api("GET", "/api/agentic/status")

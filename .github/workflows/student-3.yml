@@ -33,15 +33,11 @@ jobs:
           cd ..
           python tests/check_seed.py
       - name: Smoke test live endpoints
-        env:
-          MCP_ENABLED: "false"
-          RAG_ENABLED: "false"
         run: |
           python database/db_api.py &
           python backend/app.py &
           sleep 5
           python tests/test_endpoints.py
-          python tests/test_release1.py
       - name: Build Docker images
         run: |
           docker build -t student-3-db database

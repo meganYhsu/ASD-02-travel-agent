@@ -142,20 +142,11 @@ async function deleteItinerary(itineraryId) {
     );
 }
 
-async function getAllItineraries() {
-    return request("GET", "/api/itineraries");
-}
-
-
-// making a funciotn to get al the itineraries:
-
-
 
 module.exports = {
     saveItinerary,
     saveActivity,
     getItinerary,
-    getAllItineraries,
     deleteItinerary,
     DatabaseUnavailableError,
     DatabaseRequestError

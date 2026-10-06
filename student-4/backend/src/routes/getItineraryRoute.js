@@ -6,7 +6,6 @@ const {
     generateCompleteItinerary,
     updateItinerary,
     saveGeneratedItinerary,
-    getSavedItineraries,
     getSavedItinerary,
     deleteSavedItinerary
 } = require("../controllers/itineraryController");
@@ -38,11 +37,6 @@ router.post(
 router.post(
     "/save_itinerary",
     saveGeneratedItinerary
-);
-
-router.get(
-    "/saved_itineraries",
-    getSavedItineraries
 );
 
 router.get(

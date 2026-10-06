@@ -75,7 +75,6 @@
         <button class="tab" data-tab="requirements">Entry Requirements</button>
         <button class="tab" data-tab="packing">Packing</button>
         <button class="tab" data-tab="tasks">Pre-Trip Tasks</button>
-        <button class="tab" data-tab="assistant">Travel Assistant</button>
         <button class="tab" data-tab="agentic">Plan → Act → Observe → Adapt</button>
     </nav>
 
@@ -199,19 +198,6 @@
                 <button type="submit">Add custom task</button>
             </form>
             <div id="tasks-table" hx-get="/partials/tasks" hx-trigger="load"></div>
-        </section>
-
-        <section id="assistant" class="panel">
-            <h2>Travel Assistant</h2>
-            <form class="card assistant-form" hx-post="/ai/assistant" hx-target="#assistant-result"
-                hx-indicator="#assistant-loading">
-                <label for="assistant-question">Ask about travel documents, packing, or pre-trip preparation</label>
-                <textarea id="assistant-question" name="question" rows="4" maxlength="2000" required
-                    placeholder="What should I check before travelling with my passport?"></textarea>
-                <button type="submit">Ask Assistant</button>
-            </form>
-            <div id="assistant-loading" class="htmx-indicator loading">Searching approved travel guidance…</div>
-            <div id="assistant-result"></div>
         </section>
 
         <section id="agentic" class="panel">

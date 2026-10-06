@@ -205,17 +205,6 @@ function SavedItineraryPage() {
                             >
                                 Back to planner
                             </button>
-
-                            <button
-                            className = "navigate-to-MCP-integration-option"
-                            type="button"
-                            onClick={()=> navigate("/MCPIntegratedPage", {
-                                state: {
-                                    itineraryId: itinerary.itinerary_id
-                                }
-                            })}>
-                                MCP Integration
-                            </button>
                         </section>
                     </>
                 )}

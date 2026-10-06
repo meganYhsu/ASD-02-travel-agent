@@ -4,16 +4,12 @@ on:
   push:
     paths:
       - "student-1/**"
-      - "ai-services/mcp-server/**"
-      - "rag-server/rag_pipeline.py"
       - "docker-compose.yml"
       - ".github/workflows/student-1.yml"
 
   pull_request:
     paths:
       - "student-1/**"
-      - "ai-services/mcp-server/**"
-      - "rag-server/rag_pipeline.py"
       - "docker-compose.yml"
       - ".github/workflows/student-1.yml"
 
@@ -22,12 +18,6 @@ on:
 jobs:
   validate-student-1:
     runs-on: ubuntu-latest
-
-    # The shared MCP and RAG servers run on a developer's machine, not in CI,
-    # so the integrations are kept but switched off here.
-    env:
-      MCP_ENABLED: "false"
-      RAG_ENABLED: "false"
 
     defaults:
       run:
@@ -68,12 +58,6 @@ jobs:
 
       - name: Test full CRUD cycle
         run: python tests/test_crud_cycle.py
-
-      - name: Validate MCP integration (disabled in CI)
-        run: python tests/test_mcp.py
-
-      - name: Validate RAG integration (disabled in CI)
-        run: python tests/test_rag.py
 
       - name: Build Docker images
         run: |

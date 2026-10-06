@@ -204,19 +204,6 @@ def delete_expense(expense_id):
 
 
 # -------------------------------------------------------------------- Budgets
-@app.route("/budgets")
-def list_budgets():
-    """Release 1: list every budget.
-
-    Added so the shared RAG server's data loader can read this feature's
-    budgets over HTTP instead of opening budget.db, which the Cross-Feature
-    Database API rule forbids.
-    """
-    conn = get_conn()
-    rows = conn.execute("SELECT * FROM Budgets ORDER BY budget_id").fetchall()
-    conn.close()
-    return jsonify([dict(r) for r in rows])
-
 @app.route("/budgets/<int:trip_id>")
 def get_budget(trip_id):
     conn = get_conn()
