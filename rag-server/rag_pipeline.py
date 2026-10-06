@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sqlite3
 import time
 import uuid
@@ -22,12 +23,12 @@ CHROMA_PATH = BASE_DIR / "chroma"
 #URL#
 TRAVEL_PLAN_SERVICE_URL = os.getenv(
     "TRAVEL_PLAN_SERVICE_URL",
-    "http://127.0.0.1:5002"
+    "http://127.0.0.1:6004"
 )
 
 BOOKING_SERVICE_URL = os.getenv(
     "BOOKING_SERVICE_URL", "http://localhost:5000"
-    ) 
+)
 
 TRAVELLER_SERVICE_URL = os.getenv(
     "TRAVELLER_SERVICE_URL",
@@ -50,7 +51,7 @@ DB_PATH_CANDIDATES = [
     APP_DIR / "database-service" / "data" / "enrolment.db",
     APP_DIR / "database-service" / "enrolment.db",
     APP_DIR / "enrolment.db",
-]
+    ]
 
 REPORT_FILES = [
     "report.json",
@@ -69,6 +70,24 @@ _last_corpus_chunks: list[dict[str, Any]] = []
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def chroma_metadata_for_chunk(chunk: dict[str, Any]) -> dict[str, Any]:
+    metadata = {
+        "source_id": chunk["source_id"],
+        "authority_tier": chunk["authority_tier"],
+        "indexed_at": chunk["indexed_at"],
+    }
+
+    for key, value in (chunk.get("metadata") or {}).items():
+        if value is None:
+            continue
+        if isinstance(value, (str, int, float, bool)):
+            metadata[key] = value
+        else:
+            metadata[key] = json.dumps(value, default=str)
+
+    return metadata
 
 
 def resolve_db_path() -> Path:
@@ -92,27 +111,34 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
         "nomic-embed-text"
     )
 
-    response = requests.post(
-        ollama_embed_url,
-        json={
-            "model": model_name,
-            "input": texts
-        },
-        timeout=300
-    )
+    batch_size = int(os.getenv("OLLAMA_EMBED_BATCH_SIZE", "64"))
+    all_embeddings: list[list[float]] = []
 
-    response.raise_for_status()
-
-    data = response.json()
-    embeddings = data.get("embeddings", [])
-
-    if len(embeddings) != len(texts):
-        raise RuntimeError(
-            f"Expected {len(texts)} embeddings, "
-            f"received {len(embeddings)}"
+    for start in range(0, len(texts), batch_size):
+        batch = texts[start : start + batch_size]
+        response = requests.post(
+            ollama_embed_url,
+            json={
+                "model": model_name,
+                "input": batch
+            },
+            timeout=300
         )
 
-    return embeddings
+        response.raise_for_status()
+
+        data = response.json()
+        embeddings = data.get("embeddings", [])
+
+        if len(embeddings) != len(batch):
+            raise RuntimeError(
+                f"Expected {len(batch)} embeddings, "
+                f"received {len(embeddings)}"
+            )
+
+        all_embeddings.extend(embeddings)
+
+    return all_embeddings
 
 
 def get_collection():
@@ -134,12 +160,12 @@ def reset_collection() -> None:
 
 
 def append_audit(
-    tool_name: str,
-    tool_input: dict[str, Any],
-    tool_output: dict[str, Any],
-    validation_status: str,
-    outcome: str,
-    start_time: float,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        tool_output: dict[str, Any],
+        validation_status: str,
+        outcome: str,
+        start_time: float,
 ) -> None:
     AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     duration_ms = int((time.time() - start_time) * 1000)
@@ -254,7 +280,7 @@ def load_database_chunks() -> list[dict[str, Any]]:
             )
 
             for row in conn.execute(
-                "SELECT student_id, student_name, subject_code FROM students ORDER BY student_id LIMIT 500"
+                    "SELECT student_id, student_name, subject_code FROM students ORDER BY student_id LIMIT 500"
             ).fetchall():
                 r = dict(row)
                 chunks.append(
@@ -381,11 +407,11 @@ def load_booking_chunks():
 
             for index, record in enumerate(records):
                 text = (
-                    f"{source_name}: "
-                    + ", ".join(
-                        f"{key}={value}"
-                        for key, value in record.items()
-                    )
+                        f"{source_name}: "
+                        + ", ".join(
+                    f"{key}={value}"
+                    for key, value in record.items()
+                )
                 )
 
                 chunks.append({
@@ -431,11 +457,11 @@ def load_budget_chunks():
 
             for index, record in enumerate(records):
                 text = (
-                    f"{source_name}: "
-                    + ", ".join(
-                        f"{key}={value}"
-                        for key, value in record.items()
-                    )
+                        f"{source_name}: "
+                        + ", ".join(
+                    f"{key}={value}"
+                    for key, value in record.items()
+                )
                 )
 
                 chunks.append({
@@ -457,6 +483,185 @@ def load_budget_chunks():
 
 
 #student 4#
+def safe_chunk_value(value: Any, fallback: str = "") -> str:
+    if value is None:
+        return fallback
+    return str(value)
+
+
+def build_itinerary_summary_chunk(itinerary: dict[str, Any]) -> dict[str, Any]:
+    itinerary_id = itinerary.get("itinerary_id")
+    destination = itinerary.get("destination")
+
+    text = (
+        f"Itinerary {itinerary_id} summary and requirements for {safe_chunk_value(destination)}. "
+        f"This chunk answers overview questions about itinerary {itinerary_id}, destination, dates, budget, "
+        f"travel group, travel style, and requirements. "
+        f"itinerary_summary: itinerary_id={itinerary_id}, "
+        f"destination={safe_chunk_value(destination)}, "
+        f"start_date={safe_chunk_value(itinerary.get('start_date'))}, "
+        f"end_date={safe_chunk_value(itinerary.get('end_date'))}, "
+        f"budget={safe_chunk_value(itinerary.get('budget'))}, "
+        f"travel_group={safe_chunk_value(itinerary.get('travel_group'))}, "
+        f"travel_style={safe_chunk_value(itinerary.get('travel_style'))}, "
+        f"requirements={safe_chunk_value(itinerary.get('requirements'))}, "
+        f"created_at={safe_chunk_value(itinerary.get('created_at'))}"
+    )
+
+    return {
+        "chunk_id": f"student4-itinerary-summary-{itinerary_id}",
+        "source_id": "student4-itinerary-summary",
+        "authority_tier": "tier_1",
+        "text": text,
+        "metadata": {
+            "student": "student4",
+            "source_type": "itinerary_summary",
+            "itinerary_id": itinerary_id,
+            "destination": destination,
+        },
+        "indexed_at": now_iso(),
+    }
+
+
+def build_activity_detail_chunk(activity: dict[str, Any]) -> dict[str, Any]:
+    activity_id = activity.get("activity_id")
+    itinerary_id = activity.get("itinerary_id")
+
+    text = (
+        f"Single activity detail for itinerary {itinerary_id}. "
+        f"This chunk answers questions about activity {activity_id}, which happens on day "
+        f"{safe_chunk_value(activity.get('day_no'))} of itinerary {itinerary_id}. "
+        f"activity_detail: activity_id={activity_id}, "
+        f"itinerary_id={itinerary_id}, "
+        f"day_no={safe_chunk_value(activity.get('day_no'))}, "
+        f"date={safe_chunk_value(activity.get('date'))}, "
+        f"location={safe_chunk_value(activity.get('location'))}, "
+        f"time={safe_chunk_value(activity.get('time'))}, "
+        f"cost={safe_chunk_value(activity.get('cost'))}, "
+        f"description={safe_chunk_value(activity.get('note'))}"
+    )
+
+    return {
+        "chunk_id": f"student4-activity-{activity_id}",
+        "source_id": "student4-activity-detail",
+        "authority_tier": "tier_1",
+        "text": text,
+        "metadata": {
+            "student": "student4",
+            "source_type": "activity_detail",
+            "itinerary_id": itinerary_id,
+            "activity_id": activity_id,
+        },
+        "indexed_at": now_iso(),
+    }
+
+
+def build_itinerary_activity_index_chunk(
+        itinerary: dict[str, Any],
+        activities: list[dict[str, Any]]
+) -> dict[str, Any]:
+    itinerary_id = itinerary.get("itinerary_id")
+    destination = itinerary.get("destination")
+    activity_lines = "; ".join(
+        f"activity_id={activity.get('activity_id')}, "
+        f"day_no={safe_chunk_value(activity.get('day_no'))}, "
+        f"time={safe_chunk_value(activity.get('time'))}, "
+        f"location={safe_chunk_value(activity.get('location'))}, "
+        f"description={safe_chunk_value(activity.get('note'))}"
+        for activity in activities
+    )
+
+    text = (
+        f"All activities for itinerary {itinerary_id}. "
+        f"This chunk lists every activity ID in itinerary {itinerary_id}, including each activity's day, "
+        f"time, location, and description. "
+        f"itinerary_activity_index: itinerary_id={itinerary_id}, "
+        f"destination={safe_chunk_value(destination)}, "
+        f"activities=[{activity_lines}]"
+    )
+
+    return {
+        "chunk_id": f"student4-itinerary-activities-{itinerary_id}",
+        "source_id": "student4-itinerary-activity-index",
+        "authority_tier": "tier_1",
+        "text": text,
+        "metadata": {
+            "student": "student4",
+            "source_type": "itinerary_activity_index",
+            "itinerary_id": itinerary_id,
+            "destination": destination,
+        },
+        "indexed_at": now_iso(),
+    }
+
+
+def build_day_schedule_chunks(
+        itinerary: dict[str, Any],
+        activities: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    itinerary_id = itinerary.get("itinerary_id")
+    activities_by_day: dict[Any, list[dict[str, Any]]] = {}
+
+    for activity in activities:
+        if not isinstance(activity, dict):
+            continue
+        day_no = activity.get("day_no")
+        activities_by_day.setdefault(day_no, []).append(activity)
+
+    chunks = []
+
+    for day_no, day_activities in activities_by_day.items():
+        sorted_activities = sorted(
+            day_activities,
+            key=lambda item: str(item.get("time") or "")
+        )
+
+        date = (
+            safe_chunk_value(sorted_activities[0].get("date"))
+            if sorted_activities else ""
+        )
+        locations = sorted({
+            safe_chunk_value(activity.get("location"))
+            for activity in sorted_activities
+            if activity.get("location")
+        })
+
+        activity_lines = "; ".join(
+            f"activity_id={activity.get('activity_id')}, "
+            f"time={safe_chunk_value(activity.get('time'))}, "
+            f"location={safe_chunk_value(activity.get('location'))}, "
+            f"description={safe_chunk_value(activity.get('note'))}"
+            for activity in sorted_activities
+        )
+
+        text = (
+            f"Day {day_no} activities for itinerary {itinerary_id}. "
+            f"This chunk answers questions about what the user is doing on day {day_no} "
+            f"of itinerary {itinerary_id}. "
+            f"day_schedule: itinerary_id={itinerary_id}, "
+            f"day_no={day_no}, "
+            f"date={date}, "
+            f"locations={', '.join(locations)}, "
+            f"activities=[{activity_lines}]"
+        )
+
+        chunks.append({
+            "chunk_id": f"student4-itinerary-{itinerary_id}-day-{day_no}",
+            "source_id": "student4-day-schedule",
+            "authority_tier": "tier_1",
+            "text": text,
+            "metadata": {
+                "student": "student4",
+                "source_type": "day_schedule",
+                "itinerary_id": itinerary_id,
+                "day_no": day_no,
+            },
+            "indexed_at": now_iso(),
+        })
+
+    return chunks
+
+
 def load_travel_plan_chunks():
     chunks = []
 
@@ -506,40 +711,29 @@ def load_travel_plan_chunks():
                         f"{itinerary_id} activities: {exc}"
                     )
 
-            itinerary_text = ", ".join(
-                f"{key}={value}"
-                for key, value in itinerary.items()
-            )
+            chunks.append(build_itinerary_summary_chunk(itinerary))
 
-            activity_text = "; ".join(
-                ", ".join(
-                    f"{key}={value}"
-                    for key, value in activity.items()
+            valid_activities = [
+                activity for activity in activities
+                if isinstance(activity, dict)
+            ]
+            if valid_activities:
+                chunks.append(
+                    build_itinerary_activity_index_chunk(
+                        itinerary,
+                        valid_activities
+                    )
                 )
-                for activity in activities
-            )
 
-            text = (
-                f"travel_plan: {itinerary_text}; "
-                f"activities=[{activity_text}]"
-            )
+            for activity in valid_activities:
+                chunks.append(build_activity_detail_chunk(activity))
 
-            chunks.append({
-                "chunk_id":
-                    f"student4-travel-plan-{itinerary_id}",
-                "source_id":
-                    "student4-travel-plans",
-                "authority_tier":
-                    "tier_1",
-                "text":
-                    text,
-                "metadata": {
-                    "student": "student4",
-                    "source_type": "travel_plan"
-                },
-                "indexed_at":
-                    now_iso()
-            })
+            chunks.extend(
+                build_day_schedule_chunks(
+                    itinerary,
+                    valid_activities
+                )
+            )
 
     except Exception as exc:
         print(
@@ -592,11 +786,11 @@ def load_pretrip_chunks() -> list[dict[str, Any]]:
                 record_id = record.get("id", index + 1)
 
                 text = (
-                    f"{source_name}: "
-                    + ", ".join(
-                        f"{key}={value}"
-                        for key, value in record.items()
-                    )
+                        f"{source_name}: "
+                        + ", ".join(
+                    f"{key}={value}"
+                    for key, value in record.items()
+                )
                 )
 
                 chunks.append({
@@ -769,6 +963,20 @@ def lexical_fallback_retrieve(query: str, k: int) -> list[dict[str, Any]]:
     return top
 
 
+def extract_itinerary_id(query: str) -> int | None:
+    patterns = [
+        r"itinerary[_\s-]*id\s*[=:]?\s*(\d+)",
+        r"itinerary\s+(\d+)",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, query or "", re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+
+    return None
+
+
 def refresh_corpus(caller: str = "student") -> dict[str, Any]:
     global _last_corpus_chunks
     start = time.time()
@@ -786,14 +994,7 @@ def refresh_corpus(caller: str = "student") -> dict[str, Any]:
             if chunks:
                 ids = [c["chunk_id"] for c in chunks]
                 docs = [c["text"] for c in chunks]
-                metas = [
-                    {
-                        "source_id": c["source_id"],
-                        "authority_tier": c["authority_tier"],
-                        "indexed_at": c["indexed_at"],
-                    }
-                    for c in chunks
-                ]
+                metas = [chroma_metadata_for_chunk(c) for c in chunks]
                 embeddings = embed_texts(docs)
                 collection.add(ids=ids, documents=docs, metadatas=metas, embeddings=embeddings)
         except Exception as exc:
@@ -832,7 +1033,15 @@ def retrieve_context(query: str, k: int = 5, caller: str = "student") -> dict[st
                     raise RuntimeError("empty_collection")
 
             query_embedding = embed_texts([query])
-            results = collection.query(query_embeddings=query_embedding, n_results=k)
+            itinerary_id = extract_itinerary_id(query)
+            query_args = {
+                "query_embeddings": query_embedding,
+                "n_results": k,
+            }
+            if itinerary_id is not None:
+                query_args["where"] = {"itinerary_id": itinerary_id}
+
+            results = collection.query(**query_args)
 
             ids = (results.get("ids") or [[]])[0]
             docs = (results.get("documents") or [[]])[0]
@@ -916,7 +1125,7 @@ def confidence_from_results(results: list[dict[str, Any]]) -> str:
 
 
 def generate_with_ollama(query: str, context: str) -> dict[str, Any]:
-    model_name = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
+    model_name = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
     ollama_generate_url = os.getenv(
         "OLLAMA_GENERATE_URL",
         "http://127.0.0.1:11434/api/generate"
@@ -1002,9 +1211,9 @@ def generate_with_ollama(query: str, context: str) -> dict[str, Any]:
 
 
 def answer_question(
-    query: str,
-    k: int = 5,
-    caller: str = "student"
+        query: str,
+        k: int = 5,
+        caller: str = "student"
 ) -> dict[str, Any]:
 
     start = time.time()

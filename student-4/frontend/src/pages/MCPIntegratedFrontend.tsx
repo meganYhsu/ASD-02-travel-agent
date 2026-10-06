@@ -1,22 +1,224 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 
+type MCPToolResult = {
+    toolName: string;
+    payload: any;
+    isError?: boolean;
+};
+
+function decodeHtml(value: string) {
+    const parser = new DOMParser();
+    return parser.parseFromString(value, "text/html").documentElement.textContent || value;
+}
+
+function parseMCPBackendResponse(toolName: string, responseText: string): MCPToolResult {
+    const preMatch = responseText.match(/<pre>([\s\S]*?)<\/pre>/i);
+    const jsonText = preMatch ? decodeHtml(preMatch[1]) : responseText;
+
+    try {
+        return {
+            toolName,
+            payload: JSON.parse(jsonText)
+        };
+    } catch {
+        return {
+            toolName,
+            payload: jsonText
+        };
+    }
+}
+
+function formatLabel(key: string) {
+    return key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function parseTravelRequirements(value: unknown) {
+    if (typeof value !== "string") {
+        return {
+            destination: "Not provided",
+            requirements: "Not provided"
+        };
+    }
+
+    try {
+        const parsed = JSON.parse(value);
+        return {
+            destination: parsed.destination || "Not provided",
+            requirements: parsed.Requirements || parsed.requirements || "Not provided"
+        };
+    } catch {
+        return {
+            destination: "Not provided",
+            requirements: value
+        };
+    }
+}
+
+function renderGenericValue(value: any): React.ReactNode {
+    if (value === null || value === undefined || value === "") {
+        return <span className="muted">Not provided</span>;
+    }
+
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return <span className="muted">No records returned</span>;
+        }
+
+        return (
+            <ol className="option-card__list">
+                {value.map((item, index) => (
+                    <li key={index}>
+                        {typeof item === "object" && item !== null
+                            ? renderGenericObject(item)
+                            : String(item)}
+                    </li>
+                ))}
+            </ol>
+        );
+    }
+
+    if (typeof value === "object") {
+        return renderGenericObject(value);
+    }
+
+    return String(value);
+}
+
+function renderGenericObject(payload: Record<string, any>) {
+    return (
+        <div className="option-card__section">
+            {Object.entries(payload).map(([key, value]) => (
+                <section
+                    key={key}
+                    className="option-card"
+                >
+                    <strong
+                        className="option-card__label"
+                    >
+                        {formatLabel(key)}
+                    </strong>
+                    <div className="option-card__summary">
+                        {renderGenericValue(value)}
+                    </div>
+                </section>
+            ))}
+        </div>
+    );
+}
+
+function ItineraryToolOutput({ payload }: { payload: any }) {
+    const travelRequirements = parseTravelRequirements(
+        payload?.requirements?.["Requirements to travel"]
+    );
+
+    const activities = Array.isArray(payload?.activities?.activity_description)
+        ? payload.activities.activity_description
+        : [];
+
+    return (
+        <div className="option-card__section">
+            <section
+                className="option-card"
+            >
+                <strong className="option-card__label">Destination</strong>
+                <p className="option-card__summary">{travelRequirements.destination}</p>
+            </section>
+
+            <section
+                className="option-card"
+            >
+                <strong className="option-card__label">Requirements</strong>
+                <p className="option-card__summary">{travelRequirements.requirements}</p>
+            </section>
+
+            <section className="option-card">
+                <strong className="option-card__label">Activities</strong>
+                {activities.length === 0 ? (
+                    <p className="muted">
+                        No activities returned.
+                    </p>
+                ) : (
+                    <ol className="option-card__list">
+                        {activities.map((activity: string, index: number) => (
+                            <li key={index}>
+                                {activity}
+                            </li>
+                        ))}
+                    </ol>
+                )}
+            </section>
+        </div>
+    );
+}
+
+function MCPOutput({ result }: { result: MCPToolResult | null }) {
+    if (!result) {
+        return <>Your MCP Generated output will be here.</>;
+    }
+
+    if (typeof result.payload !== "object" || result.payload === null) {
+        return <>{String(result.payload)}</>;
+    }
+
+    if (result.toolName === "get-itinerary") {
+        return <ItineraryToolOutput payload={result.payload} />;
+    }
+
+    return renderGenericObject(result.payload);
+}
+
 function MCPIntegratedFile() {
     const location = useLocation();
     const itineraryIdFromState = Number((location.state as any)?.itineraryId || "");
-    const [result, setResult] = useState("");
+    const [result, setResult] = useState<MCPToolResult | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [activeTool, setActiveTool] = useState("");
     const [dayNo, setDayNo] = useState("1");
     const selectedItineraryId = Number.isInteger(itineraryIdFromState)
         ? itineraryIdFromState
         : null;
 
+    async function showOutputFromRequest(toolName: string, request: () => Promise<Response>) {
+        setActiveTool(toolName);
+        setIsLoading(true);
+        setResult({
+            toolName,
+            payload: `Running ${toolName}...`
+        });
 
+        try {
+            const response = await request();
+            const responseText = await response.text();
 
+            if (!response.ok) {
+                setResult({
+                    toolName,
+                    payload: responseText || `Unable to run ${toolName}.`,
+                    isError: true
+                });
+                return;
+            }
 
-
-
-    function showResult() {
-        setResult("Result will be generated here.");
+            setResult(
+                responseText
+                    ? parseMCPBackendResponse(toolName, responseText)
+                    : {
+                        toolName,
+                        payload: "No output was returned by this MCP tool."
+                    }
+            );
+        } catch (error) {
+            setResult({
+                toolName,
+                payload: error instanceof Error ? error.message : `Unable to run ${toolName}.`,
+                isError: true
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
 
@@ -26,7 +228,11 @@ function MCPIntegratedFile() {
 // a function that wil fetch all the activities from the mcp_mode file:
     async function runingMCPTool(toolName: "get-itinerary" | "get-activity"){
         if (selectedItineraryId === null) {
-            setResult("No itinerary was provided. Please open MCP Integration from a saved itinerary.");
+            setResult({
+                toolName,
+                payload: "No itinerary was provided. Please open MCP Integration from a saved itinerary.",
+                isError: true
+            });
             return;
         }
 
@@ -35,7 +241,7 @@ function MCPIntegratedFile() {
             "http://localhost:5004/api/mcp/get-itinerary":
             "http://localhost:5004/api/mcp/get-activity";
 
-        const response = await fetch(endpoint , {
+        await showOutputFromRequest(toolName, () => fetch(endpoint , {
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
@@ -43,14 +249,16 @@ function MCPIntegratedFile() {
             body: JSON.stringify({
                 itinerary_id: selectedItineraryId
             })
-        });
-        const result = await response.text();
-        setResult(result);
+        }));
     }
 
     async function runSpecificMCPTool(toolName: string, needsDayNo = false) {
         if (selectedItineraryId === null) {
-            setResult("No itinerary was provided. Please open MCP Integration from a saved itinerary.");
+            setResult({
+                toolName,
+                payload: "No itinerary was provided. Please open MCP Integration from a saved itinerary.",
+                isError: true
+            });
             return;
         }
 
@@ -65,7 +273,7 @@ function MCPIntegratedFile() {
             argumentsPayload.day_no = Number(dayNo);
         }
 
-        const response = await fetch("http://localhost:5004/api/mcp/tool", {
+        await showOutputFromRequest(toolName, () => fetch("http://localhost:5004/api/mcp/tool", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -74,76 +282,12 @@ function MCPIntegratedFile() {
                 tool_name: toolName,
                 arguments: argumentsPayload
             })
-        });
-
-        const result = await response.text();
-        setResult(result);
+        }));
     }
 
     return (
         <div className="travel-page">
             <div className="travel-page__shell">
-                <nav
-                    className="mcp-toolbar"
-                    style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "24px",
-                        marginBottom: "28px"
-                    }}
-                >
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runingMCPTool("get-itinerary")}
-                    >
-                        get-itinerary
-                    </button>
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runingMCPTool("get-activity")}
-                    >
-                        get-activity
-                    </button>
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runSpecificMCPTool("total_activity_count")}
-                    >
-                        total_activity_count
-                    </button>
-
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runSpecificMCPTool("get_activity_start_times")}
-                    >
-                        get_activity_start_times
-                    </button>
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runSpecificMCPTool("get_travel_requirements")}
-                    >
-                        get_travel_requirements
-                    </button>
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runSpecificMCPTool("total_activities_count_a_day", true)}
-                    >
-                        total_activities_count_a_day
-                    </button>
-                    <button
-                        className="travel-button"
-                        type="button"
-                        onClick={() => runSpecificMCPTool("get_trip_activities_for_day_desc", true)}
-                    >
-                        get_trip_activities_for_day_desc
-                    </button>
-                </nav>
-
                 <header className="travel-page__hero">
                     <p className="travel-page__eyebrow">Result viewer</p>
                     <h1 className="travel-page__title">Itinerary result viewer</h1>
@@ -155,84 +299,98 @@ function MCPIntegratedFile() {
 
 
                 <main>
-                    <section
-                        className="travel-panel mcp-result-panel"
-                        style={{
-                            display: "grid",
-                            gap: "18px",
-                            maxWidth: "100%",
-                            overflow: "hidden",
-                            borderRadius: "20px",
-                            padding: "22px",
-                            background: "rgba(255, 255, 255, 0.84)",
-                            border: "1px solid rgba(24, 53, 68, 0.12)",
-                            boxShadow: "0 18px 42px rgba(18, 38, 49, 0.08)"
-                        }}
-                    >
-                        <div
-                            className="mcp-result-panel__head"
-                            style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                alignItems: "end",
-                                justifyContent: "space-between",
-                                gap: "16px",
-                                minWidth: 0
-                            }}
-                        >
-                            <label
-                                className="mcp-day-field"
-                                style={{
-                                    display: "grid",
-                                    gap: "8px",
-                                    fontWeight: 700
-                                }}
-                            >
-                                Day no
+                    <section className="travel-panel mcp-panel">
+                        <div className="mcp-panel__controls">
+                            <label className="mcp-panel__field">
+                                <span>Day no</span>
                                 <input
                                     type="number"
                                     min="1"
                                     value={dayNo}
                                     onChange={(event) => setDayNo(event.target.value)}
-                                    style={{
-                                        width: "120px",
-                                        minHeight: "44px",
-                                        border: "1px solid rgba(28, 59, 76, 0.18)",
-                                        borderRadius: "12px",
-                                        padding: "10px 12px"
-                                    }}
                                 />
                             </label>
 
-                            <div>
-                                <h2 style={{ margin: 0 }}>Tool's generated output</h2>
-                            </div>
+                            <nav className="mcp-toolbar" aria-label="MCP tools">
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runingMCPTool("get-itinerary")}
+                                    disabled={isLoading}
+                                >
+                                    get-itinerary
+                                </button>
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runingMCPTool("get-activity")}
+                                    disabled={isLoading}
+                                >
+                                    get-activity
+                                </button>
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runSpecificMCPTool("total_activity_count")}
+                                    disabled={isLoading}
+                                >
+                                    total_activity_count
+                                </button>
+
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runSpecificMCPTool("get_activity_start_times")}
+                                    disabled={isLoading}
+                                >
+                                    get_activity_start_times
+                                </button>
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runSpecificMCPTool("get_travel_requirements")}
+                                    disabled={isLoading}
+                                >
+                                    get_travel_requirements
+                                </button>
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runSpecificMCPTool("total_activities_count_a_day", true)}
+                                    disabled={isLoading}
+                                >
+                                    total_activities_count_a_day
+                                </button>
+                                <button
+                                    className="travel-button"
+                                    type="button"
+                                    onClick={() => runSpecificMCPTool("get_trip_activities_for_day_desc", true)}
+                                    disabled={isLoading}
+                                >
+                                    get_trip_activities_for_day_desc
+                                </button>
+                            </nav>
 
                         </div>
 
-                        <pre
-                            className="mcp-output"
-                            style={{
-                                width: "100%",
-                                maxWidth: "100%",
-                                maxHeight: "560px",
-                                margin: 0,
-                                overflow: "auto",
-                                whiteSpace: "pre-wrap",
-                                overflowWrap: "anywhere",
-                                wordBreak: "break-word",
-                                boxSizing: "border-box",
-                                border: "1px solid rgba(28, 59, 76, 0.1)",
-                                borderRadius: "16px",
-                                padding: "18px",
-                                background: "rgba(250, 252, 253, 0.96)",
-                                color: "#183042",
-                                fontSize: "0.92rem",
-                                lineHeight: 1.55
-                            }}
-                        >
-                            {result || "Output"}
-                        </pre>
+                        <div className="mcp-output">
+                            <div className="mcp-output__head">
+                                <div>
+                                    <p className="mcp-output__eyebrow">Tool output</p>
+                                    <h2>Generated MCP response</h2>
+                                </div>
+                                <span className="mcp-output__status">
+                                    {isLoading ? "Running" : activeTool || "Ready"}
+                                </span>
+                            </div>
+
+                            <div
+                                className={`mcp-output__box${result?.isError ? " saved-itinerary-page__state--error" : ""}`}
+                                aria-live="polite"
+                            >
+                                <MCPOutput result={result} />
+                            </div>
+                        </div>
                     </section>
                 </main>
             </div>

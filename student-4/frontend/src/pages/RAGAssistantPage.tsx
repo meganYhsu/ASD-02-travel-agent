@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "../styles/RAGAssistantPage.css";
 
 type RagCitation = {
     chunk_id: string;
@@ -30,7 +29,7 @@ function RAGAssistantPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const context = (location.state || {}) as RagPageState;
-    const [question, setQuestion] = useState("What activities are included in this travel plan?");
+    const [question, setQuestion] = useState("");
     const [result, setResult] = useState<RagResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -75,7 +74,8 @@ function RAGAssistantPage() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    question: `${contextPrefix}${trimmedQuestion}`
+                    // question: `${contextPrefix}${trimmedQuestion}`
+                    question: `${trimmedQuestion}`
                 })
             });
 
@@ -95,43 +95,29 @@ function RAGAssistantPage() {
     }
 
     return (
-        <div className="rag-assistant-page">
-            <div className="rag-assistant-page__shell">
-                <header className="rag-assistant-page__hero">
-                    <p className="rag-assistant-page__eyebrow">Shared RAG</p>
-                    <h1 className="rag-assistant-page__title">Travel plan search</h1>
-                    <p className="rag-assistant-page__intro">
-                        Ask questions about saved itineraries and retrieve grounded project context with source chunks.
-                    </p>
-                </header>
-
-                <section className="rag-assistant-page__panel">
-                    <div className="rag-assistant-page__section-head">
-                        <div>
-                            <p className="rag-assistant-page__eyebrow">Question</p>
-                            <h2 className="rag-assistant-page__section-title">Ask about saved travel plans</h2>
-                        </div>
-                        <div className="rag-assistant-page__meta">
-                            {context.itineraryId ? `Itinerary ${context.itineraryId}` : "All saved plans"}
-                        </div>
-                    </div>
-
+        <div className="saved-itinerary-page">
+            <div className="saved-itinerary-page__shell">
+                <header className="saved-itinerary-page__hero">
+                    <p className="saved-itinerary-page__eyebrow">Question</p>
+                    <h1 className="saved-itinerary-page__title">Ask about saved travel plans</h1>
                     {contextPrefix && (
-                        <p className="rag-assistant-page__context">
+                        <p className="saved-itinerary-page__intro">
                             {contextPrefix.replace(/: $/, "")}
                         </p>
                     )}
+                </header>
 
-                    <form className="rag-assistant-page__form" onSubmit={askSharedRag}>
+                <section className="saved-itinerary-page__panel">
+                    <form className="saved-itinerary-page__section-head" onSubmit={askSharedRag}>
                         <input
                             className="rag-assistant-page__input"
                             type="text"
                             value={question}
                             onChange={(event) => setQuestion(event.target.value)}
-                            placeholder="Ask about itinerary ID, destination, location, date, activity, or budget"
+                            placeholder="Ask about itinerary activities, dates, budget, or locations."
                         />
                         <button
-                            className="rag-assistant-page__button"
+                            className="saved-itinerary-page__button"
                             type="submit"
                             disabled={loading}
                         >
@@ -140,28 +126,28 @@ function RAGAssistantPage() {
                     </form>
 
                     {error && (
-                        <div className="rag-assistant-page__state rag-assistant-page__state--error">
+                        <div className="saved-itinerary-page__state saved-itinerary-page__state--error">
                             {error}
                         </div>
                     )}
 
                     {result && (
-                        <article className="rag-assistant-page__result">
-                            <div className="rag-assistant-page__result-head">
-                                <p className="rag-assistant-page__eyebrow">Retrieved context</p>
+                        <article className="saved-itinerary-page__day">
+                            <div className="saved-itinerary-page__day-head">
+                                <div>
+                                    <p className="saved-itinerary-page__eyebrow">Retrieved context</p>
+                                </div>
                                 <span>{result.confidenceCategory}</span>
                             </div>
-                            <p className="rag-assistant-page__answer">{result.answer}</p>
-                            <div className="rag-assistant-page__summary">
+                            <p>{result.answer}</p>
+                            <div className="saved-itinerary-page__day-meta">
                                 <span>Top chunk: {result.retrievalSummary?.top_chunk || "None"}</span>
                                 <span>Retrieved: {result.retrievalSummary?.retrieved_count || 0}</span>
                             </div>
                             {result.citations.length > 0 && (
-                                <div className="rag-assistant-page__citations">
+                                <div className="saved-itinerary-page__day-meta">
                                     {result.citations.map((citation) => (
-                                        <span key={citation.chunk_id}>
-                                            {citation.chunk_id}
-                                        </span>
+                                        <span key={citation.chunk_id}>{citation.chunk_id}</span>
                                     ))}
                                 </div>
                             )}
@@ -169,16 +155,16 @@ function RAGAssistantPage() {
                     )}
                 </section>
 
-                <section className="rag-assistant-page__actions">
+                <section className="saved-itinerary-page__actions">
                     <button
-                        className="rag-assistant-page__button"
+                        className="saved-itinerary-page__button"
                         type="button"
                         onClick={() => navigate(-1)}
                     >
                         Back
                     </button>
                     <button
-                        className="rag-assistant-page__button rag-assistant-page__button--secondary"
+                        className="saved-itinerary-page__button"
                         type="button"
                         onClick={() => navigate("/")}
                     >
