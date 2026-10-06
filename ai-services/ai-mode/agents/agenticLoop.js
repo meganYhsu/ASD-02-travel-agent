@@ -781,6 +781,7 @@ async function checkContract(
 
         return {
             name,
+            url,
             ok,
             status: response.status,
             detail,
@@ -796,6 +797,7 @@ async function checkContract(
 
         return {
             name,
+            url,
             ok: false,
             status: 0,
 
@@ -816,6 +818,7 @@ async function checkContract(
 function skipped(name, flag) {
     return {
         name,
+        url: "not called",
         ok: true,
         status: 0,
         detail: `skipped (${flag}=false)`,
@@ -881,7 +884,7 @@ async function observeStudent3Mcp() {
 
                 body: {
                     tool_name: "total_activity_count",
-                    arguments: { itinerary_id: 1 }
+                    arguments: { itinerary_id: 3 }
                 },
 
                 assert: (payload) => {
@@ -914,7 +917,7 @@ async function observeStudent3Mcp() {
 
                 body: {
                     tool_name: "get_trip_activities_desc",
-                    arguments: { itinerary_id: 1 }
+                    arguments: { itinerary_id: 3 }
                 },
 
                 assert: (payload) => {
@@ -1189,8 +1192,45 @@ async function observeStudent3Rag() {
         renderedRefusal
     ];
 }
+// Release 1 - validation modes for the Student 3 observer.
+// main() is shared and stays unchanged. Its parseArgs() skips flags it
+// does not know, so --mode reaches this observer through process.argv.
+//   base  Release 0 checks only
+//   mcp   Release 0 checks + shared MCP server checks
+//   rag   Release 0 checks + shared RAG server checks
+//   all   both (default)
+
+function student3ValidationMode() {
+
+    const modes = ["base", "mcp", "rag", "all"];
+
+    const argv = process.argv.slice(2);
+
+    const index = argv.indexOf("--mode");
+
+    const mode =
+        index >= 0 && argv[index + 1]
+            ? argv[index + 1]
+            : (process.env.AGENT_MODE || "all");
+
+    if (!modes.includes(mode)) {
+        throw new Error(
+            `Unknown mode: ${mode}. Use one of: ${modes.join(", ")}`
+        );
+    }
+
+    return mode;
+}
+
 
 async function observeStudent3() {
+
+    const mode =
+        student3ValidationMode();
+
+    console.log(
+        `  Student 3 validation mode: ${mode}`
+    );
 
     const frontend =
         await checkService(
@@ -1258,12 +1298,15 @@ async function observeStudent3() {
             }
         );
 
-    // Release 1 - shared local MCP server and shared local RAG server
     const mcpServices =
-        await observeStudent3Mcp();
+        mode === "mcp" || mode === "all"
+            ? await observeStudent3Mcp()
+            : [];
 
     const ragServices =
-        await observeStudent3Rag();
+        mode === "rag" || mode === "all"
+            ? await observeStudent3Rag()
+            : [];
 
     const services = [
         frontend,
@@ -1276,8 +1319,6 @@ async function observeStudent3() {
         ...ragServices
     ];
 
-    // Print the asserted detail for each check, so the Release 1
-    // evidence is visible in the loop transcript.
     for (const service of services) {
         if (service.detail) {
             console.log(
@@ -1296,13 +1337,129 @@ async function observeStudent3() {
 
     return {
         student: "Student 3",
-        component: "Budget & Expense Tracking",
+        component: `Budget & Expense Tracking (validation mode: ${mode})`,
         ok: issues.length === 0,
         services,
         issues
     };
 }
 
+
+async function observeStudent5() {
+
+    const frontend =
+        await checkService(
+            "Student 5 Frontend",
+            STUDENT5_FRONTEND,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const backendHealth =
+        await checkService(
+            "Student 5 Backend Health",
+            `${STUDENT5_BACKEND}/health`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const databaseHealth =
+        await checkService(
+            "Student 5 Database Health",
+            `${STUDENT5_DATABASE}/health`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const documents =
+        await checkService(
+            "Student 5 Documents",
+            `${STUDENT5_BACKEND}/api/documents`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const requirements =
+        await checkService(
+            "Student 5 Entry Requirements",
+            `${STUDENT5_BACKEND}/api/entry-requirements`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const packingLists =
+        await checkService(
+            "Student 5 Packing Lists",
+            `${STUDENT5_BACKEND}/api/packing-lists`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const tasks =
+        await checkService(
+            "Student 5 Pre-trip Tasks",
+            `${STUDENT5_BACKEND}/api/pre-trip-tasks`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const agenticStatus =
+        await checkService(
+            "Student 5 Agentic Status",
+            `${STUDENT5_BACKEND}/api/agentic/status`,
+            {
+                expectedStatuses: [200]
+            }
+        );
+
+    const services = [
+        frontend,
+        backendHealth,
+        databaseHealth,
+        documents,
+        requirements,
+        packingLists,
+        tasks,
+        agenticStatus
+    ];
+
+    const issues = services
+        .filter(service => !service.ok)
+        .map(service =>
+            `${service.name} failed: ${service.error ||
+            `HTTP ${service.status}`
+            }`
+        );
+
+    return {
+        student: "Student 5",
+        component: "Pre-trip Preparation",
+        ok: issues.length === 0,
+        services,
+        issues
+    };
+}
+
+
+async function observeStudent1() {
+    return {
+        student: "Student 1",
+        component: "Not configured yet",
+        ok: false,
+        skipped: true,
+        services: [],
+        issues: [
+            "Validation not configured yet"
+        ]
+    };
+}
 
 async function observeStudent2() {
 

@@ -6,12 +6,6 @@
     <meta name="htmx-config" content='{"selfRequestsOnly": false}'>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script>
-        // Release 1 - the MCP tool boundary answers with HTTP 403 and the
-        // server-unavailable paths with 503, each carrying an explanatory
-        // message. htmx discards non-2xx responses by default, so those
-        // messages would never reach the user. The status codes stay correct
-        // for the agentic loop and the endpoint tests, and the body is shown
-        // here as well.
         document.addEventListener("htmx:beforeSwap", function (event) {
             if (event.detail.xhr.status >= 400) {
                 event.detail.shouldSwap = true;
@@ -35,6 +29,18 @@
         table { border-collapse: collapse; margin-top: .75rem; }
         td, th { border: 1px solid #ccc; padding: .4rem .8rem; text-align: left; }
         .rag-answer ol { padding-left: 1.2rem; }
+        .tool-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: .5rem; margin-top: .75rem;
+        }
+        .tool-grid button {
+            width: 100%; font-size: .78rem; padding: .45rem .3rem;
+            white-space: normal; line-height: 1.25;
+        }
+        .field-row { display: flex; gap: 1rem; align-items: center; }
+        .field-row input { width: 5rem; }
+        .rag-form { display: inline-block; margin: 0 .75rem .5rem 0; }
+        .rag-form button { font-size: .85rem; padding: .35rem .8rem; }
     </style>
 </head>
 
@@ -61,138 +67,116 @@
             </div>
         </div>
 
-                <!-- ============================================================
-             Release 1 - shared MCP server, reached through the backend API
-             ============================================================ -->
         <section class="section-card">
-            <h2>MCP tools</h2>
+            <h2>Dashboard</h2>
+            <button hx-get="/api/dashboard/1" hx-target="#dashboard">
+                Load trip 1 dashboard
+            </button>
+            <div id="dashboard"></div>
+            <div id="edit-form"></div>
+        </section>
+
+        <section class="section-card">
+            <h2>Add expense</h2>
+            <form hx-post="/api/expenses" hx-target="#dashboard">
+                <input type="hidden" name="trip_id" value="1">
+                <label>Description <input name="description" required></label>
+                <label>Amount (AUD)
+                    <input name="amount" type="number" step="0.01" min="0" required></label>
+                <label>Category
+                    <select name="category_id">
+                        <option value="1">Accommodation</option>
+                        <option value="2">Food</option>
+                        <option value="3">Transport</option>
+                        <option value="4">Activities</option>
+                        <option value="5">Shopping</option>
+                    </select>
+                </label>
+                <label>Date <input name="expense_date" type="date"></label>
+                <button type="submit" class="primary-button">Save expense</button>
+            </form>
+        </section>
+
+        <section class="section-card">
+            <h2>AI budget analysis</h2>
+            <button hx-post="/api/analyse/1" hx-target="#ai-result"
+                    hx-indicator="#ai-loading">
+                Analyse budget
+            </button>
+            <span id="ai-loading" class="htmx-indicator">Analysing&hellip;</span>
+            <div id="ai-result"></div>
+        </section>
+
+                        <section class="section-card">
+            <h2>Your trip plan</h2>
             <p class="muted">
-                Calls the shared local MCP server through this feature's
-                backend API. The Budget feature is permitted only the
-                read-only itinerary tools it needs to put spending in the
-                context of the plan.
+                Shared MCP server &middot; this feature may call three
+                read-only itinerary tools, so spending can be read against the
+                plan. Trip Planning owns the data; Budget never reads its
+                database.
             </p>
 
-            <p>
+            <div class="field-row">
                 <label>Trip ID
                     <input id="mcp-trip-id" name="trip_id" type="number"
-                           min="1" value="1"></label>
+                           min="1" value="3"></label>
                 <label>Day
                     <input id="mcp-day-no" name="day_no" type="number"
                            min="1" value="1"></label>
-            </p>
+            </div>
 
-            <p>
-                <button hx-get="/api/mcp/tools" hx-target="#mcp-result">
-                    Show tools and boundary
-                </button>
-
+            <div class="tool-grid">
                 <button hx-post="/api/mcp/total_activity_count"
                         hx-target="#mcp-result" hx-include="#mcp-trip-id"
-                        hx-indicator="#mcp-loading" class="primary-button">
-                    Run total_activity_count
+                        hx-indicator="#mcp-loading">
+                    Activities planned
                 </button>
 
                 <button hx-post="/api/mcp/total_activities_count_a_day"
                         hx-target="#mcp-result"
                         hx-include="#mcp-trip-id, #mcp-day-no"
                         hx-indicator="#mcp-loading">
-                    Run total_activities_count_a_day
+                    Activities on a day
                 </button>
 
                 <button hx-post="/api/mcp/get_trip_activities_desc"
                         hx-target="#mcp-result" hx-include="#mcp-trip-id"
                         hx-indicator="#mcp-loading">
-                    Run get_trip_activities_desc
+                    What is planned
                 </button>
+            </div>
 
-                <button hx-post="/api/mcp/get_travel_requirements"
-                        hx-target="#mcp-result" hx-include="#mcp-trip-id">
-                    Run a registered tool outside the boundary
-                </button>
-            </p>
-
-            <span id="mcp-loading" class="htmx-indicator">Calling MCP tool&hellip;</span>
+            <span id="mcp-loading" class="htmx-indicator">Reading the trip plan&hellip;</span>
             <div id="mcp-result"></div>
         </section>
 
-       
         <section class="section-card">
-            <h2>MCP tools</h2>
+            <h2>Ask about your spending</h2>
             <p class="muted">
-                Calls the shared local MCP server through this feature's
-                backend API. The Budget feature is permitted only the
-                read-only itinerary tools it needs to put spending in the
-                context of the plan.
-            </p>
-
-            <button hx-get="/api/mcp/tools" hx-target="#mcp-result">
-                Show tools and boundary
-            </button>
-
-            <form hx-post="/api/mcp/total_activity_count" hx-target="#mcp-result"
-                  hx-indicator="#mcp-loading">
-                <label>Trip ID
-                    <input name="trip_id" type="number" min="1" value="1" required></label>
-                <button type="submit" class="primary-button">
-                    Run total_activity_count
-                </button>
-            </form>
-
-            <form hx-post="/api/mcp/total_activities_count_a_day"
-                  hx-target="#mcp-result" hx-indicator="#mcp-loading">
-                <input type="hidden" name="trip_id" value="1">
-                <label>Day <input name="day_no" type="number" min="1" value="1"></label>
-                <button type="submit">Run total_activities_count_a_day</button>
-            </form>
-
-            <form hx-post="/api/mcp/get_trip_activities_desc"
-                  hx-target="#mcp-result" hx-indicator="#mcp-loading">
-                <input type="hidden" name="trip_id" value="1">
-                <button type="submit">Run get_trip_activities_desc</button>
-            </form>
-
-            <form hx-post="/api/mcp/get_travel_requirements" hx-target="#mcp-result">
-                <input type="hidden" name="trip_id" value="1">
-                <button type="submit">
-                    Run a registered tool outside the boundary
-                </button>
-            </form>
-
-            <span id="mcp-loading" class="htmx-indicator">Calling MCP tool&hellip;</span>
-            <div id="mcp-result"></div>
-        </section>
-
-        <!-- ============================================================
-             Release 1 - shared RAG server, reached through the backend API
-             ============================================================ -->
-        <section class="section-card">
-            <h2>Ask with retrieved context (RAG)</h2>
-            <p class="muted">
-                Answers are generated from retrieved project context and are
-                shown with source citations and a confidence category. When no
-                relevant context is found, an insufficient-context response is
-                shown instead.
+                Shared RAG server &middot; answers are built from the
+                project's own records and shown with their sources and a
+                confidence category. When nothing supports the question, no
+                answer is given.
             </p>
 
             <form hx-post="/api/rag/query" hx-target="#rag-result"
-                  hx-indicator="#rag-loading">
+                  hx-indicator="#rag-loading" class="rag-form">
                 <label>Question
-                    <input name="question" size="60"
+                    <input name="question" size="45"
                            value="What expenses are recorded for trip 1?"
                            required></label>
-                <button type="submit" class="primary-button">Ask</button>
+                <button type="submit">Ask</button>
             </form>
 
             <form hx-post="/api/rag/retrieve" hx-target="#rag-result"
-                  hx-indicator="#rag-loading">
+                  hx-indicator="#rag-loading" class="rag-form">
                 <input type="hidden" name="question"
                        value="trip budget and expenses">
-                <button type="submit">Show retrieved context only</button>
+                <button type="submit">Show sources</button>
             </form>
 
             <span id="rag-loading" class="htmx-indicator">
-                Retrieving&hellip; (llama3.1:8b generation can take a minute)
+                Searching the records&hellip;
             </span>
             <div id="rag-result"></div>
         </section>
