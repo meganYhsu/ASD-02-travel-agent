@@ -16,6 +16,8 @@ AI flow: User -> frontend -> Flask API -> Ollama (port 11434) -> qwen2.5:3b -> s
 
 Shared assistant flow: User -> Travel Assistant tab -> Flask API -> shared RAG server (port 7005) -> approved Markdown retrieval -> optional Ollama grounded answer -> cited response
 
+MCP flow: Travel Assistant tab -> Student 5 Flask API -> shared MCP HTTP server (port 7004) -> registered travel tool -> structured result
+
 The frontend never queries SQLite. SQL lives in `database/db.py` and uses parameterised queries.
 
 ## Frontend
@@ -63,6 +65,8 @@ SQLite tables and seed counts:
 - POST `/api/ai/generate-pretrip-checklist`
 - POST `/api/ai/save-pretrip-checklist`
 - POST `/api/ai/assistant`
+- GET `/api/mcp/tools`
+- POST `/api/mcp/tool` with `{ "tool_name": "...", "arguments": {} }`
 - POST `/api/alerts/compliance`
 - GET `/api/agentic/status`
 - GET `/health`
@@ -103,6 +107,10 @@ python student-5/backend/app.py
 # terminal 3
 set BACKEND_URL=http://127.0.0.1:5505
 python student-5/frontend/app.py
+
+# terminal 4 (shared MCP server)
+set MCP_HOST=127.0.0.1
+python ai-services/mcp-server/http_server.py
 ```
 
 - UI: http://localhost:8505
@@ -149,6 +157,14 @@ docker compose up --build
 
 Then open http://localhost:8505 or the homepage at http://localhost:8080.
 
+The Student 5 container connects to the shared MCP server on the host at port 7004. Start it before using MCP;
+for Docker access it must listen on all interfaces:
+
+```
+set MCP_HOST=0.0.0.0
+python ai-services/mcp-server/http_server.py
+```
+
 ```
 docker compose exec ollama ollama pull qwen2.5:3b
 ```
@@ -164,6 +180,9 @@ docker compose exec ollama ollama pull qwen2.5:3b
 - `EXPIRY_WARNING_DAYS` Expiry alert window
 - `RAG_SERVICE_URL` Shared RAG server, default `http://127.0.0.1:7005`
 - `RAG_TIMEOUT_SECONDS` Shared RAG request timeout
+- `MCP_SERVICE_URL` Shared MCP server, default `http://127.0.0.1:7004`
+- `MCP_TIMEOUT_SECONDS` Shared MCP request timeout
+- `MCP_ENABLED` Set to `false` to disable MCP
 
 ## Known limitations
 
@@ -171,4 +190,4 @@ docker compose exec ollama ollama pull qwen2.5:3b
 - No login/auth in Release 0; traveller and trip IDs are demo strings.
 - Live AI quality depends on the local Ollama model being pulled.
 - The shared RAG knowledge base is deliberately small and must be expanded only with reviewed sources.
-- MCP and multi-agent runtime features are not implemented; student-5 currently uses the shared RAG HTTP service.
+- MCP uses the shared registered tool server. Its tools may require the corresponding Student 1 or Student 4 database services to be running.

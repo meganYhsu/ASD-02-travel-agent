@@ -278,7 +278,13 @@ services:
       OLLAMA_TIMEOUT_SECONDS: "180"
       RAG_SERVICE_URL: http://rag-server:7005
       RAG_TIMEOUT_SECONDS: "130"
+      MCP_SERVICE_URL: http://host.docker.internal:7004
+      MCP_TIMEOUT_SECONDS: "15"
+      MCP_ENABLED: "true"
       EXPIRY_WARNING_DAYS: "90"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5505:5505"
