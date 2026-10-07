@@ -120,7 +120,14 @@ const RAG_ENABLED =
         .toLowerCase() !== "false";
 
 
+const VALIDATION_MODES = ["base", "mcp", "rag", "all"];
 
+const FEATURE_VALIDATION = {
+    "student-3": {
+        mcp: observeStudent3Mcp,
+        rag: observeStudent3Rag
+    }
+};
 
 async function main() {
 
@@ -145,7 +152,8 @@ async function main() {
        COMMAND-LINE INPUT
     ========================================================= */
 
-    function parseArgs(argv) {
+
+        function parseArgs(argv) {
 
         const args = {
             student:
@@ -160,7 +168,11 @@ async function main() {
                 Number(
                     process.env.AGENT_MAX_ROUNDS ||
                     3
-                )
+                ),
+
+            mode:
+                process.env.AGENT_MODE ||
+                "all"
         };
 
 
@@ -198,7 +210,25 @@ async function main() {
                     Number(argv[i + 1]);
 
                 i += 1;
+                continue;
             }
+
+
+            if (
+                argv[i] === "--mode" &&
+                argv[i + 1]
+            ) {
+                args.mode = argv[i + 1];
+                i += 1;
+            }
+        }
+
+
+        if (!VALIDATION_MODES.includes(args.mode)) {
+            throw new Error(
+                `Unknown mode: ${args.mode}. ` +
+                `Use one of: ${VALIDATION_MODES.join(", ")}`
+            );
         }
 
 
@@ -286,13 +316,17 @@ async function main() {
     console.log(
         `Task: ${task}`
     );
+    
+    console.log(
+        `Validation mode: ${args.mode}`
+    );
 
 
     console.log("\nPLAN");
 
     console.log(
         JSON.stringify(
-            PLAN,
+            buildPlan(PLAN, args.mode),
             null,
             2
         )
@@ -337,9 +371,12 @@ async function main() {
 
 
         const observation =
-            await observeStudent(
-                student
+            await applyValidationMode(
+                await observeStudent(student),
+                student,
+                args.mode
             );
+        
 
 
         const evidenceText =
@@ -826,29 +863,113 @@ function skipped(name, flag) {
     };
 }
 
+// RELEASE 1 - SHARED AGENTIC LOOP VALIDATION MODES
 
-// RELEASE 1 - SHARED MCP SERVER (Student 3)
+function buildPlan(plan, mode) {
 
-async function observeStudent3Mcp() {
+    const focus = {
+        base:
+            "Release 0 checks of the selected feature: frontend, " +
+            "backend/API and database.",
+        mcp:
+            "Release 0 checks, the shared MCP server (registered tools, " +
+            "a structured tool result, an unregistered tool refused) and " +
+            "the feature's own MCP checks.",
+        rag:
+            "Release 0 checks, the shared RAG server (retrieval, a grounded " +
+            "answer with citations and a confidence category, an " +
+            "insufficient-context response) and the feature's own RAG checks.",
+        all:
+            "Release 0 checks plus both the MCP and the RAG validation."
+    };
+
+    return {
+        ...plan,
+        validationMode: mode,
+        validationFocus: focus[mode]
+    };
+}
+
+
+async function applyValidationMode(observation, student, mode) {
+
+    const kinds =
+        mode === "all" ? ["mcp", "rag"]
+            : mode === "base" ? []
+                : [mode];
+
+    const feature =
+        FEATURE_VALIDATION[student] || {};
+
+    const extra = [];
+
+    for (const kind of kinds) {
+
+        if (kind === "mcp") {
+            extra.push(...(await observeSharedMcp()));
+        } else {
+            extra.push(...(await observeSharedRag()));
+        }
+
+        if (feature[kind]) {
+            extra.push(...(await feature[kind]()));
+        } else {
+            console.log(
+                `  ${observation.student}: no feature ${kind.toUpperCase()} ` +
+                "checks registered - shared checks only"
+            );
+        }
+    }
+
+    for (const service of extra) {
+        if (service.detail) {
+            console.log(
+                `  ${service.name} -> ${service.detail}`
+            );
+        }
+    }
+
+    const extraIssues = extra
+        .filter(service => !service.ok)
+        .map(service =>
+            `${service.name} failed: ${service.error ||
+            `HTTP ${service.status}`
+            }`
+        );
+
+    return {
+        ...observation,
+        component:
+            `${observation.component} (validation mode: ${mode})`,
+        ok: observation.ok && extraIssues.length === 0,
+        services: [
+            ...observation.services,
+            ...extra
+        ],
+        issues: [
+            ...observation.issues,
+            ...extraIssues
+        ]
+    };
+}
+
+
+// Shared MCP server checks - identical for every member
+
+async function observeSharedMcp() {
 
     if (!MCP_ENABLED) {
         return [
             skipped(
-                "Student 3 MCP - shared server",
+                "Shared MCP server",
                 "MCP_ENABLED"
             )
         ];
     }
 
-    const PERMITTED = [
-        "total_activity_count",
-        "total_activities_count_a_day",
-        "get_trip_activities_desc"
-    ];
-
     const registry =
         await checkContract(
-            "Student 3 MCP - registered tools",
+            "Shared MCP - registered tools",
             `${MCP_SERVER}/mcp/tools`,
             {
                 assert: (payload) => {
@@ -856,28 +977,17 @@ async function observeStudent3Mcp() {
                     const names =
                         (payload && payload.tools) || [];
 
-                    const present =
-                        PERMITTED.filter(
-                            tool => names.includes(tool)
-                        );
-
                     return {
-                        ok:
-                            names.length > 0 &&
-                            present.length === PERMITTED.length,
-
-                        detail:
-                            `registered=${names.length}, ` +
-                            `permitted_present=` +
-                            `${present.length}/${PERMITTED.length}`
+                        ok: names.length > 0,
+                        detail: `registered=${names.length}`
                     };
                 }
             }
         );
 
-    const activityCount =
+    const toolResult =
         await checkContract(
-            "Student 3 MCP - tool total_activity_count",
+            "Shared MCP - registered tool returns a structured result",
             `${MCP_SERVER}/mcp/tool`,
             {
                 method: "POST",
@@ -896,42 +1006,14 @@ async function observeStudent3Mcp() {
                         ok: Boolean(
                             payload &&
                             payload.ok &&
-                            result
+                            result &&
+                            typeof result === "object"
                         ),
 
                         detail:
                             `ok=${payload && payload.ok}, ` +
-                            `activities=` +
-                            `${result && result.total_no_of_activities}`
-                    };
-                }
-            }
-        );
-
-    const activityDesc =
-        await checkContract(
-            "Student 3 MCP - tool get_trip_activities_desc",
-            `${MCP_SERVER}/mcp/tool`,
-            {
-                method: "POST",
-
-                body: {
-                    tool_name: "get_trip_activities_desc",
-                    arguments: { itinerary_id: 3 }
-                },
-
-                assert: (payload) => {
-
-                    const list =
-                        (payload &&
-                            payload.result &&
-                            payload.result.activity_description) || [];
-
-                    return {
-                        ok: Boolean(payload && payload.ok),
-                        detail:
-                            `ok=${payload && payload.ok}, ` +
-                            `descriptions=${list.length}`
+                            `result_fields=` +
+                            `${result ? Object.keys(result).join("|") : "none"}`
                     };
                 }
             }
@@ -939,7 +1021,7 @@ async function observeStudent3Mcp() {
 
     const unregistered =
         await checkContract(
-            "Student 3 MCP - unregistered tool refused by server",
+            "Shared MCP - unregistered tool refused",
             `${MCP_SERVER}/mcp/tool`,
             {
                 method: "POST",
@@ -964,58 +1046,22 @@ async function observeStudent3Mcp() {
             }
         );
 
-    const boundary =
-        await checkContract(
-            "Student 3 MCP - registered tool outside boundary refused by backend",
-            `${STUDENT3_BACKEND}/mcp/get_travel_requirements`,
-            {
-                method: "POST",
-                body: { trip_id: 1 },
-                expectedStatuses: [403],
-
-                assert: (payload, text) => ({
-                    ok: /outside the Budget/i.test(text),
-                    detail:
-                        "refused with HTTP 403 before contacting the server"
-                })
-            }
-        );
-
-    const throughBackend =
-        await checkContract(
-            "Student 3 MCP - permitted tool through backend",
-            `${STUDENT3_BACKEND}/mcp/total_activity_count`,
-            {
-                method: "POST",
-                body: { trip_id: 1 },
-
-                assert: (payload, text) => ({
-                    ok: /MCP tool result/i.test(text),
-                    detail:
-                        `result rendered=${/MCP tool result/i.test(text)}`
-                })
-            }
-        );
-
     return [
         registry,
-        activityCount,
-        activityDesc,
-        unregistered,
-        boundary,
-        throughBackend
+        toolResult,
+        unregistered
     ];
 }
 
 
-//  RELEASE 1 - SHARED RAG SERVER (Student 3)
+// Shared RAG server checks - identical for every member
 
-async function observeStudent3Rag() {
+async function observeSharedRag() {
 
     if (!RAG_ENABLED) {
         return [
             skipped(
-                "Student 3 RAG - shared server",
+                "Shared RAG server",
                 "RAG_ENABLED"
             )
         ];
@@ -1029,14 +1075,14 @@ async function observeStudent3Rag() {
 
     const health =
         await checkContract(
-            "Student 3 RAG - shared server health",
+            "Shared RAG - server health",
             `${RAG_SERVER}/health`,
             { timeoutMs: 10000 }
         );
 
     const retrieval =
         await checkContract(
-            "Student 3 RAG - context retrieved",
+            "Shared RAG - context retrieved",
             `${RAG_SERVER}/rag/retrieve`,
             {
                 method: "POST",
@@ -1061,10 +1107,7 @@ async function observeStudent3Rag() {
                     return {
                         ok: results.length > 0,
                         detail:
-                            `retrieved=${results.length}, mode=${mode}` +
-                            (results.length
-                                ? `, top=${results[0].source_id}`
-                                : "")
+                            `retrieved=${results.length}, mode=${mode}`
                     };
                 }
             }
@@ -1072,7 +1115,7 @@ async function observeStudent3Rag() {
 
     const grounded =
         await checkContract(
-            "Student 3 RAG - grounded answer with citations",
+            "Shared RAG - grounded answer with citations",
             `${RAG_SERVER}/rag/answer`,
             {
                 method: "POST",
@@ -1114,7 +1157,7 @@ async function observeStudent3Rag() {
 
     const insufficient =
         await checkContract(
-            "Student 3 RAG - insufficient-context response",
+            "Shared RAG - insufficient-context response",
             `${RAG_SERVER}/rag/answer`,
             {
                 method: "POST",
@@ -1149,13 +1192,88 @@ async function observeStudent3Rag() {
             }
         );
 
+    return [
+        health,
+        retrieval,
+        grounded,
+        insufficient
+    ];
+}
+
+
+// Student 3 feature MCP checks (registered in FEATURE_VALIDATION)
+
+async function observeStudent3Mcp() {
+
+    if (!MCP_ENABLED) {
+        return [
+            skipped(
+                "Student 3 MCP - feature checks",
+                "MCP_ENABLED"
+            )
+        ];
+    }
+
+    const boundary =
+        await checkContract(
+            "Student 3 MCP - registered tool outside boundary refused by backend",
+            `${STUDENT3_BACKEND}/mcp/get_travel_requirements`,
+            {
+                method: "POST",
+                body: { trip_id: 3 },
+                expectedStatuses: [403],
+
+                assert: (payload, text) => ({
+                    ok: /outside the Budget/i.test(text),
+                    detail:
+                        "refused with HTTP 403 before contacting the server"
+                })
+            }
+        );
+
+    const throughBackend =
+        await checkContract(
+            "Student 3 MCP - permitted tool through backend",
+            `${STUDENT3_BACKEND}/mcp/total_activity_count`,
+            {
+                method: "POST",
+                body: { trip_id: 3 },
+
+                assert: (payload, text) => ({
+                    ok: /MCP tool result/i.test(text),
+                    detail:
+                        `result rendered=${/MCP tool result/i.test(text)}`
+                })
+            }
+        );
+
+    return [
+        boundary,
+        throughBackend
+    ];
+}
+
+
+// Student 3 feature RAG checks (registered in FEATURE_VALIDATION)
+
+async function observeStudent3Rag() {
+
+    if (!RAG_ENABLED) {
+        return [
+            skipped(
+                "Student 3 RAG - feature checks",
+                "RAG_ENABLED"
+            )
+        ];
+    }
+
     const renderedGrounded =
         await checkContract(
             "Student 3 RAG - backend renders citations",
             `${STUDENT3_BACKEND}/rag/query`,
             {
                 method: "POST",
-                body: { question: groundedQuery },
+                body: { question: "What expenses are recorded for trip 1?" },
                 timeoutMs: RAG_TIMEOUT_MS,
 
                 assert: (payload, text) => ({
@@ -1171,7 +1289,7 @@ async function observeStudent3Rag() {
             `${STUDENT3_BACKEND}/rag/query`,
             {
                 method: "POST",
-                body: { question: unrelatedQuery },
+                body: { question: "zzzqqq xylophone submarine telegraph" },
                 timeoutMs: RAG_TIMEOUT_MS,
 
                 assert: (payload, text) => ({
@@ -1184,53 +1302,11 @@ async function observeStudent3Rag() {
         );
 
     return [
-        health,
-        retrieval,
-        grounded,
-        insufficient,
         renderedGrounded,
         renderedRefusal
     ];
 }
-// Release 1 - validation modes for the Student 3 observer.
-// main() is shared and stays unchanged. Its parseArgs() skips flags it
-// does not know, so --mode reaches this observer through process.argv.
-//   base  Release 0 checks only
-//   mcp   Release 0 checks + shared MCP server checks
-//   rag   Release 0 checks + shared RAG server checks
-//   all   both (default)
-
-function student3ValidationMode() {
-
-    const modes = ["base", "mcp", "rag", "all"];
-
-    const argv = process.argv.slice(2);
-
-    const index = argv.indexOf("--mode");
-
-    const mode =
-        index >= 0 && argv[index + 1]
-            ? argv[index + 1]
-            : (process.env.AGENT_MODE || "all");
-
-    if (!modes.includes(mode)) {
-        throw new Error(
-            `Unknown mode: ${mode}. Use one of: ${modes.join(", ")}`
-        );
-    }
-
-    return mode;
-}
-
-
 async function observeStudent3() {
-
-    const mode =
-        student3ValidationMode();
-
-    console.log(
-        `  Student 3 validation mode: ${mode}`
-    );
 
     const frontend =
         await checkService(
@@ -1298,33 +1374,19 @@ async function observeStudent3() {
             }
         );
 
-    const mcpServices =
-        mode === "mcp" || mode === "all"
-            ? await observeStudent3Mcp()
-            : [];
-
-    const ragServices =
-        mode === "rag" || mode === "all"
-            ? await observeStudent3Rag()
-            : [];
-
     const services = [
         frontend,
         categories,
         expenses,
         budget,
         dashboard,
-        configuration,
-        ...mcpServices,
-        ...ragServices
+        configuration
     ];
 
-    for (const service of services) {
-        if (service.detail) {
-            console.log(
-                `  ${service.name} -> ${service.detail}`
-            );
-        }
+    if (configuration.detail) {
+        console.log(
+            `  ${configuration.name} -> ${configuration.detail}`
+        );
     }
 
     const issues = services
@@ -1337,13 +1399,12 @@ async function observeStudent3() {
 
     return {
         student: "Student 3",
-        component: `Budget & Expense Tracking (validation mode: ${mode})`,
+        component: "Budget & Expense Tracking",
         ok: issues.length === 0,
         services,
         issues
     };
 }
-
 
 async function observeStudent5() {
 

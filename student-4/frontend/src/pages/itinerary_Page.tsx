@@ -316,7 +316,7 @@ function ItineraryPage(){
                 <header className="itinerary-page__hero">
                     <div className="itinerary-page__eyebrow">Trip Planner</div>
                     <h1 className="itinerary-page__title">
-                        {itinerary?.title || "Your Nordic itinerary is being prepared"}
+                        {itinerary?.title || "Your itinerary is being prepared"}
                     </h1>
                     <p className="itinerary-page__intro">
                         Your complete travel plan is ready:
@@ -397,19 +397,15 @@ function ItineraryPage(){
 
                             <div className="itinerary-page__facts">
                                 <div className="itinerary-page__fact">
-                                    <span className="itinerary-page__meta-label">Cities</span>
                                     <strong>{tripCities.length > 0 ? tripCities.join(", ") : destination || "Planned route"}</strong>
                                 </div>
                                 <div className="itinerary-page__fact">
-                                    <span className="itinerary-page__meta-label">Days</span>
                                     <strong>{dayCount}</strong>
                                 </div>
                                 <div className="itinerary-page__fact">
-                                    <span className="itinerary-page__meta-label">Activities</span>
                                     <strong>{activityCount}</strong>
                                 </div>
                                 <div className="itinerary-page__fact">
-                                    <span className="itinerary-page__meta-label">Dining stops</span>
                                     <strong>{restaurantCount}</strong>
                                 </div>
                             </div>

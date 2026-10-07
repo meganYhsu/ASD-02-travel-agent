@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json
 import logging
 import os
 from typing import Any
@@ -433,6 +434,35 @@ def create_app() -> Flask:
             f"<h3>Sources</h3><ul>{sources}</ul>"
             f"<p class='disclaimer'>{esc(data.get('disclaimer'))}</p>"
             "</article>"
+        )
+
+    @app.get("/partials/mcp-tools")
+    def partial_mcp_tools():
+        status, body = api("GET", "/api/mcp/tools")
+        if status != 200:
+            return error_banner((body or {}).get("error") or "Shared MCP server unavailable")
+        options = "".join(f"<option value='{esc(name)}'>{esc(name)}</option>" for name in body.get("data") or [])
+        if not options:
+            return "<p class='empty'>No tools are registered on the shared MCP server.</p>"
+        return f"<label for='mcp-tool-name'>Registered tool</label><select id='mcp-tool-name' name='tool_name' required>{options}</select>"
+
+    @app.post("/mcp/tool")
+    def mcp_tool():
+        tool_name = (request.form.get("tool_name") or "").strip()
+        try:
+            arguments = json.loads(request.form.get("arguments") or "{}")
+        except json.JSONDecodeError:
+            return error_banner("Arguments must be valid JSON.")
+        if not isinstance(arguments, dict):
+            return error_banner("Arguments must be a JSON object.")
+        status, body = api("POST", "/api/mcp/tool", json={"tool_name": tool_name, "arguments": arguments})
+        if status != 200:
+            return error_banner((body or {}).get("error") or "MCP tool call failed")
+        result = body.get("data") or {}
+        return (
+            "<article class='card' aria-live='polite'>"
+            f"<h3>MCP tool: {esc(result.get('tool_name'))}</h3>"
+            f"<pre>{esc(json.dumps(result.get('result'), indent=2, ensure_ascii=False))}</pre></article>"
         )
 
     @app.get("/partials/agentic")

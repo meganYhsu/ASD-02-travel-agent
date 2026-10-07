@@ -212,6 +212,19 @@
             </form>
             <div id="assistant-loading" class="htmx-indicator loading">Searching approved travel guidance…</div>
             <div id="assistant-result"></div>
+            <h3>Shared MCP tools</h3>
+            <p>Run a registered shared travel tool and inspect its structured result. Itinerary tools need an
+                <code>itinerary_id</code>; traveler preference tools need a numeric <code>traveler_id</code>.</p>
+            <form class="card grid" hx-post="/mcp/tool" hx-target="#mcp-result" hx-indicator="#mcp-loading">
+                <div id="mcp-tools" hx-get="/partials/mcp-tools" hx-trigger="load" hx-swap="innerHTML">
+                    Loading registered tools…
+                </div>
+                <label for="mcp-arguments">Tool arguments (JSON object)</label>
+                <textarea id="mcp-arguments" name="arguments" rows="4">{}</textarea>
+                <button type="submit">Run MCP tool</button>
+            </form>
+            <div id="mcp-loading" class="htmx-indicator loading">Calling shared MCP tool…</div>
+            <div id="mcp-result"></div>
         </section>
 
         <section id="agentic" class="panel">

@@ -161,6 +161,7 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: llama3.2:3b
       MCP_BASE_URL: http://host.docker.internal:7004
+      RAG_SERVICE_URL: http://host.docker.internal:7001
 
     ports:
       - "5004:5001"
@@ -228,7 +229,7 @@ services:
 
     networks:
       - travel-net
-  
+
   student3-frontend:
     build:
       context: ./student-3/frontend
@@ -277,7 +278,13 @@ services:
       OLLAMA_TIMEOUT_SECONDS: "180"
       RAG_SERVICE_URL: http://rag-server:7005
       RAG_TIMEOUT_SECONDS: "130"
+      MCP_SERVICE_URL: http://host.docker.internal:7004
+      MCP_TIMEOUT_SECONDS: "15"
+      MCP_ENABLED: "true"
       EXPIRY_WARNING_DAYS: "90"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5505:5505"
@@ -329,6 +336,8 @@ services:
       DATABASE_URL: http://student2-database:5000
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: qwen2.5:0.5b
+      MCP_URL: http://host.docker.internal:7004
+      RAG_URL: http://host.docker.internal:7001
 
     ports:
       - "5002:5001"

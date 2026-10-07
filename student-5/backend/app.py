@@ -17,9 +17,10 @@ if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
 from compliance import compute_document_status, evaluate_compliance, trip_duration_days
-from config import DATABASE_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
+from config import DATABASE_SERVICE_URL, MCP_ENABLED, MCP_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
 from db_client import DatabaseClient, DatabaseUnavailable
 from ollama_client import OllamaClient, OllamaError
+from mcp_client import McpClient, McpError
 from rag_client import RagClient, RagError
 from validation import (
     ValidationError,
@@ -66,11 +67,13 @@ def create_app(
     db_client: DatabaseClient | None = None,
     ollama_client: OllamaClient | None = None,
     rag_client: RagClient | None = None,
+    mcp_client: McpClient | None = None,
 ) -> Flask:
     app = Flask(__name__)
     app.config["DB_CLIENT"] = db_client or DatabaseClient(DATABASE_SERVICE_URL)
     app.config["OLLAMA"] = ollama_client or OllamaClient()
     app.config["RAG"] = rag_client or RagClient()
+    app.config["MCP"] = mcp_client or McpClient()
 
     def db() -> DatabaseClient:
         return app.config["DB_CLIENT"]
@@ -80,6 +83,9 @@ def create_app(
 
     def rag() -> RagClient:
         return app.config["RAG"]
+
+    def mcp() -> McpClient:
+        return app.config["MCP"]
 
     def forward(status: int, body: Any):
         if status == 204:
@@ -166,6 +172,8 @@ def create_app(
                 "ollama_url": OLLAMA_BASE_URL,
                 "ollama_model": OLLAMA_MODEL,
                 "rag_service_url": RAG_SERVICE_URL,
+                "mcp_enabled": MCP_ENABLED,
+                "mcp_service_url": MCP_SERVICE_URL,
             }
         )
 
@@ -180,6 +188,29 @@ def create_app(
         try:
             return json_ok(rag().query(question))
         except RagError as exc:
+            return json_error(exc.message, exc.status)
+
+    @app.get("/api/mcp/tools")
+    def list_mcp_tools():
+        try:
+            return json_ok(mcp().list_tools())
+        except McpError as exc:
+            return json_error(exc.message, exc.status)
+
+    @app.post("/api/mcp/tool")
+    def call_mcp_tool():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return json_error("JSON object is required", 400)
+        tool_name = payload.get("tool_name")
+        arguments = payload.get("arguments", {})
+        if not isinstance(tool_name, str) or not tool_name.strip():
+            return json_error("tool_name is required", 400)
+        if not isinstance(arguments, dict):
+            return json_error("arguments must be a JSON object", 400)
+        try:
+            return json_ok(mcp().call_tool(tool_name.strip(), arguments))
+        except McpError as exc:
             return json_error(exc.message, exc.status)
 
     @app.get("/api/documents")
