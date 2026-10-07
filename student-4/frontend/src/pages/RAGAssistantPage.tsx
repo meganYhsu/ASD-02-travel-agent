@@ -125,6 +125,10 @@ function RAGAssistantPage() {
                         </button>
                     </form>
 
+                    <p className="rag-assistant-page__note">
+                        Note: To generate an accurate response, please be specific with your question. Include the itinerary ID, such as itinerary ID {context.itineraryId || "(itinerary ID)"}, and keywords like activities, dates, budget, or locations.
+                    </p>
+
                     {error && (
                         <div className="saved-itinerary-page__state saved-itinerary-page__state--error">
                             {error}
