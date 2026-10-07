@@ -1,3 +1,4 @@
 mcp
 chromadb
 requests
+flask

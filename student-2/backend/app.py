@@ -8,6 +8,11 @@ import os
 app = Flask(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL") or "http://127.0.0.1:5000"
+RAG_URL = os.getenv("RAG_URL") or "http://127.0.0.1:7001"
+MCP_URL = os.getenv("MCP_URL") or "http://127.0.0.1:7004"
+
+RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
+MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() == "true"
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -636,6 +641,91 @@ def delete_booking_item(booking_item_id):
 
 
 
+# Shared RAG integration
+@app.route('/rag/answer', methods=['POST'])
+def rag_answer():
+    if not RAG_ENABLED:
+        return jsonify({
+            "status": "disabled",
+            "message": "RAG is disabled in this environment."
+        }), 503
+    data = request.get_json()
+
+    if not data or not data.get('query'):
+        return jsonify({
+            "error": "query is required"
+        }), 400
+
+    try:
+        response = requests.post(
+            f"{RAG_URL}/rag/answer",
+            json={
+                "query": data["query"],
+                "caller": "student2-booking"
+            },
+            timeout=330
+        )
+
+        return jsonify(response.json()), response.status_code
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Shared RAG request timed out"
+        }), 504
+
+    except requests.RequestException as exc:
+        return jsonify({
+            "error": "Shared RAG service is unavailable",
+            "details": str(exc)
+        }), 503
+
+
+# Shared MCP integration
+@app.route('/mcp/tool', methods=['POST'])
+def mcp_tool():
+    if not MCP_ENABLED:
+        return jsonify({
+            "status": "disabled",
+            "message": "MCP is disabled in this environment."
+        }), 503
+
+    data = request.get_json() or {}
+
+    tool_name = data.get('tool_name')
+    arguments = data.get('arguments', {})
+
+    if not tool_name:
+        return jsonify({
+            "error": "tool_name is required"
+        }), 400
+
+    try:
+        response = requests.post(
+            f"{MCP_URL}/mcp/tool",
+            json={
+                "tool_name": tool_name,
+                "arguments": arguments
+            },
+            timeout=20
+        )
+
+        return jsonify(response.json()), response.status_code
+
+    except ValueError:
+        return jsonify({
+            "error": "Invalid response from Shared MCP service"
+        }), 502
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Shared MCP request timed out"
+        }), 504
+
+    except requests.RequestException as exc:
+        return jsonify({
+            "error": "Shared MCP service is unavailable",
+            "details": str(exc)
+        }), 503
 
 
 

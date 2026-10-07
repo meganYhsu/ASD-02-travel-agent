@@ -1,13 +1,14 @@
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from mcp_mode import list_mcp_tools, run_mcp_tool
 
 
-HOST = "127.0.0.1"
+HOST = os.getenv("MCP_HOST", "127.0.0.1")
 PORT = 7004
 
-
+    
 class MCPRequestHandler(BaseHTTPRequestHandler):
     def _send_json(self, status_code, payload):
         body = json.dumps(payload).encode("utf-8")

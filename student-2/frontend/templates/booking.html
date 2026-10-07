@@ -262,6 +262,40 @@
 
         </div>
 
+        <!-- MCP Travel Plan -->
+        <div class="section-card">
+            <section>
+                <h2>Travel Plan</h2>
+
+                <p>
+                    Use MCP tools to retrieve itinerary information
+                    from the shared travel services.
+                </p>
+
+                <label>Itinerary ID:</label>
+                <input type="number" id="mcp-itinerary-id" name="itinerary_id" value="3" min="1">
+
+                <div>
+                    <button type="button" hx-post="/booking/mcp" hx-vals='{"action": "itinerary"}'
+                        hx-include="#mcp-itinerary-id" hx-target="#mcp-result" hx-swap="innerHTML">
+                        View Itinerary
+                    </button>
+
+                    <button type="button" hx-post="/booking/mcp" hx-vals='{"action": "schedule"}'
+                        hx-include="#mcp-itinerary-id" hx-target="#mcp-result" hx-swap="innerHTML">
+                        View Schedule
+                    </button>
+
+                    <button type="button" hx-post="/booking/mcp" hx-vals='{"action": "requirements"}'
+                        hx-include="#mcp-itinerary-id" hx-target="#mcp-result" hx-swap="innerHTML">
+                        Travel Requirements
+                    </button>
+                </div>
+
+                <div id="mcp-result"></div>
+            </section>
+        </div>
+
 
         <div class="ai-assistant">
             <section>
@@ -284,6 +318,30 @@
                 </form>
 
                 <div id="ai-result"></div>
+            </section>
+        </div>
+
+        <!-- RAG Travel Information Assistant -->
+        <div class="section-card">
+            <section>
+                <h2>Travel Information Assistant</h2>
+
+                <p>
+                    Ask questions using information retrieved
+                    from the shared RAG knowledge base.
+                </p>
+
+                <form hx-post="/booking/rag" hx-target="#rag-result" hx-swap="innerHTML">
+                    <label>Question:</label>
+
+                    <input type="text" name="query" placeholder="What activities are planned in Sydney?" required>
+
+                    <button type="submit">
+                        Ask
+                    </button>
+                </form>
+
+                <div id="rag-result"></div>
             </section>
         </div>
 
