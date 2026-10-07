@@ -27,7 +27,9 @@ TRAVEL_PLAN_SERVICE_URL = os.getenv(
 )
 
 BOOKING_SERVICE_URL = os.getenv(
-    "BOOKING_SERVICE_URL", "http://localhost:5000"
+    # "BOOKING_SERVICE_URL", "http://localhost:5000"
+    "BOOKING_SERVICE_URL", "http://127.0.0.1:5002"
+
 )
 
 TRAVELLER_SERVICE_URL = os.getenv(
@@ -1033,13 +1035,15 @@ def retrieve_context(query: str, k: int = 5, caller: str = "student") -> dict[st
                     raise RuntimeError("empty_collection")
 
             query_embedding = embed_texts([query])
-            itinerary_id = extract_itinerary_id(query)
+            # Filtering disabled for testing: allow RAG retrieval to search
+            # the full collection even when the query mentions an itinerary ID.
+            # itinerary_id = extract_itinerary_id(query)
             query_args = {
                 "query_embeddings": query_embedding,
                 "n_results": k,
             }
-            if itinerary_id is not None:
-                query_args["where"] = {"itinerary_id": itinerary_id}
+            # if itinerary_id is not None:
+            #     query_args["where"] = {"itinerary_id": itinerary_id}
 
             results = collection.query(**query_args)
 
