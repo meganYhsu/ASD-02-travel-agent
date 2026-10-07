@@ -229,7 +229,7 @@ services:
 
     networks:
       - travel-net
-  
+
   student3-frontend:
     build:
       context: ./student-3/frontend
@@ -330,6 +330,8 @@ services:
       DATABASE_URL: http://student2-database:5000
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: qwen2.5:0.5b
+      MCP_URL: http://host.docker.internal:7004
+      RAG_URL: http://host.docker.internal:7001
 
     ports:
       - "5002:5001"
