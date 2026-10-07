@@ -11,6 +11,9 @@ DATABASE_URL = os.getenv("DATABASE_URL") or "http://127.0.0.1:5000"
 RAG_URL = os.getenv("RAG_URL") or "http://127.0.0.1:7001"
 MCP_URL = os.getenv("MCP_URL") or "http://127.0.0.1:7004"
 
+RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
+MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() == "true"
+
 BASE_DIR = Path(__file__).resolve().parent
 
 BOOKING_PROMPT_FILE = (
@@ -641,6 +644,11 @@ def delete_booking_item(booking_item_id):
 # Shared RAG integration
 @app.route('/rag/answer', methods=['POST'])
 def rag_answer():
+    if not RAG_ENABLED:
+        return jsonify({
+            "status": "disabled",
+            "message": "RAG is disabled in this environment."
+        }), 503
     data = request.get_json()
 
     if not data or not data.get('query'):
@@ -675,6 +683,12 @@ def rag_answer():
 # Shared MCP integration
 @app.route('/mcp/tool', methods=['POST'])
 def mcp_tool():
+    if not MCP_ENABLED:
+        return jsonify({
+            "status": "disabled",
+            "message": "MCP is disabled in this environment."
+        }), 503
+
     data = request.get_json() or {}
 
     tool_name = data.get('tool_name')
