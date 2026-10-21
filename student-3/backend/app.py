@@ -5,6 +5,7 @@ from markupsafe import escape
 from pathlib import Path
 from datetime import date
 import os
+import re
 import requests
 
 load_dotenv()
@@ -15,8 +16,26 @@ OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:7004")
 RAG_SERVER_URL = os.getenv("RAG_SERVER_URL", "http://127.0.0.1:7001")
-MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() == "true"
-RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
+# Shared Multi-Agent server (ai-services/multi-agent-server, default port 6767)
+MULTI_AGENT_SERVICE_URL = os.getenv("MULTI_AGENT_SERVICE_URL",
+                                    "http://127.0.0.1:6767").rstrip("/")
+# Planner + Worker + Reviewer run one after another on a local model
+MULTI_AGENT_TIMEOUT_SECONDS = int(os.getenv("MULTI_AGENT_TIMEOUT_SECONDS", "420"))
+
+# Release 2: every AI service is OFF unless the environment turns it on.
+# docker-compose.yml (local) sets them to "true"; CI and the cloud
+# deployment leave them off, which is the required cloud baseline.
+def flag(name):
+    return os.getenv(name, "false").lower() == "true"
+
+
+AI_MODE_ENABLED = flag("AI_MODE_ENABLED")
+MCP_ENABLED = flag("MCP_ENABLED")
+RAG_ENABLED = flag("RAG_ENABLED")
+MULTI_AGENT_ENABLED = flag("MULTI_AGENT_ENABLED")
+MULTI_AGENT_SERVICE = "budget"
+MULTI_AGENT_TASK = "review_spending"
+WORKFLOW_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 RAG_CALLER = os.getenv("RAG_CALLER", "student-3-budget")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
 RAG_TIMEOUT_SECONDS = int(os.getenv("RAG_TIMEOUT_SECONDS", "300"))
@@ -105,7 +124,7 @@ def get_trip(trip_id):
     return trip, None
 
 
-# ------------------------------------------------------------------ dashboard
+# ------------------------------------------------------------- model helper
 def call_model(system_prompt, user_prompt, max_tokens=250):
     try:
         response = client.chat.completions.create(
@@ -122,6 +141,7 @@ def call_model(system_prompt, user_prompt, max_tokens=250):
         return None, str(exc)
 
 
+# ------------------------------------------------------------------ dashboard
 @app.route("/dashboard/<int:trip_id>")
 def dashboard(trip_id):
     try:
@@ -215,7 +235,6 @@ def delete_expense(expense_id):
     return dashboard(trip_id)
 
 
-# ------------------------------------------------------------------ AI analyse
 @app.route("/expenses/<int:expense_id>/edit")
 def edit_expense_form(expense_id):
     try:
@@ -273,8 +292,13 @@ def update_expense(expense_id):
     return dashboard(trip_id)
 
 
+# ------------------------------------------------------------------ AI analyse
 @app.route("/analyse/<int:trip_id>", methods=["POST"])
 def analyse(trip_id):
+    if not AI_MODE_ENABLED:
+        return ("<p class='error'>AI-Mode is disabled in this environment "
+                "(AI_MODE_ENABLED=false).</p>"), 503
+
     # 1. OBSERVE - gather live evidence from both services
     trip, err = get_trip(trip_id)
     if err:
@@ -357,10 +381,6 @@ def decide(rec_id):
     except requests.RequestException:
         return "<p class='error'>Could not record the decision.</p>", 503
 
-    # Release 0 stretch goal: if accepted, also send the itinerary
-    # adjustment to the Trip Planning DB API here, e.g.
-    #   requests.put(f"{TRIP_DB_API_URL}/activities/<id>", json={...})
-    # Agreed API contract required first - see docs/api-contract.md
     return f"<p>Recommendation {status}. Decision recorded for human review evidence.</p>"
 
 
@@ -725,9 +745,314 @@ def rag_retrieve():
     """
 
 
+# =============================================================================
+# RELEASE 2 - MULTI-AGENT
+# Shared server: ai-services/multi-agent-server (port 6767, not containerised)
+#   Frontend UI -> this backend -> POST /workflow
+#     -> Planner -> Worker -> Reviewer (run by the shared server)
+#   -> human decision in this UI -> POST /workflow/<id>/review
+#   -> recommendation saved in this feature's database
+# =============================================================================
+MA_DECISIONS = ("Accept", "Partially Accept", "Reject")
+MA_MIN_REASON = 20
+
+
+def ma_disabled():
+    return ("<p class='error'>Multi-Agent mode is disabled in this environment "
+            "(MULTI_AGENT_ENABLED=false).</p>"), 503
+
+
+def budget_review_request(trip_id, focus=""):
+    text = (f"Review the spending of trip {trip_id} against its budget and "
+            "recommend one concrete adjustment for the rest of the trip. Use only "
+            "the supplied budget context and give amounts in its currency.")
+    if focus:
+        text += f" Focus on: {focus[:200]}"
+    return text
+
+
+def build_budget_evidence(trip_id):
+    """Context the agents may use. Budget data comes only from this feature's
+    own DB API; trip dates from Trip Planning; activities through shared MCP.
+    Returns (evidence, None) or (None, (message, http_status))."""
+    try:
+        budget = requests.get(f"{DB_API_URL}/budgets/{trip_id}", timeout=5).json()
+        expenses = requests.get(
+            f"{DB_API_URL}/expenses", params={"trip_id": trip_id}, timeout=5
+        ).json()
+    except (requests.RequestException, ValueError):
+        return None, ("Budget database service is unavailable.", 503)
+    if "error" in budget:
+        return None, (f"No budget set for trip {trip_id} yet.", 404)
+
+    total = budget["total_budget"]
+    spent = 0
+    per_cat = {}
+    for e in expenses:
+        spent += e["amount"]
+        per_cat[e["category_name"]] = per_cat.get(e["category_name"], 0) + e["amount"]
+
+    recent = sorted(expenses, key=lambda e: e["expense_date"], reverse=True)[:15]
+    evidence = {
+        "budget": {"trip_id": trip_id, "total_budget": round(total, 2),
+                   "currency": budget["currency"]},
+        "spending": {"spent": round(spent, 2), "remaining": round(total - spent, 2),
+                     "expense_count": len(expenses),
+                     "percent_used": round(spent / total * 100, 1) if total else 0},
+        "spent_by_category": {name: round(amount, 2) for name, amount in
+                              sorted(per_cat.items(), key=lambda x: x[1], reverse=True)},
+        "recent_expenses": [
+            {"date": e["expense_date"], "category": e["category_name"],
+             "description": e["description"], "amount": e["amount"]}
+            for e in recent
+        ],
+    }
+
+    trip, _ = get_trip(trip_id)
+    if trip:
+        total_days = (date.fromisoformat(trip["end_date"])
+                      - date.fromisoformat(trip["start_date"])).days + 1
+        days_with = len({e["expense_date"] for e in expenses})
+        evidence["trip"] = {"destination": trip["destination"],
+                            "start_date": trip["start_date"],
+                            "end_date": trip["end_date"],
+                            "total_days": total_days,
+                            "days_with_expenses": days_with,
+                            "days_left": max(total_days - days_with, 0)}
+    else:
+        evidence["trip"] = {"available": False,
+                            "note": "Trip Planning service unavailable - dates unknown"}
+
+    if MCP_ENABLED:
+        try:
+            resp = requests.post(
+                f"{MCP_SERVER_URL}/mcp/tool",
+                json={"tool_name": "total_activity_count",
+                      "arguments": {"itinerary_id": trip_id}},
+                timeout=10,
+            )
+            data = resp.json()
+            if resp.ok and data.get("ok", True):
+                evidence["planned_activities"] = data.get("result", data)
+        except (requests.RequestException, ValueError):
+            evidence["planned_activities"] = {"available": False,
+                                              "note": "shared MCP server unavailable"}
+    return evidence, None
+
+
+def ma_request_body(trip_id, evidence, focus=""):
+    """Request format of the shared server (see its README)."""
+    return {"service": MULTI_AGENT_SERVICE, "task": MULTI_AGENT_TASK,
+            "user_request": budget_review_request(trip_id, focus),
+            "context": evidence}
+
+
+def ma_call(method, path, payload=None):
+    """Call the shared server. Returns (data, None) or (None, (message, status))."""
+    url = f"{MULTI_AGENT_SERVICE_URL}{path}"
+    try:
+        if method == "POST":
+            resp = requests.post(url, json=payload, timeout=MULTI_AGENT_TIMEOUT_SECONDS)
+        else:
+            resp = requests.get(url, timeout=MULTI_AGENT_TIMEOUT_SECONDS)
+    except requests.Timeout:
+        return None, ("The shared Multi-Agent server did not answer within "
+                      f"{MULTI_AGENT_TIMEOUT_SECONDS} seconds.", 504)
+    except requests.RequestException:
+        return None, ("Shared Multi-Agent server is unavailable at "
+                      f"{MULTI_AGENT_SERVICE_URL}. Start it locally and try again.", 503)
+    try:
+        data = resp.json()
+    except ValueError:
+        return None, ("Multi-Agent server returned a non-JSON response.", 502)
+    if resp.status_code >= 400:
+        message = data.get("error") if isinstance(data, dict) else None
+        return None, (str(message or f"HTTP {resp.status_code}"),
+                      resp.status_code if resp.status_code < 500 else 502)
+    return data, None
+
+
+def ma_error(err):
+    message, status = err
+    return f"<p class='error'>{escape(message)}</p>", status
+
+
+def ma_trip_id(wf):
+    return ((wf.get("context") or {}).get("budget") or {}).get("trip_id")
+
+
+def ma_agent_card(number, title, result, text, extra_html=""):
+    """One agent's result. Model text is escaped; extra_html is built here."""
+    status = str(result.get("status", "missing"))
+    flag = "" if status == "success" else f" &middot; <strong class='error'>{escape(status)}</strong>"
+    error = f"<p class='error'>{escape(str(result['error']))}</p>" if result.get("error") else ""
+    return (f"<div class='ma-stage'><h4>{number}. {title} "
+            f"<span class='muted'>{escape(str(result.get('model', '')))}{flag}</span></h4>"
+            f"<div class='ma-text'>{escape(str(text or ''))}</div>{extra_html}{error}</div>")
+
+
+def ma_render(wf, notice=""):
+    """The three agent results and the human-review step as one HTML fragment."""
+    wid = str(wf.get("workflow_id", ""))
+    planner = wf.get("planner_result") or {}
+    worker = wf.get("worker_result") or {}
+    reviewer = wf.get("reviewer_result") or {}
+
+    steps = ""
+    if isinstance(planner.get("steps"), list):
+        steps = "<ol>" + "".join(
+            f"<li>{escape(str(s.get('agent', '')))}: {escape(str(s.get('action', '')))}</li>"
+            for s in planner["steps"] if isinstance(s, dict)) + "</ol>"
+    cards = (ma_agent_card(1, "Planner", planner, planner.get("plan"), steps)
+             + ma_agent_card(2, "Worker", worker, worker.get("output"))
+             + ma_agent_card(3, "Reviewer", reviewer, reviewer.get("review")))
+
+    decision = wf.get("human_decision") or {}
+    if decision.get("status") == "recorded":
+        action = (f"<p><strong>Human decision: {escape(str(decision.get('decision', '')))}</strong></p>"
+                  f"<p class='muted'>Reason: {escape(str(decision.get('reason', '')))}</p>")
+        trip_id = ma_trip_id(wf)
+        if decision.get("decision") == "Partially Accept" and trip_id:
+            action += f"""
+            <form hx-post="/api/multi-agent/budget-review/{int(trip_id)}"
+                  hx-target="#ma-result" hx-indicator="#ma-loading">
+              <input type="hidden" name="focus" value="{escape(str(decision.get('reason', '')))}">
+              <button type="submit">Run the agents again with this correction</button>
+            </form>"""
+    else:
+        options = "".join(
+            f"<label><input type='radio' name='decision' value='{d}' required> {d}</label><br>"
+            for d in MA_DECISIONS)
+        action = f"""
+        <form hx-post="/api/multi-agent/workflow/{escape(wid)}/decision"
+              hx-target="#ma-workflow" hx-swap="outerHTML">
+          <fieldset><legend>Human review</legend>
+            {options}
+            <label>Reason (at least {MA_MIN_REASON} characters)<br>
+              <textarea name="reason" rows="2" cols="60" minlength="{MA_MIN_REASON}" required></textarea>
+            </label><br>
+            <label>Evidence (optional) <input name="evidence" size="50"></label>
+            <button type="submit">Submit decision</button>
+          </fieldset>
+        </form>"""
+
+    seconds = (wf.get("duration_ms") or 0) / 1000
+    notice_html = f"<p>{escape(notice)}</p>" if notice else ""
+    return f"""
+    <div id="ma-workflow">
+      <p>Workflow <code>{escape(wid)}</code> &middot; agents:
+         <strong>{escape(str(wf.get('status', '')))}</strong> &middot; {seconds:.0f} s</p>
+      {notice_html}
+      {cards}
+      {action}
+    </div>
+    """
+
+
+def ma_save_outcome(wf):
+    """Store the human-reviewed recommendation in this feature's database."""
+    trip_id = ma_trip_id(wf)
+    decision = wf.get("human_decision") or {}
+    choice = decision.get("decision")
+    output = str((wf.get("worker_result") or {}).get("output") or "").strip()
+    if not trip_id or not output or choice not in MA_DECISIONS:
+        return ""
+    text = output if len(output) <= 600 else output[:600] + "..."
+    if choice == "Partially Accept":
+        text += f" | Correction: {decision.get('reason', '')}"
+    status = {"Accept": "accepted", "Reject": "dismissed"}.get(choice)
+    try:
+        rec = requests.post(
+            f"{DB_API_URL}/recommendations",
+            json={"trip_id": trip_id,
+                  "recommendation": f"[Multi-agent {str(wf.get('workflow_id', ''))[:8]}] {text}"},
+            timeout=5,
+        ).json()
+        rec_id = rec.get("rec_id")
+        if not rec_id:
+            raise ValueError("no rec_id returned")
+        if status:
+            requests.patch(f"{DB_API_URL}/recommendations/{rec_id}",
+                           json={"status": status}, timeout=5)
+    except (requests.RequestException, ValueError):
+        return ("The decision was recorded by the Multi-Agent server, but the "
+                "recommendation could not be saved.")
+    return f"Recommendation #{rec_id} saved to the budget database as {status or 'proposed'}."
+
+
+@app.route("/multi-agent/evidence/<int:trip_id>")
+def multi_agent_evidence(trip_id):
+    """The exact request this feature sends to the shared server, as JSON.
+    Used by tools/budget_review_cli.py for the terminal workflow."""
+    if not MULTI_AGENT_ENABLED:
+        return jsonify({"error": "Multi-Agent mode is disabled (MULTI_AGENT_ENABLED=false)"}), 503
+    evidence, err = build_budget_evidence(trip_id)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    return jsonify(ma_request_body(trip_id, evidence))
+
+
+@app.route("/multi-agent/budget-review/<int:trip_id>", methods=["POST"])
+def multi_agent_start(trip_id):
+    if not MULTI_AGENT_ENABLED:
+        return ma_disabled()
+    evidence, err = build_budget_evidence(trip_id)
+    if err:
+        return ma_error(err)
+    focus = (request_value("focus") or "").strip()
+    wf, err = ma_call("POST", "/workflow", ma_request_body(trip_id, evidence, focus))
+    if err:
+        return ma_error(err)
+    return ma_render(wf)
+
+
+@app.route("/multi-agent/workflow/<workflow_id>")
+def multi_agent_status(workflow_id):
+    if not MULTI_AGENT_ENABLED:
+        return ma_disabled()
+    if not WORKFLOW_ID.match(workflow_id):
+        return "<p class='error'>Invalid workflow id.</p>", 400
+    wf, err = ma_call("GET", f"/workflow/{workflow_id}")
+    if err:
+        return ma_error(err)
+    return ma_render(wf)
+
+
+@app.route("/multi-agent/workflow/<workflow_id>/decision", methods=["POST"])
+def multi_agent_decision(workflow_id):
+    if not MULTI_AGENT_ENABLED:
+        return ma_disabled()
+    if not WORKFLOW_ID.match(workflow_id):
+        return "<p class='error'>Invalid workflow id.</p>", 400
+    decision = request_value("decision")
+    reason = (request_value("reason") or "").strip()
+    evidence = (request_value("evidence") or "").strip()
+
+    problem = None
+    if decision not in MA_DECISIONS:
+        problem = "Choose Accept, Partially Accept or Reject."
+    elif len(reason) < MA_MIN_REASON:
+        problem = f"The reason must contain at least {MA_MIN_REASON} characters."
+    wf = None
+    if problem is None:
+        wf, err = ma_call("POST", f"/workflow/{workflow_id}/review",
+                          {"decision": decision, "reason": reason, "evidence": evidence})
+        if err:
+            problem = err[0]
+    if problem:
+        # Keep the review form on screen and say why the decision was refused.
+        current, err = ma_call("GET", f"/workflow/{workflow_id}")
+        if err:
+            return ma_error(err)
+        return ma_render(current, notice=f"Decision not recorded: {problem}")
+
+    return ma_render(wf, notice=ma_save_outcome(wf))
+
+
 @app.route("/health")
 def health():
-    """Release 1 configuration check - used by the agentic loop and CI."""
+    """Configuration check (Release 1 and 2) - used by the agentic loop, CI and
+    the cloud smoke test."""
     return jsonify({
         "service": "student-3-backend",
         "db_api": DB_API_URL,
@@ -736,10 +1061,19 @@ def health():
         "rag_server": RAG_SERVER_URL,
         "rag_caller": RAG_CALLER,
         "rag_timeout_seconds": RAG_TIMEOUT_SECONDS,
+        "multi_agent_server": MULTI_AGENT_SERVICE_URL,
+        "ai_mode_enabled": AI_MODE_ENABLED,
         "mcp_enabled": MCP_ENABLED,
         "rag_enabled": RAG_ENABLED,
+        "multi_agent_enabled": MULTI_AGENT_ENABLED,
         "allowed_mcp_tools": sorted(ALLOWED_MCP_TOOLS),
     })
-    
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5003, debug=True)
+    # Direct runs (python app.py) listen on 127.0.0.1 unless FLASK_HOST is set,
+    # and the debugger stays off unless FLASK_DEBUG=true. Containers start
+    # gunicorn instead (see the Dockerfile).
+    app.run(host=os.getenv("FLASK_HOST", "127.0.0.1"), port=5003,
+            debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
+

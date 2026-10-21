@@ -7,9 +7,13 @@ Responses are JSON because the callers are other services, not browsers.
 
 from flask import Flask, jsonify, request
 from pathlib import Path
+import os
 import sqlite3
 
-DB_PATH = Path(__file__).with_name("budget.db")
+# Local runs keep budget.db next to this file. In a container the Dockerfile
+# sets BUDGET_DB_PATH=/app/data/budget.db so the data directory can be a
+# mounted volume (for example Amazon EFS on ECS Fargate).
+DB_PATH = Path(os.getenv("BUDGET_DB_PATH") or Path(__file__).with_name("budget.db"))
 
 app = Flask(__name__)
 
@@ -23,6 +27,7 @@ def get_conn():
 
 # ---------------------------------------------------------------- schema + seed
 def init_db():
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     conn = get_conn()
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS ExpenseCategories (
@@ -308,6 +313,23 @@ def update_recommendation_status(rec_id):
     return jsonify({"rec_id": rec_id, "status": status})
 
 
+@app.route("/health")
+def health():
+    """Load-balancer / ECS health check: the database file can be queried."""
+    try:
+        conn = get_conn()
+        categories = conn.execute("SELECT COUNT(*) FROM ExpenseCategories").fetchone()[0]
+        conn.close()
+    except sqlite3.Error:
+        return jsonify({"service": "student-3-database", "status": "error"}), 503
+    return jsonify({"service": "student-3-database", "status": "ok",
+                    "categories": categories})
+
+
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=6003, debug=True)
+    # Direct runs (python app.py) listen on 127.0.0.1 unless FLASK_HOST is set,
+    # and the debugger stays off unless FLASK_DEBUG=true. Containers start
+    # gunicorn instead (see the Dockerfile).
+    app.run(host=os.getenv("FLASK_HOST", "127.0.0.1"), port=6003,
+            debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

@@ -13,7 +13,7 @@
             }
         });
     </script>
-    <link rel="stylesheet" href="http://localhost:8080/css/styles.css" />
+    <link rel="stylesheet" href="{{ shared_home_url }}/css/styles.css" />
     <style>
         .error { color: #b00020; }
         .muted { color: #5b6b7c; font-size: .9rem; }
@@ -41,6 +41,14 @@
         .field-row input { width: 5rem; }
         .rag-form { display: inline-block; margin: 0 .75rem .5rem 0; }
         .rag-form button { font-size: .85rem; padding: .35rem .8rem; }
+        .ma-stage {
+            border-left: 3px solid #d7e0ea; padding: .25rem 0 .25rem .9rem;
+            margin: .75rem 0;
+        }
+        .ma-stage h4 { margin: .2rem 0 .4rem; }
+        .ma-stage p, .ma-stage ul { margin: .25rem 0; }
+        #ma-workflow fieldset { margin-top: .75rem; border: 1px solid #d7e0ea; }
+        .ma-text { white-space: pre-wrap; }
     </style>
 </head>
 
@@ -48,15 +56,15 @@
     <nav class="shared-nav">
         <div class="nav-title">Travel Agent</div>
         <div class="nav-links">
-            <a href="http://127.0.0.1:8080/welcome">Welcome</a>
-            <a href="http://127.0.0.1:8080/traveler-preferences">Traveler Preferences</a>
-            <a href="http://127.0.0.1:8080/booking">Booking</a>
-            <a href="http://127.0.0.1:8080/itinerary">Itinerary</a>
-            <a href="http://127.0.0.1:8080/budget">Budget &amp; Expense</a>
-            <a href="http://127.0.0.1:8080/trip-planning">Trip Planning</a>
-            <a href="http://127.0.0.1:8080/pre-trip">Travel Preparation</a>
-            <a href="http://127.0.0.1:8080/account">Account</a>
-            <a href="http://127.0.0.1:8080/logout">Log Out</a>
+            <a href="{{ shared_home_url }}/welcome">Welcome</a>
+            <a href="{{ shared_home_url }}/traveler-preferences">Traveler Preferences</a>
+            <a href="{{ shared_home_url }}/booking">Booking</a>
+            <a href="{{ shared_home_url }}/itinerary">Itinerary</a>
+            <a href="{{ shared_home_url }}/budget">Budget &amp; Expense</a>
+            <a href="{{ shared_home_url }}/trip-planning">Trip Planning</a>
+            <a href="{{ shared_home_url }}/pre-trip">Travel Preparation</a>
+            <a href="{{ shared_home_url }}/account">Account</a>
+            <a href="{{ shared_home_url }}/logout">Log Out</a>
         </div>
     </nav>
 
@@ -179,6 +187,31 @@
                 Searching the records&hellip;
             </span>
             <div id="rag-result"></div>
+        </section>
+
+        <section class="section-card">
+            <h2>Budget review (multi-agent)</h2>
+            <p class="muted">
+                Shared Multi-Agent server &middot; a Planner agent plans the
+                review, a Worker agent answers it from this trip's budget and
+                expenses, and a Reviewer agent checks the answer. You make the
+                final decision (Accept, Partially Accept or Reject) and it is
+                saved with the trip.
+            </p>
+
+            <form hx-post="/api/multi-agent/budget-review/1"
+                  hx-target="#ma-result" hx-indicator="#ma-loading">
+                <label>Focus (optional)
+                    <input name="focus" size="40"
+                           placeholder="e.g. food spending"></label>
+                <button type="submit">Start budget review</button>
+            </form>
+
+            <span id="ma-loading" class="htmx-indicator">
+                Planner, Worker and Reviewer are working &ndash; this can take
+                a few minutes&hellip;
+            </span>
+            <div id="ma-result"></div>
         </section>
     </main>
 </body>
