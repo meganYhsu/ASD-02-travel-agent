@@ -1,0 +1,11 @@
+# Ruff security scan used by .pre-commit-config.yaml
+# "S" = flake8-bandit rules (hard-coded secrets, SQL built from strings,
+# debug servers, binding to all interfaces, requests without timeouts, ...)
+[lint]
+select = ["S"]
+
+[lint.per-file-ignores]
+# pytest checks results with assert by design
+"**/test_*.py" = ["S101"]
+"**/tests/**" = ["S101"]
+"**/conftest.py" = ["S101"]

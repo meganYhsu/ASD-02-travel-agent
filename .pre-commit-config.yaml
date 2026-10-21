@@ -1,0 +1,61 @@
+# Release 2 - local pre-commit security scans
+#
+# One-time set-up (each team member, inside the project venv):
+#     pip install pre-commit
+#     pre-commit install
+# After that the hooks run on the staged files every time you `git commit`;
+# a failing hook blocks the commit. Run them on demand with:
+#     pre-commit run                      (staged files)
+#     pre-commit run --files <paths>      (chosen files)
+#
+# Ruff security rules and detect-secrets cover the whole repository.
+# pip-audit and the endpoint tests are added per student, scoped to that
+# student's folder (copy the student-3 entries and change the paths).
+# The shared Multi-Agent server owner can add its requirements and tests the
+# same way.
+
+default_install_hook_types: [pre-commit]
+
+repos:
+  # 1. Ruff security rules (flake8-bandit "S" rules), config in ruff-security.toml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.11
+    hooks:
+      - id: ruff-check
+        name: ruff security scan (S rules)
+        args: [--config, ruff-security.toml, --output-format, concise]
+
+  # 2. Secrets committed by mistake (API keys, tokens, passwords)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: (package-lock\.json|\.secrets\.baseline)$
+
+  # 3. Known-vulnerable dependencies (PyPI advisory database)
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.10.1
+    hooks:
+      - id: pip-audit
+        name: pip-audit (student-3)
+        args:
+          - -r
+          - student-3/backend/requirements.txt
+          - -r
+          - student-3/database/requirements.txt
+          - -r
+          - student-3/frontend/requirements.txt
+        files: ^student-3/
+
+  # 4. Endpoint tests before the commit (the same tests run again in CI)
+  - repo: local
+    hooks:
+      - id: student-3-endpoint-tests
+        name: pytest (student-3 Release 2 endpoint tests)
+        entry: python -m pytest student-3 -q
+        language: python
+        additional_dependencies: [pytest, flask, requests, openai, python-dotenv, markupsafe]
+        pass_filenames: false
+        files: ^student-3/
