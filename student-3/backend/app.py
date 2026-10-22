@@ -890,6 +890,26 @@ def ma_agent_card(number, title, result, text, extra_html=""):
             f"<span class='muted'>{escape(str(result.get('model', '')))}{flag}</span></h4>"
             f"<div class='ma-text'>{escape(str(text or ''))}</div>{extra_html}{error}</div>")
 
+def ma_status_strip(wf):
+    """Request -> Planner -> Worker -> Reviewer -> Human review, one box each."""
+    decision = wf.get("human_decision") or {}
+    human = decision.get("decision") if decision.get("status") == "recorded" else "pending"
+    stages = [
+        ("Request", "received"),
+        ("Planner", (wf.get("planner_result") or {}).get("status", "missing")),
+        ("Worker", (wf.get("worker_result") or {}).get("status", "missing")),
+        ("Reviewer", (wf.get("reviewer_result") or {}).get("status", "missing")),
+        ("Human review", human),
+    ]
+    items = ""
+    for number, (name, state) in enumerate(stages, start=1):
+        state = str(state)
+        css = ("ma-wait" if state == "pending" else
+               "ma-bad" if state in ("timeout", "error", "missing") else "ma-ok")
+        items += (f"<li class='{css}'>{number}. {name}: "
+                  f"<strong>{escape(state)}</strong></li>")
+    return f"<ol class='ma-status'>{items}</ol>"
+
 
 def ma_render(wf, notice=""):
     """The three agent results and the human-review step as one HTML fragment."""
@@ -942,6 +962,7 @@ def ma_render(wf, notice=""):
     <div id="ma-workflow">
       <p>Workflow <code>{escape(wid)}</code> &middot; agents:
          <strong>{escape(str(wf.get('status', '')))}</strong> &middot; {seconds:.0f} s</p>
+      {ma_status_strip(wf)}
       {notice_html}
       {cards}
       {action}

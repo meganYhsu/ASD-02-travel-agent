@@ -104,6 +104,8 @@ def test_agent_results_and_review_form_are_shown(backend_client, multi_agent):
     assert "<li>planner_agent: Identify the supplied facts</li>" in html   # plan steps as a list
     for decision in ("Accept", "Partially Accept", "Reject"):
         assert f"value='{decision}'" in html
+    assert "2. Planner: <strong>success</strong>" in html
+    assert "5. Human review: <strong>pending</strong>" in html
 
 
 def test_accept_saves_the_recommendation(backend_client, db_api, multi_agent):
@@ -114,6 +116,7 @@ def test_accept_saves_the_recommendation(backend_client, db_api, multi_agent):
     saved = saved_for(db_api, wid)
 
     assert "Human decision: Accept" in html
+    assert "5. Human review: <strong>Accept</strong>" in html
     assert multi_agent["reviews"][0] == {"decision": "Accept", "reason": REASON, "evidence": ""}
     assert len(saved) == 1 and saved[0]["status"] == "accepted"
 
@@ -154,7 +157,8 @@ def test_short_reason_is_refused_and_the_form_stays(backend_client, db_api, mult
 def test_agent_failure_is_visible_to_the_human(backend_client, multi_agent):
     multi_agent["worker_status"] = "timeout"
     html = start_review(backend_client)[1]
-    assert "partial_failure" in html and "timeout" in html
+    assert "partial_failure" in html
+    assert "<li class='ma-bad'>3. Worker: <strong>timeout</strong></li>" in html
 
 
 def test_evidence_endpoint_returns_the_shared_server_request(backend_client, backend_module,
