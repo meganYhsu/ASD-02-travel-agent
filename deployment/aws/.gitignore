@@ -1,0 +1,6 @@
+reports/
+backups/
+__pycache__/
+.env
+.env.*
+*.pem
