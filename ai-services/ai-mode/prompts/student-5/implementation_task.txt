@@ -1,0 +1,10 @@
+Validate {{STUDENT}}'s Travel Preparation & Compliance microservice for this task:
+{{TASK}}
+
+Use only the verified validation evidence below. Focus recommendations on document CRUD and privacy, demonstration entry requirements, deterministic compliance findings, reviewed AI checklist generation, RAG citations, MCP tool boundaries, and reliable Plan -> Act -> Observe -> Adapt status. Do not treat sample entry requirements or AI output as official immigration advice. Identify concrete gaps and practical fixes. Carry forward prior feedback where relevant.
+
+Validation evidence:
+{{VALIDATION_EVIDENCE}}
+
+Prior round feedback:
+{{CARRY_FORWARD}}

@@ -281,6 +281,8 @@ services:
       MCP_SERVICE_URL: http://host.docker.internal:7004
       MCP_TIMEOUT_SECONDS: "15"
       MCP_ENABLED: "true"
+      MULTI_AGENT_SERVICE_URL: http://host.docker.internal:7010
+      MULTI_AGENT_TIMEOUT_SECONDS: "600"
       EXPIRY_WARNING_DAYS: "90"
 
     extra_hosts:

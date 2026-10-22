@@ -1,0 +1,15 @@
+Review the implementation recommendation for {{STUDENT}}'s Travel Preparation & Compliance microservice.
+
+Task:
+{{TASK}}
+
+Implementation recommendation:
+{{IMPLEMENTATION_RECOMMENDATION}}
+
+Verified validation evidence:
+{{VALIDATION_EVIDENCE}}
+
+Prior round feedback:
+{{CARRY_FORWARD}}
+
+Check that claims match the evidence, fixes fit the existing Student 5 architecture, document numbers remain protected, AI suggestions require traveller review, and sample entry requirements are clearly described as demonstration data. Flag unsupported claims or material omissions. Give concise, actionable review feedback.
