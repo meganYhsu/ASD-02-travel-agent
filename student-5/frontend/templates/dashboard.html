@@ -76,6 +76,7 @@
         <button class="tab" data-tab="packing">Packing</button>
         <button class="tab" data-tab="tasks">Pre-Trip Tasks</button>
         <button class="tab" data-tab="assistant">Travel Assistant</button>
+        <button class="tab" data-tab="multi-agent">Multi-Agent Review</button>
         <button class="tab" data-tab="agentic">Plan → Act → Observe → Adapt</button>
     </nav>
 
@@ -225,6 +226,25 @@
             </form>
             <div id="mcp-loading" class="htmx-indicator loading">Calling shared MCP tool…</div>
             <div id="mcp-result"></div>
+        </section>
+
+        <section id="multi-agent" class="panel">
+            <h2>Shared Multi-Agent Review</h2>
+            <p>The local Planner, Worker and Reviewer assess the evidence. Review the result and submit a human decision.</p>
+            <form class="card grid" hx-post="/multi-agent/run" hx-target="#multi-agent-result" hx-indicator="#multi-agent-loading">
+                <label>Review mode
+                    <select name="review_mode">
+                        <option value="workflow">Multi-Agent Workflow Review</option>
+                        <option value="testing_report">Testing Report Review</option>
+                        <option value="cloud_deployment_report">Cloud Deployment Report Review</option>
+                    </select>
+                </label>
+                <label>Task <input name="task" maxlength="4000" value="Review Student-5 travel preparation and compliance" required></label>
+                <label>Evidence or report<textarea name="evidence" rows="8" maxlength="60000" required placeholder="Paste verified workflow evidence, a testing report, or a cloud deployment report."></textarea></label>
+                <button type="submit">Run Planner → Worker → Reviewer</button>
+            </form>
+            <div id="multi-agent-loading" class="htmx-indicator loading">Running the local Multi-Agent review…</div>
+            <div id="multi-agent-result"></div>
         </section>
 
         <section id="agentic" class="panel">

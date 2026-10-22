@@ -1,12 +1,4 @@
 const {
-    getImplementationAdvice
-} = require("./implementationAgent");
-
-const {
-    getReview
-} = require("./reviewAgent");
-
-const {
     recordReview
 } = require("./reviewRecorder");
 
@@ -16,6 +8,7 @@ const {
 } = require("./validation");
 
 const readline = require("readline/promises");
+const fs = require("node:fs");
 
 
 
@@ -101,6 +94,8 @@ const RAG_SERVER =
     process.env.RAG_SERVER_URL ||
     "http://localhost:7001";
 
+const MULTI_AGENT_SERVER = process.env.MULTI_AGENT_SERVER_URL || "http://localhost:7010";
+
 const RAG_CALLER =
     process.env.RAG_CALLER ||
     "student-3-budget";
@@ -121,11 +116,16 @@ const RAG_ENABLED =
 
 
 const VALIDATION_MODES = ["base", "mcp", "rag", "all"];
+const REVIEW_MODES = ["workflow", "testing_report", "cloud_deployment_report"];
 
 const FEATURE_VALIDATION = {
     "student-3": {
         mcp: observeStudent3Mcp,
         rag: observeStudent3Rag
+    },
+    "student-5": {
+        mcp: observeStudent5Mcp,
+        rag: observeStudent5Rag
     }
 };
 
@@ -172,7 +172,10 @@ async function main() {
 
             mode:
                 process.env.AGENT_MODE ||
-                "all"
+                "all",
+
+            reviewMode: process.env.AGENT_REVIEW_MODE || "workflow",
+            reportFile: ""
         };
 
 
@@ -221,6 +224,17 @@ async function main() {
                 args.mode = argv[i + 1];
                 i += 1;
             }
+
+            if (argv[i] === "--review-mode" && argv[i + 1]) {
+                args.reviewMode = argv[i + 1];
+                i += 1;
+                continue;
+            }
+
+            if (argv[i] === "--report-file" && argv[i + 1]) {
+                args.reportFile = argv[i + 1];
+                i += 1;
+            }
         }
 
 
@@ -229,6 +243,13 @@ async function main() {
                 `Unknown mode: ${args.mode}. ` +
                 `Use one of: ${VALIDATION_MODES.join(", ")}`
             );
+        }
+
+        if (!REVIEW_MODES.includes(args.reviewMode)) {
+            throw new Error(`Unknown review mode: ${args.reviewMode}. Use one of: ${REVIEW_MODES.join(", ")}`);
+        }
+        if (args.reviewMode !== "workflow" && !args.reportFile) {
+            throw new Error(`--report-file is required for ${args.reviewMode} review.`);
         }
 
 
@@ -320,6 +341,7 @@ async function main() {
     console.log(
         `Validation mode: ${args.mode}`
     );
+    console.log(`Review mode: ${args.reviewMode}`);
 
 
     console.log("\nPLAN");
@@ -379,10 +401,15 @@ async function main() {
         
 
 
-        const evidenceText =
+        let evidenceText =
             buildStudentEvidenceText(
                 observation
             );
+
+        if (args.reportFile) {
+            const report = fs.readFileSync(args.reportFile, "utf8");
+            evidenceText += `\n\nREPORT FILE: ${args.reportFile}\n${report}`;
+        }
 
 
         console.log(
@@ -401,23 +428,19 @@ async function main() {
            IMPLEMENTATION AGENT
         --------------------- */
 
-        console.log(
-            "\nIMPLEMENTATION AGENT"
-        );
+        console.log("\nPLANNER / WORKER / REVIEWER AGENTS");
 
 
-        const implementation =
-            await getImplementationAdvice({
+        const multiAgentWorkflow = await runMultiAgentReview({
+            student,
+            task: [task, carryForward && `Previous review feedback: ${carryForward}`].filter(Boolean).join("\n"),
+            evidence: evidenceText,
+            reviewMode: args.reviewMode
+        });
 
-                student,
+        console.log("\nPLANNER AGENT\n" + multiAgentWorkflow.planner.output);
 
-                task,
-
-                validationEvidence:
-                    evidenceText,
-
-                carryForward
-            });
+        const implementation = { content: multiAgentWorkflow.worker.output, error: "" };
 
 
         console.log(
@@ -443,21 +466,7 @@ async function main() {
         );
 
 
-        const review =
-            await getReview({
-
-                student,
-
-                task,
-
-                implementationRecommendation:
-                    implementation.content,
-
-                validationEvidence:
-                    evidenceText,
-
-                carryForward
-            });
+        const review = { content: multiAgentWorkflow.reviewer.output, error: "" };
 
 
         console.log(
@@ -490,6 +499,12 @@ async function main() {
                 round
             });
 
+        await submitMultiAgentDecision(
+            multiAgentWorkflow.workflow_id,
+            decision.decision,
+            decision.note
+        );
+
 
         /* ---------------------
            RECORD EVIDENCE
@@ -521,6 +536,16 @@ async function main() {
                 decision.note,
 
             carryForward,
+
+            multiAgentWorkflow: {
+                workflow_id: multiAgentWorkflow.workflow_id,
+                review_mode: multiAgentWorkflow.review_mode,
+                review_title: multiAgentWorkflow.review_title,
+                planner: multiAgentWorkflow.planner,
+                worker: multiAgentWorkflow.worker,
+                reviewer: multiAgentWorkflow.reviewer,
+                human_review: { decision: decision.decision, note: decision.note }
+            },
 
             timestamp:
                 new Date().toISOString()
@@ -610,6 +635,39 @@ main().catch(
         process.exit(1);
     }
 );
+
+async function runMultiAgentReview({ student, task, evidence, reviewMode }) {
+    let response;
+    try {
+        response = await fetch(`${MULTI_AGENT_SERVER}/workflows`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ student, task, evidence, review_mode: reviewMode }),
+            signal: AbortSignal.timeout(Number(process.env.MULTI_AGENT_TIMEOUT_MS || 600000))
+        });
+    } catch (error) {
+        throw new Error(`Shared Multi-Agent Server unavailable at ${MULTI_AGENT_SERVER}: ${error.message}`);
+    }
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.ok || !body.workflow) {
+        throw new Error(body?.error || `Shared Multi-Agent Server returned HTTP ${response.status}`);
+    }
+    return body.workflow;
+}
+
+async function submitMultiAgentDecision(workflowId, decision, note) {
+    const response = await fetch(`${MULTI_AGENT_SERVER}/workflows/${workflowId}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, note }),
+        signal: AbortSignal.timeout(15000)
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.ok) {
+        throw new Error(body?.error || `Could not record human decision (HTTP ${response.status})`);
+    }
+    return body.workflow;
+}
 
 
 
@@ -1506,6 +1564,74 @@ async function observeStudent5() {
         services,
         issues
     };
+}
+
+// Student 5 exposes shared RAG and MCP through its own Flask API. These
+// checks validate that the feature proxy and its response envelope work,
+// alongside the shared server checks performed by the loop.
+async function observeStudent5Mcp() {
+    if (!MCP_ENABLED) {
+        return [skipped("Student 5 MCP - backend proxy", "MCP_ENABLED")];
+    }
+
+    const tools = await checkContract(
+        "Student 5 MCP - backend tool registry",
+        `${STUDENT5_BACKEND}/api/mcp/tools`,
+        {
+            assert: (payload) => {
+                const names = payload?.data;
+                return {
+                    ok: Boolean(payload?.success && Array.isArray(names) && names.length > 0),
+                    detail: `success=${Boolean(payload?.success)}, registered=${Array.isArray(names) ? names.length : 0}`
+                };
+            }
+        }
+    );
+
+    const call = await checkContract(
+        "Student 5 MCP - backend tool call",
+        `${STUDENT5_BACKEND}/api/mcp/tool`,
+        {
+            method: "POST",
+            body: {
+                tool_name: "total_activity_count",
+                arguments: { itinerary_id: 3 }
+            },
+            timeoutMs: 20000,
+            assert: (payload) => {
+                const result = payload?.data?.result;
+                return {
+                    ok: Boolean(payload?.success && result && typeof result === "object"),
+                    detail: `success=${Boolean(payload?.success)}, structured_result=${Boolean(result && typeof result === "object")}`
+                };
+            }
+        }
+    );
+
+    return [tools, call];
+}
+
+async function observeStudent5Rag() {
+    const response = await checkContract(
+        "Student 5 RAG - backend assistant response",
+        `${STUDENT5_BACKEND}/api/ai/assistant`,
+        {
+            method: "POST",
+            body: { question: "What should I check before travelling with my passport?" },
+            timeoutMs: RAG_TIMEOUT_MS,
+            assert: (payload) => {
+                const data = payload?.data;
+                const hasAnswer = typeof data?.answer === "string" && data.answer.trim().length > 0;
+                const hasSources = Array.isArray(data?.sources) && data.sources.length > 0;
+                return {
+                    ok: Boolean(payload?.success && hasAnswer && hasSources),
+                    detail: `success=${Boolean(payload?.success)}, answer=${hasAnswer}, sources=${Array.isArray(data?.sources) ? data.sources.length : 0}`
+                };
+            }
+        }
+    );
+
+    return [response];
 }
 
 
