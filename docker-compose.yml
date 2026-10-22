@@ -97,11 +97,15 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434/v1
       OLLAMA_MODEL: qwen2.5:0.5b
       MCP_BASE_URL: http://host.docker.internal:7004
-      MCP_ENABLED: "true"
       RAG_BASE_URL: http://host.docker.internal:7001
+      MULTI_AGENT_SERVICE_URL: http://host.docker.internal:6767
+      # The code defaults every AI service to off (cloud baseline); local runs turn them on.
+      AI_MODE_ENABLED: "true"
+      MCP_ENABLED: "true"
       RAG_ENABLED: "true"
+      MULTI_AGENT_ENABLED: "true"
 
-    # Lets host.docker.internal reach the host-run MCP and RAG servers on Linux too.
+    # Lets host.docker.internal reach the host-run MCP, RAG and Multi-Agent servers on Linux too.
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -121,6 +125,7 @@ services:
 
     environment:
       BACKEND_URL: http://student1-backend:5001
+      SHARED_HOME_URL: http://127.0.0.1:8080
 
     ports:
       - "3001:3001"

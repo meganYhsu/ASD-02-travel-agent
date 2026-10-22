@@ -42,6 +42,17 @@
             opacity: 0.85;
             color: #ffffff;
         }
+        .success { color: #1b7a3a; }
+        .ma-stage {
+            border-left: 3px solid var(--line, #d7e0ea);
+            padding: .25rem 0 .25rem .9rem;
+            margin: .75rem 0;
+        }
+        .ma-stage h4 { margin: .2rem 0 .4rem; }
+        .ma-text { white-space: pre-wrap; font-size: 14px; }
+        .ma-stage fieldset { border: 1px solid var(--line, #d7e0ea); margin-bottom: .6rem; }
+        .ma-choice { display: block; }
+        #ma-request { width: 100%; max-width: 600px; }
     </style>
 </head>
 <body>
@@ -50,14 +61,14 @@
         Travel Agent
     </div>
     <div class="nav-links">
-        <a href="http://127.0.0.1:8080/welcome">Welcome</a>
-        <a href="http://127.0.0.1:8080/traveler-preferences">Traveler Preferences</a>
-        <a href="http://127.0.0.1:8080/booking">Booking</a>
-        <a href="http://127.0.0.1:8080/itinerary">Itinerary</a>
-        <a href="http://127.0.0.1:8080/budget">Budget &amp; Expense</a>
-        <a href="http://127.0.0.1:8080/trip-planning">Trip Planning</a>
-        <a href="http://127.0.0.1:8080/pre-trip">Travel Preparation</a>
-        <a href="http://127.0.0.1:8080/logout">Log Out</a>
+        <a href="{{ shared_home_url }}/welcome">Welcome</a>
+        <a href="{{ shared_home_url }}/traveler-preferences">Traveler Preferences</a>
+        <a href="{{ shared_home_url }}/booking">Booking</a>
+        <a href="{{ shared_home_url }}/itinerary">Itinerary</a>
+        <a href="{{ shared_home_url }}/budget">Budget &amp; Expense</a>
+        <a href="{{ shared_home_url }}/trip-planning">Trip Planning</a>
+        <a href="{{ shared_home_url }}/pre-trip">Travel Preparation</a>
+        <a href="{{ shared_home_url }}/logout">Log Out</a>
     </div>
 </nav>
 
@@ -230,6 +241,37 @@
         </form>
         <span id="rag-loading" class="htmx-indicator">Searching and answering...</span>
         <div id="rag-answer"></div>
+    </section>
+
+    <section class="section-card">
+        <h2>Preference review (multi-agent)</h2>
+        <p class="muted">
+            Shared Multi-Agent server &middot; a Planner agent decides what to
+            check, a Worker agent reviews the selected traveller's saved
+            preferences and writes a trip-planning brief, and a Reviewer agent
+            checks that brief against the stored data. You make the final
+            decision: Accept, Partially Accept or Reject, with a reason or
+            correction. Recording a decision does not change the profile.
+        </p>
+        <form hx-post="/api/multi-agent/workflow" hx-target="#ma-workflow"
+              hx-include="#traveler-picker" hx-indicator="#ma-loading">
+            <label for="ma-request">What should the agents check? (optional)</label>
+            <textarea id="ma-request" name="user_request" maxlength="500" rows="2"
+                      placeholder="Check this traveller's saved preferences are complete and consistent, then summarise them as a brief for trip planning."></textarea>
+            <button type="submit" class="primary-button">Run multi-agent review</button>
+        </form>
+        <form class="traveler-bar"
+              hx-get="/api/multi-agent/lookup" hx-target="#ma-workflow"
+              hx-indicator="#ma-loading">
+            <label for="ma-lookup">Workflow ID</label>
+            <input id="ma-lookup" name="workflow_id" required
+                   placeholder="Reload a saved workflow">
+            <button type="submit">Load workflow</button>
+        </form>
+        <span id="ma-loading" class="htmx-indicator">
+            Agents working - this can take a few minutes...
+        </span>
+        <div id="ma-workflow"></div>
     </section>
 </main>
 </body>

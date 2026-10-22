@@ -1,0 +1,13 @@
+Student 1 smoke test against http://127.0.0.1:3001 (AI expected on)
+  frontend /health                                 -> PASS 
+  backend /health through the proxy                -> PASS 
+  page renders                                     -> PASS 
+  READ traveller list from the database            -> PASS 
+  CREATE traveller                                 -> PASS 
+  UPDATE traveller                                 -> PASS 
+  CREATE interest                                  -> PASS 
+  deterministic completeness check                 -> PASS 
+  DELETE traveller                                 -> PASS 
+  deleted traveller is gone                        -> PASS 
+
+10 passed, 0 failed

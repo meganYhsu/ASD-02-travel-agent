@@ -559,4 +559,7 @@ def health():
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=PORT, debug=True)
+    # Direct runs listen on 127.0.0.1 with the debugger off unless FLASK_HOST /
+    # FLASK_DEBUG say otherwise. Containers start gunicorn (see the Dockerfile).
+    app.run(host=os.getenv("FLASK_HOST", "127.0.0.1"), port=PORT,
+            debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

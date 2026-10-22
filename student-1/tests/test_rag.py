@@ -14,7 +14,7 @@ import os
 import requests
 
 BACKEND = os.getenv("BACKEND_URL", "http://127.0.0.1:5001")
-RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() not in ("false", "0", "no")
+RAG_ENABLED = os.getenv("RAG_ENABLED", "false").lower() in ("true", "1", "yes")
 
 
 def ask(question):

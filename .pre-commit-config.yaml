@@ -1,0 +1,88 @@
+repos:
+  - repo: local
+    hooks:
+      - id: detect-secrets
+        name: Scan tracked files for secrets
+        entry: detect-secrets-hook --no-verify
+        language: python
+        additional_dependencies: [detect-secrets==1.5.0]
+        types: [text]
+        exclude: '(^|/)package-lock\.json$|^rag-server/chroma/'
+
+      - id: ruff-security
+        name: Ruff security rules for shared Python services
+        entry: ruff check --select S --per-file-ignores **/test_*.py:S101
+        language: python
+        additional_dependencies: [ruff==0.14.0]
+        types: [python]
+        files: '^(ai-services|rag-server)/'
+
+      - id: pip-audit-multi-agent
+        name: Audit shared multi-agent Python dependencies
+        entry: pip-audit -r ai-services/multi-agent-server/requirements.txt
+        language: python
+        additional_dependencies: [pip-audit==2.9.0]
+        pass_filenames: false
+        files: '^ai-services/multi-agent-server/requirements\.txt$'
+
+      - id: pip-audit-mcp
+        name: Audit shared MCP Python dependencies
+        entry: pip-audit -r ai-services/mcp-server/requirements.txt
+        language: python
+        additional_dependencies: [pip-audit==2.9.0]
+        pass_filenames: false
+        files: '^ai-services/mcp-server/requirements\.txt$'
+
+      - id: pip-audit-rag
+        name: Audit shared local RAG Python dependencies
+        entry: pip-audit -r rag-server/requirements.txt
+        language: python
+        additional_dependencies: [pip-audit==2.9.0]
+        pass_filenames: false
+        files: '^rag-server/requirements\.txt$'
+
+      - id: npm-audit-student4-backend
+        name: Audit Student 4 backend dependencies
+        entry: npm --prefix student-4/backend audit --package-lock-only --ignore-scripts --audit-level=low
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: npm-audit-student4-database
+        name: Audit Student 4 database dependencies
+        entry: npm --prefix student-4/database audit --package-lock-only --ignore-scripts --audit-level=low
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: npm-audit-student4-frontend
+        name: Audit Student 4 frontend dependencies
+        entry: npm --prefix student-4/frontend audit --package-lock-only --ignore-scripts --audit-level=low
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # ---- Student 1 (Traveler Preferences) ----
+      - id: ruff-security-student1
+        name: Ruff security rules for Student 1
+        entry: ruff check --select S --per-file-ignores **/test_*.py:S101
+        language: python
+        additional_dependencies: [ruff==0.14.0]
+        types: [python]
+        files: '^student-1/'
+
+      - id: pip-audit-student1
+        name: Audit Student 1 Python dependencies
+        entry: pip-audit -r student-1/backend/requirements.txt -r student-1/database/requirements.txt -r student-1/frontend/requirements.txt
+        language: python
+        additional_dependencies: [pip-audit==2.9.0]
+        pass_filenames: false
+        files: '^student-1/'
+
+      - id: pytest-student1
+        name: Student 1 Release 2 endpoint tests
+        entry: python -m pytest -c student-1/pytest.ini --rootdir student-1 student-1/tests -q
+        language: python
+        additional_dependencies: [pytest, flask==3.1.3, requests==2.34.2, openai==3.35.1, python-dotenv==1.2.4, markupsafe==3.0.4]
+        pass_filenames: false
+        files: '^student-1/'

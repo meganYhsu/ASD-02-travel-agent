@@ -16,17 +16,29 @@ from pathlib import Path
 import json
 import os
 import requests
+import uuid
 
 load_dotenv()
+
+
+def flag(name):
+    """AI feature switches. Off unless set to true, so CI and the cloud
+    baseline run with every AI service disabled; docker-compose and .env turn
+    them on for local runs."""
+    return os.getenv(name, "false").strip().lower() in ("true", "1", "yes")
+
 
 DB_API_URL = os.getenv("DB_API_URL", "http://127.0.0.1:6001")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
 
+# AI-Mode: the summarise and completeness-explanation calls to Ollama.
+AI_MODE_ENABLED = flag("AI_MODE_ENABLED")
+
 # Shared MCP server runs on the host, not in Docker, so in compose this is
-# http://host.docker.internal:7004. CI sets MCP_ENABLED=false.
+# http://host.docker.internal:7004.
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://127.0.0.1:7004").rstrip("/")
-MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() not in ("false", "0", "no")
+MCP_ENABLED = flag("MCP_ENABLED")
 
 # The only shared MCP tools this feature may call - its own data, nothing else.
 MCP_TOOLS = {
@@ -36,10 +48,28 @@ MCP_TOOLS = {
 }
 
 # Shared RAG server also runs on the host: http://host.docker.internal:7001 in
-# compose. CI sets RAG_ENABLED=false.
+# compose.
 RAG_BASE_URL = os.getenv("RAG_BASE_URL", "http://127.0.0.1:7001").rstrip("/")
-RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() not in ("false", "0", "no")
+RAG_ENABLED = flag("RAG_ENABLED")
 RAG_MAX_QUESTION = 300
+
+# Release 2 shared Multi-Agent server (ai-services/multi-agent-server, port
+# 6767, not containerised). One workflow is three sequential model calls, so
+# the wait is long; the frontend proxy waits longer still.
+MULTI_AGENT_SERVICE_URL = os.getenv(
+    "MULTI_AGENT_SERVICE_URL", "http://127.0.0.1:6767").rstrip("/")
+MULTI_AGENT_ENABLED = flag("MULTI_AGENT_ENABLED")
+MULTI_AGENT_TIMEOUT_SECONDS = int(os.getenv("MULTI_AGENT_TIMEOUT_SECONDS", "420"))
+MULTI_AGENT_SERVICE = "traveller"
+MULTI_AGENT_TASK = "review_preferences"
+MULTI_AGENT_MAX_REQUEST = 500
+DEFAULT_REVIEW_REQUEST = (
+    "Check this traveller's saved preferences are complete and consistent, "
+    "then summarise them as a brief for trip planning. Flag anything missing "
+    "or contradictory."
+)
+REVIEW_DECISIONS = ("Accept", "Partially Accept", "Reject")
+REVIEW_MIN_REASON = 20
 
 PROMPT_DIR = Path(__file__).with_name("prompts")
 PORT = int(os.getenv("PORT", "5001"))
@@ -628,6 +658,9 @@ def summarise(traveler_id):
     OBSERVE check the answer actually carries all four required labels
     ADAPT   re-prompt once, naming the labels that were missing
     """
+    if not AI_MODE_ENABLED:
+        return "<p class='muted'>AI-Mode is disabled in this environment.</p>", 503
+
     log_stage("PLAN", f"Summarise traveler {traveler_id}: need profile, budget, "
                       "interests and accessibility needs from the database API.")
 
@@ -742,7 +775,10 @@ def completeness(traveler_id):
         .replace("{{GAPS}}", "; ".join(result["gaps"]) or "none")
     )
 
-    advice, ai_error = call_model(system_prompt, task_prompt, max_tokens=180)
+    if AI_MODE_ENABLED:
+        advice, ai_error = call_model(system_prompt, task_prompt, max_tokens=180)
+    else:
+        advice, ai_error = None, "AI-Mode is disabled in this environment"
     if ai_error:
         log_stage("OBSERVE", f"Model call failed: {ai_error}")
         advice = None
@@ -756,9 +792,14 @@ def completeness(traveler_id):
 
     gap_items = "".join(f"<li>{escape(g)}</li>" for g in result["gaps"])
     gap_html = f"<p>Still missing:</p><ul>{gap_items}</ul>" if gap_items else ""
-    advice_html = (f"<p>{escape(advice)}</p>" if advice else
-                   "<p class='error'>AI explanation unavailable - check that "
-                   "Ollama is running. The score above is still valid.</p>")
+    if advice:
+        advice_html = f"<p>{escape(advice)}</p>"
+    elif not AI_MODE_ENABLED:
+        advice_html = ("<p class='muted'>AI-Mode is disabled in this environment. "
+                       "The score above is still valid.</p>")
+    else:
+        advice_html = ("<p class='error'>AI explanation unavailable - check that "
+                       "Ollama is running. The score above is still valid.</p>")
 
     return f"""
     <div>
@@ -887,6 +928,279 @@ def rag_ask():
     """
 
 
+# ------------------------------------------------- Release 2: shared Multi-Agent
+# Frontend -> this backend -> shared Multi-Agent server:
+#   Planner (what to check) -> Worker (answer from the supplied preference set)
+#   -> Reviewer (check the answer against that evidence) -> Human Review here.
+# The shared server only analyses the evidence sent to it; a recorded decision
+# never changes the traveller's data.
+def multi_agent_disabled():
+    return ("<p class='muted'>Multi-Agent mode is disabled in this environment.</p>",
+            503)
+
+
+def multi_agent_context(profile):
+    """The evidence the agents work from: the stored preference set plus the
+    deterministic completeness verdict. The email address is left out because
+    no review task needs it."""
+    traveler = profile["traveler"]
+    return {
+        "traveler": {
+            "traveler_id": traveler["traveler_id"],
+            "name": traveler["name"],
+            "home_location": traveler["home_location"],
+            "travel_style": traveler["travel_style"],
+        },
+        "preferences": profile.get("preferences"),
+        "interests": [
+            {"interest_category": i["interest_category"], "priority": i["priority"]}
+            for i in profile.get("interests") or []
+        ],
+        "accessibility_needs": [
+            {"requirement": n["requirement"],
+             "dietary_restriction": n["dietary_restriction"]}
+            for n in profile.get("accessibility_needs") or []
+        ],
+        "completeness": check_completeness(profile),
+    }
+
+
+def multi_agent_request(traveler_id, user_request=""):
+    """Builds the shared server's POST /workflow body for one traveller.
+    Returns (body, None) or (None, (message, status))."""
+    profile, err = get_preference_set(traveler_id)
+    if err == "not found":
+        return None, (f"Traveler {traveler_id} not found.", 404)
+    if err:
+        return None, ("Preferences database service is unavailable.", 503)
+    return {
+        "service": MULTI_AGENT_SERVICE,
+        "task": MULTI_AGENT_TASK,
+        "user_request": user_request or DEFAULT_REVIEW_REQUEST,
+        "context": multi_agent_context(profile),
+    }, None
+
+
+def call_multi_agent(method, path, payload=None):
+    """One call to the shared server. Returns (json, None) or (None, (message, status))."""
+    url = f"{MULTI_AGENT_SERVICE_URL}{path}"
+    try:
+        if method == "POST":
+            resp = requests.post(url, json=payload, timeout=MULTI_AGENT_TIMEOUT_SECONDS)
+        else:
+            resp = requests.get(url, timeout=MULTI_AGENT_TIMEOUT_SECONDS)
+    except requests.Timeout:
+        return None, ("The shared Multi-Agent server did not answer within "
+                      f"{MULTI_AGENT_TIMEOUT_SECONDS} seconds.", 504)
+    except requests.RequestException:
+        return None, ("The shared Multi-Agent server is unavailable. Start it with "
+                      "python ai-services/multi-agent-server/app.py.", 503)
+    try:
+        data = resp.json()
+    except ValueError:
+        return None, ("The shared Multi-Agent server returned a non-JSON response.", 502)
+    if not resp.ok:
+        status = resp.status_code if resp.status_code in (400, 404) else 502
+        return None, (data.get("error", "the Multi-Agent request failed"), status)
+    return data, None
+
+
+def valid_workflow_id(workflow_id):
+    """Only well-formed IDs are forwarded to the shared server."""
+    try:
+        return str(uuid.UUID(workflow_id)) == workflow_id.lower()
+    except (ValueError, AttributeError):
+        return False
+
+
+def is_own_workflow(workflow):
+    """The shared server keeps every student's history together, so only
+    workflows this feature started are shown or reviewed here."""
+    return (workflow.get("service") == MULTI_AGENT_SERVICE
+            and workflow.get("task") == MULTI_AGENT_TASK)
+
+
+def agent_card(number, title, result, text_key):
+    result = result or {}
+    status = result.get("status", "unknown")
+    status_class = "" if status == "success" else " error"
+    error = (f"<p class='error'>{escape(result['error'])}</p>"
+             if result.get("error") else "")
+    return f"""
+    <div class='ma-stage'>
+      <h4>{number}. {title}
+        <span class='muted{status_class}'>&middot; {escape(status)}
+        &middot; {escape(result.get('model', ''))}</span></h4>
+      <div class='ma-text'>{escape(result.get(text_key, ''))}</div>
+      {error}
+    </div>
+    """
+
+
+def render_workflow(workflow, notice=""):
+    workflow_id = workflow.get("workflow_id", "")
+    decision = workflow.get("human_decision") or {}
+    traveler = (workflow.get("context") or {}).get("traveler") or {}
+
+    if decision.get("status") == "recorded":
+        evidence = (f"<p><strong>Evidence:</strong> {escape(decision['evidence'])}</p>"
+                    if decision.get("evidence") else "")
+        human_html = f"""
+        <div class='ma-stage'>
+          <h4>4. Human review <span class='muted'>&middot; recorded</span></h4>
+          <p><strong>{escape(decision.get('decision', ''))}</strong>
+             <span class='muted'>&middot; {escape(decision.get('timestamp', ''))}</span></p>
+          <p>{escape(decision.get('reason', ''))}</p>
+          {evidence}
+        </div>
+        """
+    else:
+        radios = "".join(
+            f"<label class='ma-choice'><input type='radio' name='decision' "
+            f"value='{value}' required> {value}</label>"
+            for value in REVIEW_DECISIONS
+        )
+        human_html = f"""
+        <div class='ma-stage'>
+          <h4>4. Human review <span class='muted'>&middot; pending</span></h4>
+          <form hx-post='/api/multi-agent/workflows/{escape(workflow_id)}/review'
+                hx-target='#ma-workflow' hx-indicator='#ma-loading'>
+            <fieldset><legend>Decision</legend>{radios}</fieldset>
+            <label>Reason or correction (at least {REVIEW_MIN_REASON} characters)
+              <textarea name='reason' minlength='{REVIEW_MIN_REASON}' rows='3'
+                        required></textarea></label>
+            <label>Evidence checked (optional)
+              <input name='evidence' placeholder='Profile, interests and needs tables'></label>
+            <button type='submit' class='primary-button'>Record decision</button>
+          </form>
+        </div>
+        """
+
+    return f"""
+    <div>
+      {notice}
+      <p class='muted'>Workflow <code>{escape(workflow_id)}</code>
+         &middot; traveller {escape(traveler.get('traveler_id', ''))}
+         {escape(traveler.get('name', ''))}
+         &middot; {escape(workflow.get('status', ''))}
+         &middot; {escape(workflow.get('duration_ms', ''))} ms</p>
+      <p><strong>Request:</strong> {escape(workflow.get('user_request', ''))}</p>
+      {agent_card(1, "Planner", workflow.get("planner_result"), "plan")}
+      {agent_card(2, "Worker", workflow.get("worker_result"), "output")}
+      {agent_card(3, "Reviewer", workflow.get("reviewer_result"), "review")}
+      {human_html}
+    </div>
+    """
+
+
+def error_fragment(err):
+    message, status = err
+    return f"<p class='error'>{escape(message)}</p>", status
+
+
+@app.route("/multi-agent/evidence/<int:traveler_id>")
+def multi_agent_evidence(traveler_id):
+    """JSON body this feature sends to the shared server. Used by the
+    terminal client (tools/preferences_review_cli.py)."""
+    if not MULTI_AGENT_ENABLED:
+        return jsonify({"error": "Multi-Agent mode is disabled in this environment"}), 503
+    body, err = multi_agent_request(traveler_id, request.args.get("user_request", "").strip())
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    return jsonify(body)
+
+
+@app.route("/multi-agent/workflow", methods=["POST"])
+def multi_agent_start():
+    if not MULTI_AGENT_ENABLED:
+        return multi_agent_disabled()
+    data = request.get_json(silent=True) or request.form
+    try:
+        traveler_id = int(data.get("traveler_id", ""))
+    except (TypeError, ValueError):
+        traveler_id = 0
+    user_request = str(data.get("user_request") or "").strip()
+    if traveler_id < 1:
+        return "<p class='error'>Select a traveller first.</p>", 400
+    if len(user_request) > MULTI_AGENT_MAX_REQUEST:
+        return (f"<p class='error'>Requests are limited to {MULTI_AGENT_MAX_REQUEST} "
+                "characters.</p>"), 400
+
+    log_stage("MULTI-AGENT", f"PLAN: traveller {traveler_id} - send the preference set "
+                             "to the shared Planner, Worker and Reviewer agents.")
+    body, err = multi_agent_request(traveler_id, user_request)
+    if err:
+        return error_fragment(err)
+
+    log_stage("MULTI-AGENT", f"ACT: POST {MULTI_AGENT_SERVICE_URL}/workflow "
+                             f"(service={MULTI_AGENT_SERVICE}, task={MULTI_AGENT_TASK}).")
+    workflow, err = call_multi_agent("POST", "/workflow", body)
+    if err:
+        log_stage("MULTI-AGENT", f"OBSERVE: failed - {err[0]}")
+        return error_fragment(err)
+
+    log_stage("MULTI-AGENT", f"OBSERVE: workflow {workflow.get('workflow_id')} "
+                             f"{workflow.get('status')}; planner="
+                             f"{(workflow.get('planner_result') or {}).get('status')}, "
+                             f"worker={(workflow.get('worker_result') or {}).get('status')}, "
+                             f"reviewer={(workflow.get('reviewer_result') or {}).get('status')}.")
+    log_stage("MULTI-AGENT", "ADAPT: waiting for the human decision.")
+    return render_workflow(workflow)
+
+
+@app.route("/multi-agent/lookup")
+def multi_agent_lookup_form():
+    """The frontend's "Load workflow" box sends the ID as a query parameter."""
+    return multi_agent_lookup(request.args.get("workflow_id", "").strip())
+
+
+@app.route("/multi-agent/workflows/<workflow_id>")
+def multi_agent_lookup(workflow_id):
+    if not MULTI_AGENT_ENABLED:
+        return multi_agent_disabled()
+    if not valid_workflow_id(workflow_id):
+        return "<p class='error'>Invalid workflow ID.</p>", 400
+    workflow, err = call_multi_agent("GET", f"/workflow/{workflow_id}")
+    if err:
+        return error_fragment(err)
+    if not is_own_workflow(workflow):
+        return "<p class='error'>Workflow not found.</p>", 404
+    return render_workflow(workflow)
+
+
+@app.route("/multi-agent/workflows/<workflow_id>/review", methods=["POST"])
+def multi_agent_review(workflow_id):
+    if not MULTI_AGENT_ENABLED:
+        return multi_agent_disabled()
+    if not valid_workflow_id(workflow_id):
+        return "<p class='error'>Invalid workflow ID.</p>", 400
+
+    data = request.get_json(silent=True) or request.form
+    decision = str(data.get("decision") or "").strip()
+    reason = str(data.get("reason") or "").strip()
+    evidence = str(data.get("evidence") or "").strip()
+    if decision not in REVIEW_DECISIONS:
+        return "<p class='error'>Choose Accept, Partially Accept or Reject.</p>", 400
+    if len(reason) < REVIEW_MIN_REASON:
+        return (f"<p class='error'>Give a reason of at least {REVIEW_MIN_REASON} "
+                "characters.</p>"), 400
+
+    existing, err = call_multi_agent("GET", f"/workflow/{workflow_id}")
+    if err:
+        return error_fragment(err)
+    if not is_own_workflow(existing):
+        return "<p class='error'>Workflow not found.</p>", 404
+
+    workflow, err = call_multi_agent("POST", f"/workflow/{workflow_id}/review",
+                                     {"decision": decision, "reason": reason,
+                                      "evidence": evidence})
+    if err:
+        return error_fragment(err)
+    log_stage("MULTI-AGENT", f"HUMAN REVIEW: {decision} recorded for workflow {workflow_id}.")
+    notice = "<p class='success'>Decision recorded by the shared Multi-Agent server.</p>"
+    return render_workflow(workflow, notice)
+
+
 # ------------------------------------------------------- cross-feature contract
 @app.route("/preference-set/<int:traveler_id>")
 def preference_set(traveler_id):
@@ -906,9 +1220,14 @@ def preference_set(traveler_id):
 @app.route("/health")
 def health():
     return jsonify({"service": "student-1-backend", "model": OLLAMA_MODEL,
+                    "ai_mode_enabled": AI_MODE_ENABLED,
                     "mcp_enabled": MCP_ENABLED, "rag_enabled": RAG_ENABLED,
+                    "multi_agent_enabled": MULTI_AGENT_ENABLED,
                     "status": "ok"})
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=PORT, debug=True)
+    # Direct runs listen on 127.0.0.1 with the debugger off unless FLASK_HOST /
+    # FLASK_DEBUG say otherwise. Containers start gunicorn (see the Dockerfile).
+    app.run(host=os.getenv("FLASK_HOST", "127.0.0.1"), port=PORT,
+            debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

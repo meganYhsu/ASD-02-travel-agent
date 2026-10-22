@@ -12,7 +12,7 @@ import os
 import requests
 
 BACKEND = os.getenv("BACKEND_URL", "http://127.0.0.1:5001")
-MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() not in ("false", "0", "no")
+MCP_ENABLED = os.getenv("MCP_ENABLED", "false").lower() in ("true", "1", "yes")
 
 TOOLS = ("get_traveler_profile", "get_traveler_interests", "get_accessibility_needs")
 
