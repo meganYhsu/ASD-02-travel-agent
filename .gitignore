@@ -5,6 +5,15 @@ dist/
 student-4/backend/reports/
 
 .venv/
+.venv-security/
+.security-reports/
+.aws-reports/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
 
 __pycache__/
 
