@@ -14,7 +14,7 @@ const FRONTEND_ROOT = path.join(PROJECT_ROOT, "frontend");
 
 const DEFAULT_TASK =
     "Using only the validation evidence, identify the single highest-priority\n" +
-    "verified problem and recommend one minimal code change to address it.\n" +
+    "verified problem and recommend one minimal core change to address it.\n" +
     "Do not recommend changes for anything that passed validation.";
 const DEFAULT_DATABASE_BASE_URL = "http://127.0.0.1:5002";
 const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5001";
@@ -1111,7 +1111,7 @@ function buildNoIssueReview(observation) {
             "SUPPORTED",
             "",
             "Findings, ordered by severity:",
-            "No verified issue was present in the validation evidence, so no code change should be recommended.",
+            "No verified issue was present in the validation evidence, so no core change should be recommended.",
             "",
             "Open questions or assumptions:",
             blockers.length

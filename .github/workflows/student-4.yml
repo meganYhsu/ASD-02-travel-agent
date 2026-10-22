@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Get repository code
+      # Get repository core
       - name: Checkout repository
         uses: actions/checkout@v4
 

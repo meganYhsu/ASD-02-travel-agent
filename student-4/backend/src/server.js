@@ -43,6 +43,9 @@ app.use("/api", itineraryRoutes);
 const ragRoutes = require("./routes/ragRoutes");
 app.use("/api", ragRoutes);
 
+const multiAgentRoutes = require("./routes/multiAgentRoutes");
+app.use("/api/multi-agent", multiAgentRoutes);
+
 const feedbackRoutes =
     require("./routes/getFeedbackRoute");
 

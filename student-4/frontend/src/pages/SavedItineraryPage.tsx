@@ -232,6 +232,17 @@ function SavedItineraryPage() {
                             >
                                 Ask Shared RAG
                             </button>
+                            <button
+                                className="saved-itinerary-page__button"
+                                type="button"
+                                onClick={() => navigate("/MultiAgentServiceIntegration", {
+                                    state: {
+                                        itineraryId: itinerary.itinerary_id
+                                    }
+                                })}
+                            >
+                                Multi-Agent Integration
+                            </button>
                         </section>
                     </>
                 )}
