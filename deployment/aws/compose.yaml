@@ -17,6 +17,8 @@ services:
   shared-home:
     <<: *runtime
     build: ../../shared/frontend
+    environment:
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?Set FLASK_SECRET_KEY in deployment/aws/.env}
     ports: ["127.0.0.1:8080:5003"]
     depends_on:
       - student1-frontend

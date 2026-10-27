@@ -4,7 +4,7 @@ umask 077
 
 deployment_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repository_dir="$(cd "$deployment_dir/../.." && pwd)"
-compose=(docker compose -f "$deployment_dir/compose.yaml")
+compose=(docker compose --env-file "$deployment_dir/.env" -f "$deployment_dir/compose.yaml")
 
 case "${1:-validate}" in
   validate)
