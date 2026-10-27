@@ -28,8 +28,9 @@ so its ports do not conflict. Do not use this environment with real personal dat
 Flags and unreachable URLs **do not disable every AI route or hide AI controls**.
 Student 4 and parts of Student 5 lack complete feature controls; unsupported AI
 requests can fail instead of returning a clean disabled response. Student 4's
-Groq-dependent generation also requires separate review. No provider keys or
-application `.env` files are loaded by this Compose configuration. Existing
+Groq-dependent generation also requires separate review. The deployment script
+loads `deployment/aws/.env` for the shared homepage's `FLASK_SECRET_KEY`. No AI
+provider keys or student application `.env` files are loaded by this configuration. Existing
 Dockerfiles can still copy files present in build contexts: review `.dockerignore`
 files and remove secrets/personal data from those contexts before building. Never
 upload keys, database exports, `.env` files, or raw logs containing secrets to Git.
@@ -46,6 +47,21 @@ upload keys, database exports, `.env` files, or raw logs containing secrets to G
 4. Do not run the root Compose project alongside this one: published loopback
    ports may conflict. Existing root-project volumes are separate and are not
    automatically migrated into the AWS project.
+
+## Cloud session secret
+
+Before using the deployment script on EC2, securely copy the administrator-managed
+`deployment/aws/.env` file to that same path in the EC2 checkout, then restrict it:
+
+```bash
+chmod 600 deployment/aws/.env
+```
+
+The file must contain a non-empty `FLASK_SECRET_KEY`. Reuse the stored random key
+for subsequent deployments of this environment. The file is ignored by Git; do
+not commit it or print it in logs. The script explicitly loads this file, and
+Compose passes the key only to `shared-home`. Avoid plain `docker compose config`
+when recording evidence because it prints resolved secrets; use `config --quiet`.
 
 ## On EC2, from the repository root
 
