@@ -1,5 +1,38 @@
 ## Student 4 - Testing Instructions
 
+### Automated backend endpoint tests
+
+From `student-4/backend`, run:
+
+```bash
+npm ci
+npm test
+```
+
+The Node.js test runner exercises the real Express itinerary router, controllers,
+and database HTTP client against a temporary local database API stub. Tests use
+random local ports and fixed data without reading or changing the application
+database. Docker, Groq, Ollama, and API keys are not required.
+
+The two backend endpoint functions covered are:
+
+- `GET /api/saved_itineraries`: saved records, an empty list, and database errors.
+- `GET /api/saved_itineraries/:id`: itinerary/activity contents, invalid IDs,
+  missing records, and database errors.
+
+To also generate a JUnit XML report, run `npm run test:ci`. The report is written
+to `student-4/backend/reports/endpoint-tests.xml` relative to the repository root.
+Generated reports are ignored by Git.
+
+After a push or pull request affecting Student 4, `.github/workflows/student-4.yml`
+runs these tests as a required step within its validation job. A failing test
+fails the job and prevents subsequent build steps from running. The workflow
+uploads the XML report as `student-4-endpoint-test-results`, including when tests
+fail, and retains it for 30 days. Download the artifact and preserve the workflow
+run URL, commit SHA, and execution logs for the testing report and agentic-loop
+review. Required branch protection checks must be configured separately in GitHub
+if merges should also be blocked.
+
 Student 4's Plan Itinerary component uses the Groq API to generate itineraries.
 
 The Groq API key is not committed to GitHub for security reasons.

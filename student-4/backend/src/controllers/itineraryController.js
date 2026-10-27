@@ -6,7 +6,8 @@ const {
     saveActivity,
     getItinerary,
     getAllItineraries,
-    deleteItinerary
+    deleteItinerary,
+    DatabaseRequestError
 } = require("../services/DBService");
 
 const {
@@ -1172,6 +1173,10 @@ async function getSavedItinerary(
             .json(data);
 
     } catch (error) {
+
+        if (error instanceof DatabaseRequestError && error.status === 404) {
+            return res.status(404).json({ error: "Itinerary not found" });
+        }
 
         console.error(
             "Load saved itinerary error:",

@@ -2,6 +2,7 @@
 .vs/
 node_modules/
 dist/
+student-4/backend/reports/
 
 .venv/
 
