@@ -1,0 +1,64 @@
+
+# Release 2 - Local Pre-Commit Security Testing
+
+
+
+
+
+
+
+# Student 2 - Booking and Itinerary Management
+repos:
+  - repo: local
+    hooks:
+
+      - id: student-2-ruff-security
+        name: Student 2 - Ruff Security Scan
+        entry: ruff check --select S
+        language: python
+        additional_dependencies:
+          - ruff==0.17.3
+        files: ^student-2/.*\.py$
+        types: [python]
+        stages: [pre-commit]
+
+  
+      - id: detect-secrets
+        name: Detect Secrets - Shared Repository
+        entry: detect-secrets-hook
+        language: python
+        additional_dependencies:
+          - detect-secrets==1.5.0
+        types: [text]
+        exclude: '(^\.idea/|^\.vscode/|__pycache__/|\.db$|\.sqlite3?$)'
+        stages: [pre-commit]
+
+      - id: student-2-pip-audit-backend
+        name: Student 2 - Backend Dependency Audit
+        entry: pip-audit -r student-2/backend/requirements.txt
+        language: python
+        additional_dependencies:
+          - pip-audit==2.10.1
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: student-2-pip-audit-database
+        name: Student 2 - Database Dependency Audit
+        entry: pip-audit -r student-2/database/requirements.txt
+        language: python
+        additional_dependencies:
+          - pip-audit==2.10.1
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: student-2-pip-audit-frontend
+        name: Student 2 - Frontend Dependency Audit
+        entry: pip-audit -r student-2/frontend/requirements.txt
+        language: python
+        additional_dependencies:
+          - pip-audit==2.10.1
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
