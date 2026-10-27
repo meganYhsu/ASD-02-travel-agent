@@ -19,7 +19,7 @@ HISTORY_PATH = BASE_DIR / "workflow_history.jsonl"
 AUDIT_PATH = BASE_DIR / "coordination_audit.jsonl"
 HUMAN_REVIEW_PATH = BASE_DIR / "human_reviews.jsonl"
 AGENT_STEP_TIMEOUT_SECONDS = float(
-    os.getenv("AGENT_STEP_TIMEOUT_SECONDS", "130")
+    os.getenv("AGENT_STEP_TIMEOUT_SECONDS", "250")
 )
 
 PROJECT_NAME = "ASD-02 Travel Agent"

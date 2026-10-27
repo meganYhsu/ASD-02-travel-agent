@@ -23,7 +23,7 @@ OLLAMA_REVIEW_MODEL = os.getenv(
 )
 
 OLLAMA_TIMEOUT_SECONDS = float(
-    os.getenv("OLLAMA_TIMEOUT_SECONDS", "120")
+    os.getenv("OLLAMA_TIMEOUT_SECONDS", "240")
 )
 
 FAST_MODE = os.getenv(
@@ -40,7 +40,7 @@ REVIEWER_MAX_TOKENS = int(
 
 client = OpenAI(
     base_url=OLLAMA_BASE_URL,
-    api_key="ollama",
+    api_key="ollama",  # pragma: allowlist secret
     timeout=OLLAMA_TIMEOUT_SECONDS,
     max_retries=0
 )

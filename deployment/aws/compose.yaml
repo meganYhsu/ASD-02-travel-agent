@@ -1,0 +1,176 @@
+name: travel-agent-aws
+
+x-runtime: &runtime
+  restart: unless-stopped
+  networks: [travel-net]
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+x-no-ai: &no-ai
+  MCP_ENABLED: "false"
+  RAG_ENABLED: "false"
+
+services:
+  shared-home:
+    <<: *runtime
+    build: ../../shared/frontend
+    ports: ["127.0.0.1:8080:5003"]
+    depends_on:
+      - student1-frontend
+      - student2-frontend
+      - student3-frontend
+      - student4-frontend
+      - student5-frontend
+
+  student1-database:
+    <<: *runtime
+    build: ../../student-1/database
+    environment:
+      DATABASE_PATH: /data/preferences.db
+    volumes:
+      - student1_data:/data
+      - ./sqlite-entrypoint.py:/deployment/sqlite-entrypoint.py:ro
+    command: ["python", "/deployment/sqlite-entrypoint.py", "/app/preferences.db", "/data/preferences.db", "python", "db_api.py"]
+
+  student1-backend:
+    <<: *runtime
+    build: ../../student-1/backend
+    environment:
+      <<: *no-ai
+      DB_API_URL: http://student1-database:6001
+      OLLAMA_BASE_URL: http://127.0.0.1:9/v1
+      MCP_BASE_URL: http://127.0.0.1:9
+      RAG_BASE_URL: http://127.0.0.1:9
+    depends_on: [student1-database]
+
+  student1-frontend:
+    <<: *runtime
+    build: ../../student-1/frontend
+    environment:
+      BACKEND_URL: http://student1-backend:5001
+    ports: ["127.0.0.1:3001:3001"]
+    depends_on: [student1-backend]
+
+  student2-database:
+    <<: *runtime
+    build: ../../student-2/database
+    volumes:
+      - student2_data:/data
+      - ./sqlite-entrypoint.py:/deployment/sqlite-entrypoint.py:ro
+    command: ["python", "/deployment/sqlite-entrypoint.py", "/app/bookings.db", "/data/bookings.db", "sh", "-c", "python init_db.py && exec python app.py"]
+
+  student2-backend:
+    <<: *runtime
+    build: ../../student-2/backend
+    environment:
+      <<: *no-ai
+      DATABASE_URL: http://student2-database:5000
+      OLLAMA_BASE_URL: http://127.0.0.1:9
+      MCP_URL: http://127.0.0.1:9
+      RAG_URL: http://127.0.0.1:9
+    depends_on: [student2-database]
+
+  student2-frontend:
+    <<: *runtime
+    build: ../../student-2/frontend
+    environment:
+      BACKEND_URL: http://student2-backend:5001
+    ports: ["127.0.0.1:3002:5002"]
+    depends_on: [student2-backend]
+
+  student3-database:
+    <<: *runtime
+    build: ../../student-3/database
+    volumes:
+      - student3_data:/data
+      - ./sqlite-entrypoint.py:/deployment/sqlite-entrypoint.py:ro
+    command: ["python", "/deployment/sqlite-entrypoint.py", "/app/budget.db", "/data/budget.db", "python", "db_api.py"]
+
+  student3-backend:
+    <<: *runtime
+    build: ../../student-3/backend
+    environment:
+      <<: *no-ai
+      DB_API_URL: http://student3-database:6003
+      TRIP_API_URL: http://student4-database:5002
+      OLLAMA_BASE_URL: http://127.0.0.1:9/v1
+      MCP_SERVER_URL: http://127.0.0.1:9
+      RAG_SERVER_URL: http://127.0.0.1:9
+    depends_on: [student3-database, student4-database]
+
+  student3-frontend:
+    <<: *runtime
+    build: ../../student-3/frontend
+    environment:
+      BACKEND_URL: http://student3-backend:5003
+    ports: ["127.0.0.1:3003:3003"]
+    depends_on: [student3-backend]
+
+  student4-database:
+    <<: *runtime
+    build: ../../student-4/database
+    environment:
+      RESET_SEED: "false"
+    volumes: ["student4_data:/app/data"]
+
+  student4-backend:
+    <<: *runtime
+    build: ../../student-4/backend
+    environment:
+      DATABASE_BASE_URL: http://student4-database:5002
+      OLLAMA_BASE_URL: http://127.0.0.1:9/v1
+      MCP_BASE_URL: http://127.0.0.1:9
+      RAG_SERVICE_URL: http://127.0.0.1:9
+      MULTI_AGENT_SERVICE_URL: http://127.0.0.1:9
+    ports: ["127.0.0.1:5004:5001"]
+    depends_on: [student4-database]
+
+  student4-frontend:
+    <<: *runtime
+    build: ../../student-4/frontend
+    ports: ["127.0.0.1:3004:80"]
+    depends_on: [student4-backend]
+
+  student5-database:
+    <<: *runtime
+    build: ../../student-5/database
+    environment:
+      PORT: "5405"
+      DATABASE_PATH: /data/travel_docs.db
+    volumes: ["student5_data:/data"]
+
+  student5-backend:
+    <<: *runtime
+    build: ../../student-5/backend
+    environment:
+      PORT: "5505"
+      DATABASE_SERVICE_URL: http://student5-database:5405
+      MCP_ENABLED: "false"
+      OLLAMA_BASE_URL: http://127.0.0.1:9
+      RAG_SERVICE_URL: http://127.0.0.1:9
+      MCP_SERVICE_URL: http://127.0.0.1:9
+      EXPIRY_WARNING_DAYS: "90"
+    depends_on: [student5-database]
+
+  student5-frontend:
+    <<: *runtime
+    build: ../../student-5/frontend
+    environment:
+      PORT: "8505"
+      BACKEND_URL: http://student5-backend:5505
+    ports: ["127.0.0.1:8505:8505"]
+    depends_on: [student5-backend]
+
+networks:
+  travel-net:
+    driver: bridge
+
+volumes:
+  student1_data:
+  student2_data:
+  student3_data:
+  student4_data:
+  student5_data:

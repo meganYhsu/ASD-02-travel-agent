@@ -40,7 +40,15 @@ jobs:
 
       - name: Run backend tests
         working-directory: student-4/backend
-        run: npm test --if-present
+        run: npm run test:ci
+
+      - name: Upload backend endpoint test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-4-endpoint-test-results
+          path: student-4/backend/reports/endpoint-tests.xml
+          retention-days: 30
 
 
       # DATABASE
