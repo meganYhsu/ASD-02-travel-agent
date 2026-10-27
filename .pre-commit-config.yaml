@@ -1,17 +1,11 @@
 
-# Release 2 - Local Pre-Commit Security Testing
-
-
-
-
-
-
-
-# Student 2 - Booking and Itinerary Management
+# ASD Release 2 - Shared Pre-Commit Security Testing
+# Student 2, shared AI services, and Student 4
 repos:
   - repo: local
     hooks:
 
+      # Student 2: Ruff Security Scan
       - id: student-2-ruff-security
         name: Student 2 - Ruff Security Scan
         entry: ruff check --select S --per-file-ignores student-2/tests/*:S101
@@ -22,17 +16,18 @@ repos:
         types: [python]
         stages: [pre-commit]
 
-  
+      # Shared Repository: Secret Detection
       - id: detect-secrets
         name: Detect Secrets - Shared Repository
-        entry: detect-secrets-hook
+        entry: detect-secrets-hook --no-verify
         language: python
         additional_dependencies:
           - detect-secrets==1.5.0
         types: [text]
-        exclude: '(^\.idea/|^\.vscode/|__pycache__/|\.db$|\.sqlite3?$)'
+        exclude: '(^\.idea/|^\.vscode/|__pycache__/|\.db$|\.sqlite3?$|(^|/)package-lock\.json$|^rag-server/chroma/)'
         stages: [pre-commit]
 
+      # Student 2: Python Dependency Audits
       - id: student-2-pip-audit-backend
         name: Student 2 - Backend Dependency Audit
         entry: pip-audit -r student-2/backend/requirements.txt
@@ -59,6 +54,80 @@ repos:
         language: python
         additional_dependencies:
           - pip-audit==2.10.1
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+
+
+      # Shared AI Services: Ruff
+      - id: ruff-security
+        name: Ruff Security - Shared AI Services
+        entry: ruff check --select S --per-file-ignores **/test_*.py:S101
+        language: python
+        additional_dependencies:
+          - ruff==0.14.0
+        types: [python]
+        files: '^(ai-services|rag-server)/'
+        stages: [pre-commit]
+
+      # Shared AI Services: Python Dependency Audits
+      - id: pip-audit-multi-agent
+        name: Audit Shared Multi-Agent Dependencies
+        entry: pip-audit -r ai-services/multi-agent-server/requirements.txt
+        language: python
+        additional_dependencies:
+          - pip-audit==2.9.0
+        pass_filenames: false
+        files: '^ai-services/multi-agent-server/requirements\.txt$'
+        stages: [pre-commit]
+
+      - id: pip-audit-mcp
+        name: Audit Shared MCP Dependencies
+        entry: pip-audit -r ai-services/mcp-server/requirements.txt
+        language: python
+        additional_dependencies:
+          - pip-audit==2.9.0
+        pass_filenames: false
+        files: '^ai-services/mcp-server/requirements\.txt$'
+        stages: [pre-commit]
+
+      - id: pip-audit-rag
+        name: Audit Shared Local RAG Dependencies
+        entry: pip-audit -r rag-server/requirements.txt
+        language: python
+        additional_dependencies:
+          - pip-audit==2.9.0
+        pass_filenames: false
+        files: '^rag-server/requirements\.txt$'
+        stages: [pre-commit]
+
+
+
+
+
+
+      # Student 4: npm Dependency Security Audits
+      - id: npm-audit-student4-backend
+        name: Audit Student 4 Backend Dependencies
+        entry: npm --prefix student-4/backend audit --package-lock-only --ignore-scripts --audit-level=low
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: npm-audit-student4-database
+        name: Audit Student 4 Database Dependencies
+        entry: npm --prefix student-4/database audit --package-lock-only --ignore-scripts --audit-level=low
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: npm-audit-student4-frontend
+        name: Audit Student 4 Frontend Dependencies
+        entry: npm --prefix student-4/frontend audit --package-lock-only --ignore-scripts --audit-level=low
+        language: system
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
