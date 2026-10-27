@@ -14,7 +14,7 @@ repos:
 
       - id: student-2-ruff-security
         name: Student 2 - Ruff Security Scan
-        entry: ruff check --select S
+        entry: ruff check --select S --per-file-ignores student-2/tests/*:S101
         language: python
         additional_dependencies:
           - ruff==0.17.3
