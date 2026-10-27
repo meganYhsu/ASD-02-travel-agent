@@ -1,5 +1,6 @@
 ## Student 4 - Testing Instructions
 
+
 ### Pre-commit security checks
 
 From the repository root, create an isolated tooling environment and install the
@@ -46,6 +47,7 @@ for the Testing Report Review. This configuration does not automatically fix fil
 upgrade dependencies, or suppress existing findings. Documenting a finding does
 not make the hook pass; corrections to shared code require coordination with its
 owner.
+
 
 ### Automated backend endpoint tests
 
