@@ -20,3 +20,8 @@ __pycache__/
 *.db
 ai-services/mcp-server/.venv/
 .DS_Store
+
+# Release 2 test output
+test-results/
+.pytest_cache/
+.ruff_cache/

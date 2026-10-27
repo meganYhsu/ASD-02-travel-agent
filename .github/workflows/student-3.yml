@@ -15,6 +15,12 @@ jobs:
     defaults:
       run:
         working-directory: student-3
+    env:
+      # CI and cloud baseline: every AI service is off.
+      AI_MODE_ENABLED: "false"
+      MCP_ENABLED: "false"
+      RAG_ENABLED: "false"
+      MULTI_AGENT_ENABLED: "false"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,20 +28,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install microservice dependencies
-        run: pip install -r backend/requirements.txt
+      - name: Install microservice and test dependencies
+        run: |
+          pip install -r backend/requirements.txt -r database/requirements.txt -r frontend/requirements.txt
+          pip install pytest
       - name: Validate Python syntax
-        run: python -m compileall database backend frontend tests
+        run: python -m compileall database backend frontend tests tools
       - name: Create database and validate seed data
         run: |
           cd database
           python -c "from db_api import init_db; init_db()"
           cd ..
           python tests/check_seed.py
+      - name: "Post-commit endpoint tests: GET /dashboard and POST /expenses"
+        run: python -m pytest tests/test_release2_endpoints.py -v --junitxml=test-results/release2-endpoints.xml
+      - name: Release 2 AI-flag, Multi-Agent and cloud-readiness tests
+        run: python -m pytest tests/test_release2_multi_agent.py tests/test_release2_cloud_ready.py -v --junitxml=test-results/release2-multi-agent-cloud.xml
       - name: Smoke test live endpoints
-        env:
-          MCP_ENABLED: "false"
-          RAG_ENABLED: "false"
         run: |
           python database/db_api.py &
           python backend/app.py &
@@ -47,3 +56,25 @@ jobs:
           docker build -t student-3-db database
           docker build -t student-3-backend backend
           docker build -t student-3-frontend frontend
+      - name: Run the containers like the cloud deployment and smoke test them
+        run: |
+          docker network create s3net
+          docker run -d --name student3-database --network s3net student-3-db
+          docker run -d --name student3-backend --network s3net \
+            -e DB_API_URL=http://student3-database:6003 student-3-backend
+          docker run -d --name student3-frontend --network s3net -p 3003:3003 \
+            -e BACKEND_URL=http://student3-backend:5003 student-3-frontend
+          sleep 8
+          python tests/cloud_smoke.py --frontend http://127.0.0.1:3003 --expect-ai off --json test-results/cloud-smoke-ci.json
+      - name: Container logs
+        if: failure()
+        run: |
+          docker logs student3-database || true
+          docker logs student3-backend || true
+          docker logs student3-frontend || true
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-3-test-results
+          path: student-3/test-results/

@@ -218,8 +218,11 @@ services:
       RAG_SERVER_URL: http://host.docker.internal:7001
       RAG_CALLER: student-3-budget
       RAG_TIMEOUT_SECONDS: "300"
+      MULTI_AGENT_SERVICE_URL: http://host.docker.internal:6767
+      AI_MODE_ENABLED: "true"
       MCP_ENABLED: "true"
       RAG_ENABLED: "true"
+      MULTI_AGENT_ENABLED: "true"
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
