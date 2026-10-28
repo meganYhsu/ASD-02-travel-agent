@@ -1,0 +1,89 @@
+{
+  "service": "student-3 Budget & Expense Tracking",
+  "frontend": "http://127.0.0.1:3003",
+  "run_at": "2026-10-27T12:26:01+00:00",
+  "expect_ai": "on",
+  "ai_flags": {
+    "ai_mode_enabled": true,
+    "mcp_enabled": true,
+    "rag_enabled": true,
+    "multi_agent_enabled": true
+  },
+  "passed": 10,
+  "total": 10,
+  "average_response_ms": 37.0,
+  "successful_requests": 5,
+  "failed_requests": 0,
+  "checks": [
+    {
+      "group": "availability",
+      "check": "frontend page",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 50.5
+    },
+    {
+      "group": "availability",
+      "check": "frontend /health",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 15.7
+    },
+    {
+      "group": "communication",
+      "check": "frontend -> backend /health",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 38.1
+    },
+    {
+      "group": "communication",
+      "check": "backend -> database (dashboard)",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 50.9
+    },
+    {
+      "group": "crud",
+      "check": "create expense",
+      "passed": true,
+      "detail": "HTTP 200, row found: True",
+      "ms": 108.7
+    },
+    {
+      "group": "crud",
+      "check": "read expense on dashboard",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 45.5
+    },
+    {
+      "group": "crud",
+      "check": "update expense",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 45.5
+    },
+    {
+      "group": "crud",
+      "check": "delete expense",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 68.3
+    },
+    {
+      "group": "ai-baseline",
+      "check": "backend reports all AI flags on",
+      "passed": true,
+      "detail": "{\"ai_mode_enabled\": true, \"mcp_enabled\": true, \"rag_enabled\": true, \"multi_agent_enabled\": true}",
+      "ms": null
+    },
+    {
+      "group": "performance",
+      "check": "5/5 dashboard requests succeeded",
+      "passed": true,
+      "detail": "0 failed",
+      "ms": 37.0
+    }
+  ]
+}
