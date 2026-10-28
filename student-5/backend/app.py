@@ -17,11 +17,12 @@ if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
 from compliance import compute_document_status, evaluate_compliance, trip_duration_days
-from config import DATABASE_SERVICE_URL, MCP_ENABLED, MCP_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
+from config import DATABASE_SERVICE_URL, MCP_ENABLED, MCP_SERVICE_URL, MULTI_AGENT_SERVICE_URL, OLLAMA_BASE_URL, OLLAMA_MODEL, PORT, RAG_SERVICE_URL
 from db_client import DatabaseClient, DatabaseUnavailable
 from ollama_client import OllamaClient, OllamaError
 from mcp_client import McpClient, McpError
 from rag_client import RagClient, RagError
+from multi_agent_client import MultiAgentClient, MultiAgentError
 from validation import (
     ValidationError,
     parse_id,
@@ -68,12 +69,14 @@ def create_app(
     ollama_client: OllamaClient | None = None,
     rag_client: RagClient | None = None,
     mcp_client: McpClient | None = None,
+    multi_agent_client: MultiAgentClient | None = None,
 ) -> Flask:
     app = Flask(__name__)
     app.config["DB_CLIENT"] = db_client or DatabaseClient(DATABASE_SERVICE_URL)
     app.config["OLLAMA"] = ollama_client or OllamaClient()
     app.config["RAG"] = rag_client or RagClient()
     app.config["MCP"] = mcp_client or McpClient()
+    app.config["MULTI_AGENT"] = multi_agent_client or MultiAgentClient()
 
     def db() -> DatabaseClient:
         return app.config["DB_CLIENT"]
@@ -86,6 +89,9 @@ def create_app(
 
     def mcp() -> McpClient:
         return app.config["MCP"]
+
+    def multi_agent() -> MultiAgentClient:
+        return app.config["MULTI_AGENT"]
 
     def forward(status: int, body: Any):
         if status == 204:
@@ -174,6 +180,7 @@ def create_app(
                 "rag_service_url": RAG_SERVICE_URL,
                 "mcp_enabled": MCP_ENABLED,
                 "mcp_service_url": MCP_SERVICE_URL,
+                "multi_agent_service_url": MULTI_AGENT_SERVICE_URL,
             }
         )
 
@@ -211,6 +218,47 @@ def create_app(
         try:
             return json_ok(mcp().call_tool(tool_name.strip(), arguments))
         except McpError as exc:
+            return json_error(exc.message, exc.status)
+
+    @app.post("/api/multi-agent/workflows")
+    def create_multi_agent_workflow():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return json_error("JSON object is required", 400)
+        task = payload.get("task")
+        evidence = payload.get("evidence")
+        if not isinstance(task, str) or not task.strip() or len(task) > 4000:
+            return json_error("task is required and must be at most 4000 characters", 400)
+        if not isinstance(evidence, str) or not evidence.strip() or len(evidence) > 60000:
+            return json_error("evidence is required and must be at most 60000 characters", 400)
+        review_mode = payload.get("review_mode", "workflow")
+        if not isinstance(review_mode, str) or review_mode not in {"workflow", "testing_report", "cloud_deployment_report"}:
+            return json_error("Unsupported review_mode", 400)
+        try:
+            workflow = multi_agent().create_workflow({
+                "student": "student-5",
+                "task": task.strip(),
+                "evidence": evidence.strip(),
+                "review_mode": review_mode,
+            })
+            return json_ok(workflow, 201)
+        except MultiAgentError as exc:
+            return json_error(exc.message, exc.status)
+
+    @app.post("/api/multi-agent/workflows/<workflow_id>/review")
+    def review_multi_agent_workflow(workflow_id: str):
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return json_error("JSON object is required", 400)
+        decision = payload.get("decision")
+        note = payload.get("note", "")
+        if not isinstance(decision, str) or decision not in {"Accept", "Partially Accept", "Reject"}:
+            return json_error("decision must be Accept, Partially Accept or Reject", 400)
+        if not isinstance(note, str) or len(note) > 4000:
+            return json_error("note must be a string of at most 4000 characters", 400)
+        try:
+            return json_ok(multi_agent().submit_review(workflow_id, decision, note))
+        except MultiAgentError as exc:
             return json_error(exc.message, exc.status)
 
     @app.get("/api/documents")

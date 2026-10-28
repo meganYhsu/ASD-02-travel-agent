@@ -23,6 +23,7 @@ async function recordReview({
                                 humanDecision,
                                 humanNote = "",
                                 carryForward = "",
+                                multiAgentWorkflow = null,
                                 timestamp = new Date().toISOString()
                             }) {
 
@@ -85,6 +86,10 @@ async function recordReview({
 
         carryForward
     };
+
+    if (multiAgentWorkflow) {
+        reviewRecord.multiAgentWorkflow = multiAgentWorkflow;
+    }
 
 
     const filename =
