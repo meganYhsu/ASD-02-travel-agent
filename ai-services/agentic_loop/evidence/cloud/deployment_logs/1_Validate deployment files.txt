@@ -1,0 +1,149 @@
+﻿2026-10-28T15:13:44.9822034Z Current runner version: '2.338.0'
+2026-10-28T15:13:44.9850001Z ##[group]Runner Image Provisioner
+2026-10-28T15:13:44.9850880Z Hosted Compute Agent
+2026-10-28T15:13:44.9851598Z Version: 20261021.618
+2026-10-28T15:13:44.9852290Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-10-28T15:13:44.9853133Z Build Date: 2026-10-21T00:45:21Z
+2026-10-28T15:13:44.9853857Z Worker ID: {0d3f6c74-b43c-45d6-9fe0-eea63e9084ce}
+2026-10-28T15:13:44.9854589Z Region: eastus
+2026-10-28T15:13:44.9855216Z Cloud: Azure
+2026-10-28T15:13:44.9855843Z ##[endgroup]
+2026-10-28T15:13:44.9857773Z ##[group]Operating System
+2026-10-28T15:13:44.9858456Z Ubuntu
+2026-10-28T15:13:44.9859797Z 24.04.5
+2026-10-28T15:13:44.9860393Z LTS
+2026-10-28T15:13:44.9860970Z ##[endgroup]
+2026-10-28T15:13:44.9861614Z ##[group]Runner Image
+2026-10-28T15:13:44.9862263Z Image: ubuntu-24.04
+2026-10-28T15:13:44.9862835Z Version: 20261025.353.1
+2026-10-28T15:13:44.9864357Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261025.353/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-28T15:13:44.9866009Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261025.353
+2026-10-28T15:13:44.9867003Z ##[endgroup]
+2026-10-28T15:13:44.9868238Z ##[group]GITHUB_TOKEN Permissions
+2026-10-28T15:13:44.9871972Z Contents: read
+2026-10-28T15:13:44.9873201Z Metadata: read
+2026-10-28T15:13:44.9873796Z ##[endgroup]
+2026-10-28T15:13:44.9876663Z Secret source: Actions
+2026-10-28T15:13:44.9877727Z Cache mode: write
+2026-10-28T15:13:44.9879336Z Prepare workflow directory
+2026-10-28T15:13:45.0250317Z Prepare all required actions
+2026-10-28T15:13:45.0302572Z Getting action download info
+2026-10-28T15:13:45.2039355Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-28T15:13:45.4280649Z Complete job name: Validate deployment files
+2026-10-28T15:13:45.5408782Z ##[group]Run actions/checkout@v4
+2026-10-28T15:13:45.5409757Z with:
+2026-10-28T15:13:45.5410262Z   repository: meganYhsu/ASD-02-travel-agent
+2026-10-28T15:13:45.5414187Z   token: ***
+2026-10-28T15:13:45.5414634Z   ssh-strict: true
+2026-10-28T15:13:45.5415095Z   ssh-user: git
+2026-10-28T15:13:45.5415552Z   persist-credentials: true
+2026-10-28T15:13:45.5416065Z   clean: true
+2026-10-28T15:13:45.5416520Z   sparse-checkout-cone-mode: true
+2026-10-28T15:13:45.5417045Z   fetch-depth: 1
+2026-10-28T15:13:45.5417484Z   fetch-tags: false
+2026-10-28T15:13:45.5417931Z   show-progress: true
+2026-10-28T15:13:45.5418384Z   lfs: false
+2026-10-28T15:13:45.5418978Z   submodules: false
+2026-10-28T15:13:45.5419431Z   set-safe-directory: true
+2026-10-28T15:13:45.5419939Z   allow-unsafe-pr-checkout: false
+2026-10-28T15:13:45.5420723Z ##[endgroup]
+2026-10-28T15:13:45.8809253Z Syncing repository: meganYhsu/ASD-02-travel-agent
+2026-10-28T15:13:45.8812183Z ##[group]Getting Git version info
+2026-10-28T15:13:45.8814052Z Working directory is '/home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent'
+2026-10-28T15:13:45.8816286Z [command]/usr/bin/git version
+2026-10-28T15:13:45.8929225Z git version 2.56.0
+2026-10-28T15:13:45.8963276Z ##[endgroup]
+2026-10-28T15:13:45.8971616Z Temporarily overriding HOME='/home/runner/work/_temp/98f96a2e-d9fb-4a13-bb5c-3faa9eb6695f' before making global git config changes
+2026-10-28T15:13:45.8974212Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-28T15:13:45.8976524Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent
+2026-10-28T15:13:45.9069092Z Deleting the contents of '/home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent'
+2026-10-28T15:13:45.9073947Z ##[group]Initializing the repository
+2026-10-28T15:13:45.9082079Z [command]/usr/bin/git init /home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent
+2026-10-28T15:13:45.9224973Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-28T15:13:45.9226808Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-28T15:13:45.9229931Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-28T15:13:45.9231423Z hint: call:
+2026-10-28T15:13:45.9232257Z hint:
+2026-10-28T15:13:45.9233102Z hint: 	git config --global init.defaultBranch <name>
+2026-10-28T15:13:45.9234123Z hint:
+2026-10-28T15:13:45.9235168Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-28T15:13:45.9237716Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-28T15:13:45.9240353Z hint:
+2026-10-28T15:13:45.9241303Z hint: 	git branch -m <name>
+2026-10-28T15:13:45.9242160Z hint:
+2026-10-28T15:13:45.9242923Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-28T15:13:45.9244570Z Initialized empty Git repository in /home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent/.git/
+2026-10-28T15:13:45.9256077Z [command]/usr/bin/git remote add origin https://github.com/meganYhsu/ASD-02-travel-agent
+2026-10-28T15:13:45.9319097Z ##[endgroup]
+2026-10-28T15:13:45.9320750Z ##[group]Disabling automatic garbage collection
+2026-10-28T15:13:45.9323750Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-28T15:13:45.9371324Z ##[endgroup]
+2026-10-28T15:13:45.9372345Z ##[group]Setting up auth
+2026-10-28T15:13:45.9381832Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-28T15:13:45.9455888Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-28T15:13:46.0001521Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-28T15:13:46.0061800Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-28T15:13:46.0343548Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-28T15:13:46.0407153Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-28T15:13:46.0690392Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-28T15:13:46.0745455Z ##[endgroup]
+2026-10-28T15:13:46.0747776Z ##[group]Fetching the repository
+2026-10-28T15:13:46.0762087Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +41eda947da0c40a86d8303e6701daad4c316ca52:refs/remotes/origin/main
+2026-10-28T15:13:46.7402691Z From https://github.com/meganYhsu/ASD-02-travel-agent
+2026-10-28T15:13:46.7405974Z  * [new ref]         41eda947da0c40a86d8303e6701daad4c316ca52 -> origin/main
+2026-10-28T15:13:46.7413672Z ##[endgroup]
+2026-10-28T15:13:46.7416390Z ##[group]Determining the checkout info
+2026-10-28T15:13:46.7418982Z ##[endgroup]
+2026-10-28T15:13:46.7420083Z [command]/usr/bin/git sparse-checkout disable
+2026-10-28T15:13:46.7509959Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-28T15:13:46.7565446Z ##[group]Checking out the ref
+2026-10-28T15:13:46.7571292Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-10-28T15:13:46.8144983Z Switched to a new branch 'main'
+2026-10-28T15:13:46.8153310Z branch 'main' set up to track 'origin/main'.
+2026-10-28T15:13:46.8166287Z ##[endgroup]
+2026-10-28T15:13:46.8231488Z [command]/usr/bin/git log -1 --format=%H
+2026-10-28T15:13:46.8276791Z 41eda947da0c40a86d8303e6701daad4c316ca52
+2026-10-28T15:13:46.8615501Z ##[group]Run docker compose -f deployment/aws/compose.yaml config --quiet
+2026-10-28T15:13:46.8618230Z [36;1mdocker compose -f deployment/aws/compose.yaml config --quiet[0m
+2026-10-28T15:13:46.8646982Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:13:46.8648182Z env:
+2026-10-28T15:13:46.8649549Z   FLASK_SECRET_KEY: ci-validation-placeholder
+2026-10-28T15:13:46.8650951Z ##[endgroup]
+2026-10-28T15:13:47.4466305Z ##[group]Run bash -n deployment/aws/deploy.sh
+2026-10-28T15:13:47.4466746Z [36;1mbash -n deployment/aws/deploy.sh[0m
+2026-10-28T15:13:47.4467085Z [36;1mbash -n deployment/aws/smoke.sh[0m
+2026-10-28T15:13:47.4467399Z [36;1mbash -n deployment/aws/tunnel.sh[0m
+2026-10-28T15:13:47.4488484Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:13:47.4489051Z ##[endgroup]
+2026-10-28T15:13:47.4620765Z ##[group]Run python3 -m unittest discover -s deployment/aws -p 'test_sqlite_entrypoint.py' -v
+2026-10-28T15:13:47.4621565Z [36;1mpython3 -m unittest discover -s deployment/aws -p 'test_sqlite_entrypoint.py' -v[0m
+2026-10-28T15:13:47.4642665Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:13:47.4643006Z ##[endgroup]
+2026-10-28T15:13:47.5678141Z test_copies_initial_database_and_links_source (test_sqlite_entrypoint.SQLiteEntrypointTests.test_copies_initial_database_and_links_source) ... ok
+2026-10-28T15:13:47.5730032Z test_existing_persistent_database_wins_over_replacement_image (test_sqlite_entrypoint.SQLiteEntrypointTests.test_existing_persistent_database_wins_over_replacement_image) ... ok
+2026-10-28T15:13:47.5733084Z test_identical_paths_are_rejected (test_sqlite_entrypoint.SQLiteEntrypointTests.test_identical_paths_are_rejected) ... ok
+2026-10-28T15:13:47.5741397Z test_invalid_image_database_is_not_destroyed (test_sqlite_entrypoint.SQLiteEntrypointTests.test_invalid_image_database_is_not_destroyed) ... ok
+2026-10-28T15:13:47.5769423Z test_missing_image_database_can_be_initialized_through_link (test_sqlite_entrypoint.SQLiteEntrypointTests.test_missing_image_database_can_be_initialized_through_link) ... ok
+2026-10-28T15:13:47.5828051Z test_repeated_preparation_preserves_writes (test_sqlite_entrypoint.SQLiteEntrypointTests.test_repeated_preparation_preserves_writes) ... ok
+2026-10-28T15:13:47.5862337Z test_wal_sidecar_is_created_in_persistent_directory (test_sqlite_entrypoint.SQLiteEntrypointTests.test_wal_sidecar_is_created_in_persistent_directory) ... ok
+2026-10-28T15:13:47.5863495Z 
+2026-10-28T15:13:47.5863823Z ----------------------------------------------------------------------
+2026-10-28T15:13:47.5864443Z Ran 7 tests in 0.025s
+2026-10-28T15:13:47.5864679Z 
+2026-10-28T15:13:47.5864808Z OK
+2026-10-28T15:13:47.6209024Z Post job cleanup.
+2026-10-28T15:13:47.7235611Z [command]/usr/bin/git version
+2026-10-28T15:13:47.7294178Z git version 2.56.0
+2026-10-28T15:13:47.7349231Z Temporarily overriding HOME='/home/runner/work/_temp/2b45d908-4c49-4d33-998d-34f53c6f81e0' before making global git config changes
+2026-10-28T15:13:47.7351030Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-28T15:13:47.7359944Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent
+2026-10-28T15:13:47.7429534Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-28T15:13:47.7487443Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-28T15:13:47.7803389Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-28T15:13:47.7824930Z http.https://github.com/.extraheader
+2026-10-28T15:13:47.7844811Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-28T15:13:47.7899442Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-28T15:13:47.8286761Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-28T15:13:47.8360382Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-28T15:13:47.8870644Z Cleaning up orphan processes
+2026-10-28T15:13:47.9338761Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

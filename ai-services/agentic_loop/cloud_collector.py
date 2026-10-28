@@ -84,7 +84,7 @@ def summarize_workflow(path: Path, repo_root: Path) -> dict:
 
 
 def collect_report_files(directory: Path, repo_root: Path) -> list:
-    """Read existing deployment evidence from approved local directories."""
+    """Collect deployment evidence with execution results and log endings."""
     reports = []
 
     if not directory.is_dir():
@@ -101,12 +101,36 @@ def collect_report_files(directory: Path, repo_root: Path) -> list:
             raise ValueError(f"Cloud evidence file too large: {path.name}")
 
         content = path.read_text(encoding="utf-8-sig")
+        lines = content.splitlines()
+
+        # Capture relevant lines from the actual execution log.
+        pattern = re.compile(
+            r"successfully|succeeded|passed|failed|error|"
+            r"smoke|health|exit code|outcome|completed",
+            re.IGNORECASE,
+        )
+
+        matches = [
+            line[:250]
+            for line in lines
+            if pattern.search(line)
+        ]
+
+        # Include both beginning and ending of the log.
+        excerpt = (
+            "LOG START:\n"
+            + content[:500]
+            + "\n\nKEY EXECUTION LINES:\n"
+            + "\n".join(matches[-12:])
+            + "\n\nLOG END:\n"
+            + content[-1200:]
+        )
 
         reports.append({
             "filename": path.name,
             "source": path.relative_to(repo_root).as_posix(),
             "evidence_type": "supplied_execution_evidence",
-            "content_excerpt": content[:3000],
+            "content_excerpt": excerpt[:3500],
             "verification_status": "requires_review",
         })
 
@@ -152,7 +176,11 @@ def collect(app_dir: Path, repo_root: Path) -> tuple[bool, str]:
             "deployment_logs": deployment_logs,
             "health_checks": health_checks,
             "deployment_reports": deployment_reports,
-            "deployment_verification_status": "unverified",
+            "deployment_verification_status": (
+                "execution_evidence_supplied_requires_validation"
+                if deployment_logs
+                else "unverified"
+            ),
             "limitations": [
                 "Configuration existence does not prove successful execution.",
                 "Supplied logs require validation against actual run outcomes.",

@@ -1,0 +1,902 @@
+﻿2026-10-28T15:13:52.4433404Z Current runner version: '2.338.0'
+2026-10-28T15:13:52.4470809Z ##[group]Runner Image Provisioner
+2026-10-28T15:13:52.4473328Z Hosted Compute Agent
+2026-10-28T15:13:52.4474761Z Version: 20261021.618
+2026-10-28T15:13:52.4476495Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-10-28T15:13:52.4478202Z Build Date: 2026-10-21T00:45:21Z
+2026-10-28T15:13:52.4479921Z Worker ID: {a4fd95a2-6c1d-4e9c-a67d-07d809608f1a}
+2026-10-28T15:13:52.4481574Z Region: eastus
+2026-10-28T15:13:52.4483411Z Cloud: Azure
+2026-10-28T15:13:52.4484924Z ##[endgroup]
+2026-10-28T15:13:52.4487587Z ##[group]Operating System
+2026-10-28T15:13:52.4489109Z Ubuntu
+2026-10-28T15:13:52.4490441Z 24.04.5
+2026-10-28T15:13:52.4492015Z LTS
+2026-10-28T15:13:52.4493345Z ##[endgroup]
+2026-10-28T15:13:52.4494777Z ##[group]Runner Image
+2026-10-28T15:13:52.4496527Z Image: ***-24.04
+2026-10-28T15:13:52.4498030Z Version: 20261025.353.1
+2026-10-28T15:13:52.4500637Z Included Software: https://github.com/actions/runner-images/blob/***24/20261025.353/images/***/Ubuntu2404-Readme.md
+2026-10-28T15:13:52.4504270Z Image Release: https://github.com/actions/runner-images/releases/tag/***24%2F20261025.353
+2026-10-28T15:13:52.4506474Z ##[endgroup]
+2026-10-28T15:13:52.4508938Z ##[group]GITHUB_TOKEN Permissions
+2026-10-28T15:13:52.4512744Z Contents: read
+2026-10-28T15:13:52.4514269Z Metadata: read
+2026-10-28T15:13:52.4515666Z ##[endgroup]
+2026-10-28T15:13:52.4518902Z Secret source: Actions
+2026-10-28T15:13:52.4521066Z Cache mode: write
+2026-10-28T15:13:52.4522784Z Prepare workflow directory
+2026-10-28T15:13:52.5019232Z Prepare all required actions
+2026-10-28T15:13:52.5094936Z Getting action download info
+2026-10-28T15:13:52.7240163Z Download action repository 'tailscale/github-action@v4' (SHA:99a8333667fff04fdd6cffb46dfd409f8329a7bf)
+2026-10-28T15:13:53.0219114Z Complete job name: Deploy approved main commit to EC2
+2026-10-28T15:13:53.1286666Z ##[group]Run tailscale/github-action@v4
+2026-10-28T15:13:53.1287729Z with:
+2026-10-28T15:13:53.1288438Z   oauth-client-id: ***
+2026-10-28T15:13:53.1289388Z   oauth-secret: ***
+2026-10-28T15:13:53.1289972Z   tags: tag:github-deploy
+2026-10-28T15:13:53.1290584Z   ping: ***
+2026-10-28T15:13:53.1291127Z   version: 1.104.2
+2026-10-28T15:13:53.1291893Z   timeout: 2m
+2026-10-28T15:13:53.1292447Z   retry: 5
+2026-10-28T15:13:53.1292970Z   use-cache: true
+2026-10-28T15:13:53.1293526Z   log-mode: grouped
+2026-10-28T15:13:53.1294395Z ##[endgroup]
+2026-10-28T15:13:53.4929383Z ##[group]Resolving Tailscale version
+2026-10-28T15:13:53.4931060Z Resolved Tailscale version: 1.104.2
+2026-10-28T15:13:53.4933664Z ##[endgroup]
+2026-10-28T15:13:53.4935776Z ##[group]Installing Tailscale
+2026-10-28T15:13:53.6083644Z Cache hit for: action-setup-tailscale/1.104.2/Linux-amd64
+2026-10-28T15:13:54.0226248Z Received 39844642 of 39844642 (100.0%), 110.1 MBs/sec
+2026-10-28T15:13:54.0229011Z Cache Size: ~38 MB (39844642 B)
+2026-10-28T15:13:54.0259176Z [command]/usr/bin/tar -xf /home/runner/work/_temp/b3773690-b862-43cc-8448-6af20e11f8e2/cache.tzst -P -C /home/runner/work/ASD-02-travel-agent/ASD-02-travel-agent --use-compress-program unzstd
+2026-10-28T15:13:54.1644695Z Cache restored successfully
+2026-10-28T15:13:54.1665867Z Found Tailscale 1.104.2 in cache: /opt/hostedtoolcache/tailscale/1.104.2/Linux-amd64
+2026-10-28T15:13:54.1758516Z ▶️ copy tailscale from cache
+2026-10-28T15:13:54.1952540Z ▶️ copy tailscaled from cache
+2026-10-28T15:13:54.2259654Z ▶️ chmod tailscale
+2026-10-28T15:13:54.2426736Z ▶️ chmod tailscaled
+2026-10-28T15:13:54.2588051Z ##[endgroup]
+2026-10-28T15:13:54.2590289Z ##[group]Starting tailscaled
+2026-10-28T15:13:54.2591482Z Starting tailscaled daemon...
+2026-10-28T15:13:54.2664666Z Waiting for tailscaled daemon to become ready...
+2026-10-28T15:13:54.2667929Z ▶️ get tailscale status
+2026-10-28T15:13:54.5363587Z Daemon ready! Initial state: NeedsLogin
+2026-10-28T15:13:54.5364908Z ✅ tailscaled daemon is up and running!
+2026-10-28T15:13:54.5366982Z ##[endgroup]
+2026-10-28T15:13:54.5367983Z ##[group]Connecting to Tailscale
+2026-10-28T15:13:54.5368822Z ▶️ hostname
+2026-10-28T15:13:54.5458303Z Attempt 1 to bring up Tailscale...
+2026-10-28T15:13:54.5460206Z ▶️ tailscale up
+2026-10-28T15:13:55.9814480Z ✅ Tailscale up command completed successfully on attempt 1
+2026-10-28T15:13:55.9816474Z ##[endgroup]
+2026-10-28T15:13:55.9817362Z ##[group]Checking Tailscale status
+2026-10-28T15:13:55.9818152Z ▶️ get tailscale status
+2026-10-28T15:13:56.0000969Z ✅ Tailscale is running and connected!
+2026-10-28T15:13:56.0003083Z ##[endgroup]
+2026-10-28T15:13:56.0005623Z ##[group]Pinging Tailscale hosts
+2026-10-28T15:13:56.0008067Z Will ping hosts *** up to 3 minutes each (in parallel) in order to check connectivity
+2026-10-28T15:13:56.0010578Z Pinging host ***
+2026-10-28T15:13:56.0012184Z ▶️ ping host
+2026-10-28T15:13:57.6028248Z direct connection not established
+2026-10-28T15:13:57.6029578Z ✅ Ping host *** reachable via DERP!
+2026-10-28T15:13:57.6031433Z ##[endgroup]
+2026-10-28T15:13:57.6302327Z ##[group]Run set -euo pipefail
+2026-10-28T15:13:57.6302787Z [36;1mset -euo pipefail[0m
+2026-10-28T15:13:57.6303296Z [36;1mfor name in SSH_PRIVATE_KEY SSH_KNOWN_HOSTS EC2_HOST EC2_USER EC2_REPO_PATH; do[0m
+2026-10-28T15:13:57.6303811Z [36;1m  if [[ -z "${!name}" ]]; then[0m
+2026-10-28T15:13:57.6304190Z [36;1m    echo "Missing deployment setting: $name" >&2[0m
+2026-10-28T15:13:57.6304560Z [36;1m    exit 1[0m
+2026-10-28T15:13:57.6304802Z [36;1m  fi[0m
+2026-10-28T15:13:57.6305039Z [36;1mdone[0m
+2026-10-28T15:13:57.6305262Z [36;1m[0m
+2026-10-28T15:13:57.6305503Z [36;1mmkdir -p "$HOME/.ssh"[0m
+2026-10-28T15:13:57.6305802Z [36;1mchmod 700 "$HOME/.ssh"[0m
+2026-10-28T15:13:57.6306179Z [36;1mprintf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_deploy"[0m
+2026-10-28T15:13:57.6306583Z [36;1mchmod 600 "$HOME/.ssh/id_deploy"[0m
+2026-10-28T15:13:57.6306980Z [36;1mprintf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"[0m
+2026-10-28T15:13:57.6307432Z [36;1mchmod 600 "$HOME/.ssh/known_hosts"[0m
+2026-10-28T15:13:57.6331409Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:13:57.6331988Z env:
+2026-10-28T15:13:57.6334084Z   SSH_PRIVATE_KEY: ***
+
+2026-10-28T15:13:57.6334743Z   SSH_KNOWN_HOSTS: ***
+
+2026-10-28T15:13:57.6335025Z   EC2_HOST: ***
+2026-10-28T15:13:57.6335301Z   EC2_USER: ***
+2026-10-28T15:13:57.6335628Z   EC2_REPO_PATH: ***
+2026-10-28T15:13:57.6335884Z ##[endgroup]
+2026-10-28T15:13:57.6487945Z ##[group]Run ssh -i "$HOME/.ssh/id_deploy" \
+2026-10-28T15:13:57.6488411Z [36;1mssh -i "$HOME/.ssh/id_deploy" \[0m
+2026-10-28T15:13:57.6488772Z [36;1m  -o IdentitiesOnly=yes \[0m
+2026-10-28T15:13:57.6489093Z [36;1m  -o BatchMode=yes \[0m
+2026-10-28T15:13:57.6489405Z [36;1m  -o StrictHostKeyChecking=yes \[0m
+2026-10-28T15:13:57.6489751Z [36;1m  -o ConnectTimeout=15 \[0m
+2026-10-28T15:13:57.6490082Z [36;1m  "$EC2_USER@$EC2_HOST" 'whoami'[0m
+2026-10-28T15:13:57.6510211Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:13:57.6510565Z env:
+2026-10-28T15:13:57.6510894Z   EC2_HOST: ***
+2026-10-28T15:13:57.6511162Z   EC2_USER: ***
+2026-10-28T15:13:57.6511400Z ##[endgroup]
+2026-10-28T15:14:00.6520280Z ***
+2026-10-28T15:14:00.6580253Z ##[group]Run set -euo pipefail
+2026-10-28T15:14:00.6580648Z [36;1mset -euo pipefail[0m
+2026-10-28T15:14:00.6580968Z [36;1mprintf -v sha_arg '%q' "$GITHUB_SHA"[0m
+2026-10-28T15:14:00.6581347Z [36;1mprintf -v path_arg '%q' "$EC2_REPO_PATH"[0m
+2026-10-28T15:14:00.6581975Z [36;1m[0m
+2026-10-28T15:14:00.6582290Z [36;1mssh -i "$HOME/.ssh/id_deploy" \[0m
+2026-10-28T15:14:00.6582622Z [36;1m  -o IdentitiesOnly=yes \[0m
+2026-10-28T15:14:00.6582944Z [36;1m  -o BatchMode=yes \[0m
+2026-10-28T15:14:00.6583250Z [36;1m  -o StrictHostKeyChecking=yes \[0m
+2026-10-28T15:14:00.6583579Z [36;1m  -o ConnectTimeout=15 \[0m
+2026-10-28T15:14:00.6583876Z [36;1m  "$EC2_USER@$EC2_HOST" \[0m
+2026-10-28T15:14:00.6584227Z [36;1m  "bash -se -- $sha_arg $path_arg" <<'REMOTE'[0m
+2026-10-28T15:14:00.6584609Z [36;1mset -euo pipefail[0m
+2026-10-28T15:14:00.6584875Z [36;1m[0m
+2026-10-28T15:14:00.6585099Z [36;1mcommit="$1"[0m
+2026-10-28T15:14:00.6585353Z [36;1mrepo="$2"[0m
+2026-10-28T15:14:00.6585893Z [36;1mcd "$repo"[0m
+2026-10-28T15:14:00.6586138Z [36;1m[0m
+2026-10-28T15:14:00.6586481Z [36;1mif [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then[0m
+2026-10-28T15:14:00.6587035Z [36;1m  echo 'EC2 repository has local tracked changes; refusing deployment' >&2[0m
+2026-10-28T15:14:00.6587469Z [36;1m  exit 1[0m
+2026-10-28T15:14:00.6587704Z [36;1mfi[0m
+2026-10-28T15:14:00.6587923Z [36;1m[0m
+2026-10-28T15:14:00.6588159Z [36;1mgit fetch origin main[0m
+2026-10-28T15:14:00.6588474Z [36;1mgit cat-file -e "$commit^{commit}"[0m
+2026-10-28T15:14:00.6588820Z [36;1mgit checkout --detach "$commit"[0m
+2026-10-28T15:14:00.6589120Z [36;1m[0m
+2026-10-28T15:14:00.6589411Z [36;1msudo -n bash deployment/aws/deploy.sh validate[0m
+2026-10-28T15:14:00.6589819Z [36;1msudo -n bash deployment/aws/deploy.sh build[0m
+2026-10-28T15:14:00.6590215Z [36;1msudo -n bash deployment/aws/deploy.sh start[0m
+2026-10-28T15:14:00.6590597Z [36;1msudo -n bash deployment/aws/deploy.sh status[0m
+2026-10-28T15:14:00.6590985Z [36;1msudo -n bash deployment/aws/smoke.sh[0m
+2026-10-28T15:14:00.6591303Z [36;1mREMOTE[0m
+2026-10-28T15:14:00.6612526Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:14:00.6612820Z env:
+2026-10-28T15:14:00.6613339Z   EC2_HOST: ***
+2026-10-28T15:14:00.6613790Z   EC2_USER: ***
+2026-10-28T15:14:00.6614119Z   EC2_REPO_PATH: ***
+2026-10-28T15:14:00.6614378Z ##[endgroup]
+2026-10-28T15:14:03.9699729Z From https://github.com/meganYhsu/ASD-02-travel-agent
+2026-10-28T15:14:03.9700614Z  * branch            main       -> FETCH_HEAD
+2026-10-28T15:14:03.9774142Z HEAD is now at 41eda94 Merge pull request #39 from meganYhsu/dev
+2026-10-28T15:14:04.1220400Z student1-database
+2026-10-28T15:14:04.1220904Z student1-backend
+2026-10-28T15:14:04.1221894Z student1-frontend
+2026-10-28T15:14:04.1222655Z student2-database
+2026-10-28T15:14:04.1223409Z student2-backend
+2026-10-28T15:14:04.1224137Z student2-frontend
+2026-10-28T15:14:04.1224861Z student4-database
+2026-10-28T15:14:04.1225558Z student4-backend
+2026-10-28T15:14:04.1226288Z student5-database
+2026-10-28T15:14:04.1226984Z student3-database
+2026-10-28T15:14:04.1227687Z student3-backend
+2026-10-28T15:14:04.1228370Z student3-frontend
+2026-10-28T15:14:04.1229071Z student4-frontend
+2026-10-28T15:14:04.1229778Z student5-backend
+2026-10-28T15:14:04.1230373Z student5-frontend
+2026-10-28T15:14:04.1231080Z shared-home
+2026-10-28T15:14:04.1361154Z UTC: 2026-10-28T15:14:04Z
+2026-10-28T15:14:04.1369881Z 41eda947da0c40a86d8303e6701daad4c316ca52
+2026-10-28T15:14:04.2927548Z  Image travel-agent-aws-student2-backend Building 
+2026-10-28T15:14:04.2928351Z  Image travel-agent-aws-shared-home Building 
+2026-10-28T15:14:04.2928982Z  Image travel-agent-aws-student5-frontend Building 
+2026-10-28T15:14:04.2929629Z  Image travel-agent-aws-student2-frontend Building 
+2026-10-28T15:14:04.2930255Z  Image travel-agent-aws-student2-database Building 
+2026-10-28T15:14:04.2930929Z  Image travel-agent-aws-student5-backend Building 
+2026-10-28T15:14:04.2932312Z  Image travel-agent-aws-student3-database Building 
+2026-10-28T15:14:04.2932977Z  Image travel-agent-aws-student1-database Building 
+2026-10-28T15:14:04.2933587Z  Image travel-agent-aws-student5-database Building 
+2026-10-28T15:14:04.2934191Z  Image travel-agent-aws-student1-backend Building 
+2026-10-28T15:14:04.2934829Z  Image travel-agent-aws-student4-backend Building 
+2026-10-28T15:14:04.2935429Z  Image travel-agent-aws-student1-frontend Building 
+2026-10-28T15:14:04.2936026Z  Image travel-agent-aws-student3-backend Building 
+2026-10-28T15:14:04.2936624Z  Image travel-agent-aws-student4-frontend Building 
+2026-10-28T15:14:04.2937235Z  Image travel-agent-aws-student4-database Building 
+2026-10-28T15:14:04.2937835Z  Image travel-agent-aws-student3-frontend Building 
+2026-10-28T15:14:04.3327206Z #1 [internal] load local bake definitions
+2026-10-28T15:14:04.4832610Z #1 reading from stdin 8.49kB done
+2026-10-28T15:14:04.4834036Z #1 DONE 0.0s
+2026-10-28T15:14:04.6051148Z 
+2026-10-28T15:14:04.6052194Z #2 [student1-backend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6053506Z #2 transferring dockerfile: 195B done
+2026-10-28T15:14:04.6053968Z #2 DONE 0.0s
+2026-10-28T15:14:04.6054182Z 
+2026-10-28T15:14:04.6054499Z #3 [student3-database internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6055158Z #3 transferring dockerfile: 1.22kB done
+2026-10-28T15:14:04.6055610Z #3 DONE 0.0s
+2026-10-28T15:14:04.6055807Z 
+2026-10-28T15:14:04.6056162Z #4 [student3-frontend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6056803Z #4 transferring dockerfile: 481B done
+2026-10-28T15:14:04.6057236Z #4 DONE 0.0s
+2026-10-28T15:14:04.6057432Z 
+2026-10-28T15:14:04.6057719Z #5 [shared-home internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6058353Z #5 transferring dockerfile: 201B 0.0s done
+2026-10-28T15:14:04.6058952Z #5 DONE 0.0s
+2026-10-28T15:14:04.6059141Z 
+2026-10-28T15:14:04.6059436Z #6 [student4-frontend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6060091Z #6 transferring dockerfile: 262B 0.0s done
+2026-10-28T15:14:04.6060539Z #6 DONE 0.0s
+2026-10-28T15:14:04.6060723Z 
+2026-10-28T15:14:04.6061019Z #7 [student5-database internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6061631Z #7 transferring dockerfile: 249B done
+2026-10-28T15:14:04.6062324Z #7 DONE 0.0s
+2026-10-28T15:14:04.6062508Z 
+2026-10-28T15:14:04.6062802Z #8 [student4-backend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6063408Z #8 transferring dockerfile: 150B done
+2026-10-28T15:14:04.6063826Z #8 DONE 0.1s
+2026-10-28T15:14:04.6064015Z 
+2026-10-28T15:14:04.6064313Z #9 [student2-database internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6064923Z #9 transferring dockerfile: 200B done
+2026-10-28T15:14:04.6065343Z #9 DONE 0.1s
+2026-10-28T15:14:04.6065526Z 
+2026-10-28T15:14:04.6065827Z #10 [student5-backend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6066438Z #10 transferring dockerfile: 210B done
+2026-10-28T15:14:04.6066866Z #10 DONE 0.1s
+2026-10-28T15:14:04.6067068Z 
+2026-10-28T15:14:04.6067368Z #11 [student4-database internal] load build definition from Dockerfile
+2026-10-28T15:14:04.6067991Z #11 transferring dockerfile: 322B done
+2026-10-28T15:14:04.6068413Z #11 DONE 0.1s
+2026-10-28T15:14:04.6068601Z 
+2026-10-28T15:14:04.6068995Z #12 [student5-backend internal] load metadata for docker.io/library/python:3.12-slim
+2026-10-28T15:14:04.8073186Z #12 ...
+2026-10-28T15:14:04.8073448Z 
+2026-10-28T15:14:04.8073873Z #13 [student5-frontend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.8074712Z #13 transferring dockerfile: 210B done
+2026-10-28T15:14:04.8075302Z #13 DONE 0.1s
+2026-10-28T15:14:04.8075558Z 
+2026-10-28T15:14:04.8075951Z #14 [student2-backend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.8076765Z #14 transferring dockerfile: 200B done
+2026-10-28T15:14:04.8077326Z #14 DONE 0.1s
+2026-10-28T15:14:04.8077569Z 
+2026-10-28T15:14:04.8078264Z #15 [student3-backend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.8079062Z #15 transferring dockerfile: 495B done
+2026-10-28T15:14:04.8079604Z #15 DONE 0.1s
+2026-10-28T15:14:04.8079841Z 
+2026-10-28T15:14:04.8080222Z #16 [student2-frontend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.8081012Z #16 transferring dockerfile: 200B done
+2026-10-28T15:14:04.8081546Z #16 DONE 0.1s
+2026-10-28T15:14:04.8082153Z 
+2026-10-28T15:14:04.8082543Z #17 [student1-database internal] load build definition from Dockerfile
+2026-10-28T15:14:04.8083309Z #17 transferring dockerfile: 198B done
+2026-10-28T15:14:04.8083791Z #17 DONE 0.1s
+2026-10-28T15:14:04.8084000Z 
+2026-10-28T15:14:04.8084328Z #18 [student1-frontend internal] load build definition from Dockerfile
+2026-10-28T15:14:04.8085017Z #18 transferring dockerfile: 195B done
+2026-10-28T15:14:04.8085510Z #18 DONE 0.1s
+2026-10-28T15:14:04.8085722Z 
+2026-10-28T15:14:04.8086155Z #12 [student1-frontend internal] load metadata for docker.io/library/python:3.12-slim
+2026-10-28T15:14:05.8553919Z #12 DONE 1.2s
+2026-10-28T15:14:05.8554784Z 
+2026-10-28T15:14:05.8555412Z #19 [student4-database internal] load metadata for docker.io/library/node:20-alpine
+2026-10-28T15:14:05.8556515Z #19 DONE 1.2s
+2026-10-28T15:14:05.8556829Z 
+2026-10-28T15:14:05.8557173Z #20 [student4-backend internal] load .dockerignore
+2026-10-28T15:14:05.8558013Z #20 transferring context: 68B done
+2026-10-28T15:14:05.8558668Z #20 DONE 0.0s
+2026-10-28T15:14:05.8558964Z 
+2026-10-28T15:14:05.8559541Z #21 [student4-frontend internal] load metadata for docker.io/library/nginx:alpine
+2026-10-28T15:14:05.8560574Z #21 DONE 1.2s
+2026-10-28T15:14:05.8560875Z 
+2026-10-28T15:14:05.8561212Z #22 [student4-database internal] load .dockerignore
+2026-10-28T15:14:05.8562403Z #22 transferring context: 64B done
+2026-10-28T15:14:05.8563000Z #22 DONE 0.0s
+2026-10-28T15:14:05.8563239Z 
+2026-10-28T15:14:05.8563481Z #23 [shared-home internal] load .dockerignore
+2026-10-28T15:14:05.8564119Z #23 transferring context: 2B done
+2026-10-28T15:14:05.8564638Z #23 DONE 0.0s
+2026-10-28T15:14:05.8564886Z 
+2026-10-28T15:14:05.8565760Z #24 [student4-database 1/5] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+2026-10-28T15:14:05.8567586Z #24 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+2026-10-28T15:14:05.8568732Z #24 DONE 0.0s
+2026-10-28T15:14:05.8568966Z 
+2026-10-28T15:14:05.8569231Z #25 [student2-backend internal] load .dockerignore
+2026-10-28T15:14:05.8569880Z #25 transferring context: 2B done
+2026-10-28T15:14:05.8570405Z #25 DONE 0.1s
+2026-10-28T15:14:05.8570640Z 
+2026-10-28T15:14:05.8570911Z #26 [student1-database internal] load .dockerignore
+2026-10-28T15:14:05.8571565Z #26 transferring context: 65B done
+2026-10-28T15:14:05.8572250Z #26 DONE 0.1s
+2026-10-28T15:14:05.8572493Z 
+2026-10-28T15:14:05.8572765Z #27 [student4-database internal] load build context
+2026-10-28T15:14:05.8573358Z #27 transferring context: 486B done
+2026-10-28T15:14:05.9568216Z #27 DONE 0.1s
+2026-10-28T15:14:05.9568685Z 
+2026-10-28T15:14:05.9569185Z #28 [student2-frontend internal] load .dockerignore
+2026-10-28T15:14:05.9570289Z #28 transferring context: 2B 0.0s done
+2026-10-28T15:14:05.9570854Z #28 DONE 0.1s
+2026-10-28T15:14:05.9571108Z 
+2026-10-28T15:14:05.9571390Z #29 [student3-frontend internal] load .dockerignore
+2026-10-28T15:14:05.9572373Z #29 transferring context: 173B 0.0s done
+2026-10-28T15:14:05.9572939Z #29 DONE 0.1s
+2026-10-28T15:14:05.9573179Z 
+2026-10-28T15:14:05.9573450Z #30 [student3-database internal] load .dockerignore
+2026-10-28T15:14:05.9574105Z #30 transferring context: 173B done
+2026-10-28T15:14:05.9574643Z #30 DONE 0.1s
+2026-10-28T15:14:05.9574880Z 
+2026-10-28T15:14:05.9575147Z #31 [student1-backend internal] load .dockerignore
+2026-10-28T15:14:05.9575796Z #31 transferring context: 65B done
+2026-10-28T15:14:05.9576323Z #31 DONE 0.1s
+2026-10-28T15:14:05.9576565Z 
+2026-10-28T15:14:05.9576827Z #32 [student4-backend internal] load build context
+2026-10-28T15:14:05.9577714Z #32 transferring context: 2.10kB done
+2026-10-28T15:14:05.9578261Z #32 DONE 0.1s
+2026-10-28T15:14:05.9578502Z 
+2026-10-28T15:14:05.9578785Z #33 [student5-frontend internal] load .dockerignore
+2026-10-28T15:14:05.9579443Z #33 transferring context: 2B done
+2026-10-28T15:14:05.9579960Z #33 DONE 0.1s
+2026-10-28T15:14:05.9580197Z 
+2026-10-28T15:14:05.9580462Z #34 [student3-backend internal] load .dockerignore
+2026-10-28T15:14:05.9581116Z #34 transferring context: 173B done
+2026-10-28T15:14:05.9581643Z #34 DONE 0.1s
+2026-10-28T15:14:05.9582072Z 
+2026-10-28T15:14:05.9582342Z #35 [student1-frontend internal] load .dockerignore
+2026-10-28T15:14:05.9583001Z #35 transferring context: 60B done
+2026-10-28T15:14:05.9583537Z #35 DONE 0.2s
+2026-10-28T15:14:05.9583777Z 
+2026-10-28T15:14:05.9584045Z #36 [student5-database internal] load .dockerignore
+2026-10-28T15:14:05.9584697Z #36 transferring context: 2B done
+2026-10-28T15:14:05.9585219Z #36 DONE 0.1s
+2026-10-28T15:14:05.9585464Z 
+2026-10-28T15:14:05.9585803Z #37 [student2-database internal] load .dockerignore
+2026-10-28T15:14:05.9586272Z #37 transferring context: 2B done
+2026-10-28T15:14:05.9586647Z #37 DONE 0.2s
+2026-10-28T15:14:05.9586818Z 
+2026-10-28T15:14:05.9587010Z #38 [student5-backend internal] load .dockerignore
+2026-10-28T15:14:05.9587491Z #38 transferring context: 2B done
+2026-10-28T15:14:05.9587861Z #38 DONE 0.2s
+2026-10-28T15:14:05.9588035Z 
+2026-10-28T15:14:05.9588225Z #39 [student4-frontend internal] load .dockerignore
+2026-10-28T15:14:05.9588692Z #39 transferring context: 64B done
+2026-10-28T15:14:05.9589069Z #39 DONE 0.2s
+2026-10-28T15:14:06.0570861Z 
+2026-10-28T15:14:06.0573201Z #24 [student4-frontend 1/5] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+2026-10-28T15:14:06.0576994Z #24 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+2026-10-28T15:14:06.0578562Z #24 DONE 0.0s
+2026-10-28T15:14:06.0578855Z 
+2026-10-28T15:14:06.0579114Z #40 [student4-database 5/6] RUN npm ci
+2026-10-28T15:14:06.0579676Z #40 CACHED
+2026-10-28T15:14:06.0579908Z 
+2026-10-28T15:14:06.0580289Z #41 [student4-database 3/6] RUN apk add --no-cache python3 make g++
+2026-10-28T15:14:06.0581040Z #41 CACHED
+2026-10-28T15:14:06.0581270Z 
+2026-10-28T15:14:06.0581560Z #42 [student4-database 4/6] COPY package*.json ./
+2026-10-28T15:14:06.0582450Z #42 CACHED
+2026-10-28T15:14:06.0582678Z 
+2026-10-28T15:14:06.0582895Z #43 [student4-database 6/6] COPY . .
+2026-10-28T15:14:06.0583423Z #43 CACHED
+2026-10-28T15:14:06.0583647Z 
+2026-10-28T15:14:06.0583903Z #44 [student4-backend 3/5] COPY package*.json ./
+2026-10-28T15:14:06.0584511Z #44 CACHED
+2026-10-28T15:14:06.0584737Z 
+2026-10-28T15:14:06.0584959Z #45 [student4-database 2/5] WORKDIR /app
+2026-10-28T15:14:06.0585521Z #45 CACHED
+2026-10-28T15:14:06.0585741Z 
+2026-10-28T15:14:06.0585960Z #46 [student4-backend 4/5] RUN npm ci
+2026-10-28T15:14:06.0586500Z #46 CACHED
+2026-10-28T15:14:06.0586723Z 
+2026-10-28T15:14:06.0586995Z #47 [student3-backend internal] load build context
+2026-10-28T15:14:06.0587482Z #47 DONE 0.0s
+2026-10-28T15:14:06.0587675Z 
+2026-10-28T15:14:06.0587849Z #48 [student4-backend 5/5] COPY . .
+2026-10-28T15:14:06.0588266Z #48 CACHED
+2026-10-28T15:14:06.0588444Z 
+2026-10-28T15:14:06.0588658Z #49 [student3-frontend internal] load build context
+2026-10-28T15:14:06.0589150Z #49 DONE 0.0s
+2026-10-28T15:14:06.0589349Z 
+2026-10-28T15:14:06.0589559Z #50 [student3-database internal] load build context
+2026-10-28T15:14:06.0590048Z #50 DONE 0.0s
+2026-10-28T15:14:06.0590234Z 
+2026-10-28T15:14:06.0590420Z #51 [shared-home internal] load build context
+2026-10-28T15:14:06.0590919Z #51 transferring context: 465B 0.0s done
+2026-10-28T15:14:06.0591366Z #51 DONE 0.0s
+2026-10-28T15:14:06.0591567Z 
+2026-10-28T15:14:06.0592010Z #52 [student2-frontend internal] load build context
+2026-10-28T15:14:06.0592560Z #52 transferring context: 44.91kB 0.0s done
+2026-10-28T15:14:06.0593016Z #52 DONE 0.0s
+2026-10-28T15:14:06.0593480Z 
+2026-10-28T15:14:06.0593698Z #53 [student2-backend internal] load build context
+2026-10-28T15:14:06.0594219Z #53 transferring context: 235B 0.0s done
+2026-10-28T15:14:06.0594662Z #53 DONE 0.1s
+2026-10-28T15:14:06.0594851Z 
+2026-10-28T15:14:06.0595526Z #54 [student1-backend 1/5] FROM docker.io/library/python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
+2026-10-28T15:14:06.0596969Z #54 resolve docker.io/library/python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159 0.0s done
+2026-10-28T15:14:06.0597789Z #54 DONE 0.1s
+2026-10-28T15:14:06.0597968Z 
+2026-10-28T15:14:06.0598600Z #55 [student4-frontend stage-1 1/2] FROM docker.io/library/nginx:alpine@sha256:a3554c0d0b48177b1413c26e01f695334428020d9df01243fbae3e11cfd17417
+2026-10-28T15:14:06.0600014Z #55 resolve docker.io/library/nginx:alpine@sha256:a3554c0d0b48177b1413c26e01f695334428020d9df01243fbae3e11cfd17417 0.1s done
+2026-10-28T15:14:06.0600812Z #55 DONE 0.1s
+2026-10-28T15:14:06.0601199Z 
+2026-10-28T15:14:06.0601394Z #56 [student1-backend internal] load build context
+2026-10-28T15:14:06.0602221Z #56 transferring context: 453B 0.0s done
+2026-10-28T15:14:06.0602627Z #56 DONE 0.1s
+2026-10-28T15:14:06.0602799Z 
+2026-10-28T15:14:06.0602991Z #57 [student5-frontend internal] load build context
+2026-10-28T15:14:06.0603479Z #57 transferring context: 47.37kB 0.0s done
+2026-10-28T15:14:06.0603885Z #57 DONE 0.1s
+2026-10-28T15:14:06.0604057Z 
+2026-10-28T15:14:06.0604224Z #58 [student4-backend] exporting to image
+2026-10-28T15:14:06.0604662Z #58 exporting layers done
+2026-10-28T15:14:06.0605330Z #58 exporting manifest sha256:3eb85c354fabdfbfc96b0c65ca2eae2c74e06d3da97adffec9b70b44d372440e done
+2026-10-28T15:14:06.0606337Z #58 exporting config sha256:d24c9a649fd8d11d2261dec6cd43adc8356642c1faf1c49f5ab455d3daf829f1 done
+2026-10-28T15:14:06.0607318Z #58 exporting attestation manifest sha256:a55c79920302608f966d333c79ccc967181fdfe6e3eb05d7432a4054d9103d83
+2026-10-28T15:14:06.1582519Z #58 ...
+2026-10-28T15:14:06.1583016Z 
+2026-10-28T15:14:06.1583441Z #59 [student5-database internal] load build context
+2026-10-28T15:14:06.1584381Z #59 transferring context: 245B done
+2026-10-28T15:14:06.1585247Z #59 DONE 0.1s
+2026-10-28T15:14:06.1585622Z 
+2026-10-28T15:14:06.1586072Z #60 [student4-frontend internal] load build context
+2026-10-28T15:14:06.1587162Z #60 transferring context: 171.27kB done
+2026-10-28T15:14:06.1588043Z #60 DONE 0.1s
+2026-10-28T15:14:06.1588520Z 
+2026-10-28T15:14:06.1588990Z #61 [student1-database internal] load build context
+2026-10-28T15:14:06.1589689Z #61 transferring context: 154B 0.0s done
+2026-10-28T15:14:06.1590249Z #61 DONE 0.1s
+2026-10-28T15:14:06.1590488Z 
+2026-10-28T15:14:06.1590753Z #62 [student1-frontend internal] load build context
+2026-10-28T15:14:06.1591419Z #62 transferring context: 33.49kB done
+2026-10-28T15:14:06.1592323Z #62 DONE 0.1s
+2026-10-28T15:14:06.1592567Z 
+2026-10-28T15:14:06.1592833Z #63 [student5-backend internal] load build context
+2026-10-28T15:14:06.1593510Z #63 transferring context: 432B done
+2026-10-28T15:14:06.1594046Z #63 DONE 0.1s
+2026-10-28T15:14:06.1594285Z 
+2026-10-28T15:14:06.1594616Z #64 [student2-database internal] load build context
+2026-10-28T15:14:06.1595265Z #64 transferring context: 242B done
+2026-10-28T15:14:06.1595785Z #64 DONE 0.1s
+2026-10-28T15:14:06.1596018Z 
+2026-10-28T15:14:06.1596292Z #65 [student5-database 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1596921Z #65 CACHED
+2026-10-28T15:14:06.1597153Z 
+2026-10-28T15:14:06.1597631Z #66 [student5-database 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1598455Z #66 CACHED
+2026-10-28T15:14:06.1598685Z 
+2026-10-28T15:14:06.1598849Z #67 [student5-database 5/5] COPY . .
+2026-10-28T15:14:06.1599242Z #67 CACHED
+2026-10-28T15:14:06.1599401Z 
+2026-10-28T15:14:06.1599596Z #47 [student3-backend internal] load build context
+2026-10-28T15:14:06.1600069Z #47 transferring context: 193B done
+2026-10-28T15:14:06.1600448Z #47 DONE 0.0s
+2026-10-28T15:14:06.1600628Z 
+2026-10-28T15:14:06.1601152Z #49 [student3-frontend internal] load build context
+2026-10-28T15:14:06.1601624Z #49 transferring context: 33.80kB done
+2026-10-28T15:14:06.1602288Z #49 DONE 0.0s
+2026-10-28T15:14:06.1602467Z 
+2026-10-28T15:14:06.1602675Z #68 [student1-database 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1603128Z #68 CACHED
+2026-10-28T15:14:06.1603292Z 
+2026-10-28T15:14:06.1603611Z #69 [student1-database 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1604188Z #69 CACHED
+2026-10-28T15:14:06.1604363Z 
+2026-10-28T15:14:06.1604561Z #70 [student2-frontend 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1605006Z #70 CACHED
+2026-10-28T15:14:06.1605169Z 
+2026-10-28T15:14:06.1605483Z #71 [student2-frontend 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1606060Z #71 CACHED
+2026-10-28T15:14:06.1606226Z 
+2026-10-28T15:14:06.1606527Z #72 [student2-backend 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1607093Z #72 CACHED
+2026-10-28T15:14:06.1607420Z 
+2026-10-28T15:14:06.1607614Z #73 [student2-backend 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1608056Z #73 CACHED
+2026-10-28T15:14:06.1608215Z 
+2026-10-28T15:14:06.1608516Z #74 [student2-database 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1609047Z #74 CACHED
+2026-10-28T15:14:06.1609192Z 
+2026-10-28T15:14:06.1609373Z #75 [student2-database 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1609785Z #75 CACHED
+2026-10-28T15:14:06.1609931Z 
+2026-10-28T15:14:06.1610107Z #76 [student1-frontend 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1610505Z #76 CACHED
+2026-10-28T15:14:06.1610652Z 
+2026-10-28T15:14:06.1610931Z #77 [student1-frontend 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1611459Z #77 CACHED
+2026-10-28T15:14:06.1611612Z 
+2026-10-28T15:14:06.1611982Z #78 [student1-frontend 5/5] COPY . .
+2026-10-28T15:14:06.1612343Z #78 CACHED
+2026-10-28T15:14:06.1612491Z 
+2026-10-28T15:14:06.1612781Z #79 [student5-backend 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1613299Z #79 CACHED
+2026-10-28T15:14:06.1613444Z 
+2026-10-28T15:14:06.1613618Z #80 [student5-backend 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1614019Z #80 CACHED
+2026-10-28T15:14:06.1614170Z 
+2026-10-28T15:14:06.1614456Z #81 [student5-frontend 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1614971Z #81 CACHED
+2026-10-28T15:14:06.1615118Z 
+2026-10-28T15:14:06.1615294Z #82 [student5-frontend 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1615699Z #82 CACHED
+2026-10-28T15:14:06.1615856Z 
+2026-10-28T15:14:06.1615999Z #83 [student2-backend 5/5] COPY . .
+2026-10-28T15:14:06.1616356Z #83 CACHED
+2026-10-28T15:14:06.1616505Z 
+2026-10-28T15:14:06.1616644Z #84 [student2-frontend 5/5] COPY . .
+2026-10-28T15:14:06.1616995Z #84 CACHED
+2026-10-28T15:14:06.1617147Z 
+2026-10-28T15:14:06.1617284Z #85 [student1-database 5/5] COPY . .
+2026-10-28T15:14:06.1617630Z #85 CACHED
+2026-10-28T15:14:06.1617776Z 
+2026-10-28T15:14:06.1617954Z #50 [student3-database internal] load build context
+2026-10-28T15:14:06.1618403Z #50 transferring context: 93B done
+2026-10-28T15:14:06.1618752Z #50 DONE 0.0s
+2026-10-28T15:14:06.1618903Z 
+2026-10-28T15:14:06.1619034Z #86 [student2-database 5/5] COPY . .
+2026-10-28T15:14:06.1619354Z #86 CACHED
+2026-10-28T15:14:06.1619488Z 
+2026-10-28T15:14:06.1619660Z #87 [student5-backend 5/5] COPY . .
+2026-10-28T15:14:06.1619979Z #87 CACHED
+2026-10-28T15:14:06.1620119Z 
+2026-10-28T15:14:06.1620245Z #88 [student5-frontend 5/5] COPY . .
+2026-10-28T15:14:06.1620562Z #88 CACHED
+2026-10-28T15:14:06.1620704Z 
+2026-10-28T15:14:06.1620847Z #45 [student4-frontend 2/5] WORKDIR /app
+2026-10-28T15:14:06.1621188Z #45 CACHED
+2026-10-28T15:14:06.1621333Z 
+2026-10-28T15:14:06.1621496Z #89 [student4-frontend build 6/6] RUN npm run build
+2026-10-28T15:14:06.1621979Z #89 CACHED
+2026-10-28T15:14:06.1622123Z 
+2026-10-28T15:14:06.1622270Z #90 [student4-frontend build 4/6] RUN npm ci
+2026-10-28T15:14:06.1622625Z #90 CACHED
+2026-10-28T15:14:06.1622903Z 
+2026-10-28T15:14:06.1623103Z #91 [student4-frontend build 3/6] COPY package*.json ./
+2026-10-28T15:14:06.1623514Z #91 CACHED
+2026-10-28T15:14:06.1623654Z 
+2026-10-28T15:14:06.1623797Z #92 [student4-frontend build 5/6] COPY . .
+2026-10-28T15:14:06.1624145Z #92 CACHED
+2026-10-28T15:14:06.1624288Z 
+2026-10-28T15:14:06.1624581Z #93 [student4-frontend stage-1 2/2] COPY --from=build /app/dist /usr/share/nginx/html
+2026-10-28T15:14:06.1625109Z #93 CACHED
+2026-10-28T15:14:06.1625248Z 
+2026-10-28T15:14:06.1625405Z #94 [shared-home 3/5] COPY requirements.txt ./
+2026-10-28T15:14:06.1625765Z #94 CACHED
+2026-10-28T15:14:06.1625903Z 
+2026-10-28T15:14:06.1626144Z #95 [shared-home 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1626617Z #95 CACHED
+2026-10-28T15:14:06.1626758Z 
+2026-10-28T15:14:06.1627017Z #96 [student1-backend 4/5] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1627499Z #96 CACHED
+2026-10-28T15:14:06.1627641Z 
+2026-10-28T15:14:06.1627818Z #97 [student1-backend 3/5] COPY requirements.txt .
+2026-10-28T15:14:06.1628383Z #97 CACHED
+2026-10-28T15:14:06.1628520Z 
+2026-10-28T15:14:06.1628647Z #98 [shared-home 5/5] COPY . .
+2026-10-28T15:14:06.1628938Z #98 CACHED
+2026-10-28T15:14:06.1629066Z 
+2026-10-28T15:14:06.1629196Z #99 [student1-backend 5/5] COPY . .
+2026-10-28T15:14:06.1629495Z #99 CACHED
+2026-10-28T15:14:06.1629620Z 
+2026-10-28T15:14:06.1629744Z #100 [student3-frontend 5/6] COPY . .
+2026-10-28T15:14:06.1630050Z #100 CACHED
+2026-10-28T15:14:06.1630183Z 
+2026-10-28T15:14:06.1630357Z #101 [student3-frontend 3/6] COPY requirements.txt .
+2026-10-28T15:14:06.1630722Z #101 CACHED
+2026-10-28T15:14:06.1630858Z 
+2026-10-28T15:14:06.1631119Z #102 [student3-frontend 4/6] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.1631604Z #102 CACHED
+2026-10-28T15:14:06.1631860Z 
+2026-10-28T15:14:06.1631994Z #103 [student3-frontend 2/5] WORKDIR /app
+2026-10-28T15:14:06.1632326Z #103 CACHED
+2026-10-28T15:14:06.1632468Z 
+2026-10-28T15:14:06.1632610Z #58 [student4-backend] exporting to image
+2026-10-28T15:14:06.1633264Z #58 exporting attestation manifest sha256:a55c79920302608f966d333c79ccc967181fdfe6e3eb05d7432a4054d9103d83 0.0s done
+2026-10-28T15:14:06.1634180Z #58 exporting manifest list sha256:d104b260798087c9daaf0f01d85302ff136eb8f4dae68bcfb76ea1c9ca5bb415 0.0s done
+2026-10-28T15:14:06.1634934Z #58 naming to docker.io/library/travel-agent-aws-student4-backend:latest done
+2026-10-28T15:14:06.1635560Z #58 unpacking to docker.io/library/travel-agent-aws-student4-backend:latest done
+2026-10-28T15:14:06.2578680Z #58 DONE 0.2s
+2026-10-28T15:14:06.2579095Z 
+2026-10-28T15:14:06.2579465Z #104 [student4-database] exporting to image
+2026-10-28T15:14:06.2580565Z #104 exporting layers 0.0s done
+2026-10-28T15:14:06.2601866Z #104 exporting manifest sha256:c09ad7c67c6f793625844f756ae22b261a9d2abbf60dda31c8938ca8f05f9ebd done
+2026-10-28T15:14:06.2602958Z #104 exporting config sha256:d02ef395f0e89d302670b99703898c16936b2bb6fe3f4c03535722507171e9d6 0.0s done
+2026-10-28T15:14:06.2604025Z #104 exporting attestation manifest sha256:9949a230c66af0ffb6c3f29df132b63ea2982e07d71700679ce439dc962e68d4 0.0s done
+2026-10-28T15:14:06.2605080Z #104 exporting manifest list sha256:e9d4e91457cc4872fd90b0189b1010476d23b6aba4371b86238e77750ca0dfd7 0.0s done
+2026-10-28T15:14:06.2605963Z #104 naming to docker.io/library/travel-agent-aws-student4-database:latest done
+2026-10-28T15:14:06.2606720Z #104 unpacking to docker.io/library/travel-agent-aws-student4-database:latest done
+2026-10-28T15:14:06.2607284Z #104 DONE 0.2s
+2026-10-28T15:14:06.2607461Z 
+2026-10-28T15:14:06.2607642Z #105 [student3-backend 5/6] COPY . .
+2026-10-28T15:14:06.2608007Z #105 CACHED
+2026-10-28T15:14:06.2608164Z 
+2026-10-28T15:14:06.2608466Z #106 [student3-backend 4/6] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.2609013Z #106 CACHED
+2026-10-28T15:14:06.2609186Z 
+2026-10-28T15:14:06.2609377Z #107 [student3-backend 3/6] COPY requirements.txt .
+2026-10-28T15:14:06.2609803Z #107 CACHED
+2026-10-28T15:14:06.2610204Z 
+2026-10-28T15:14:06.2610495Z #108 [student3-backend 6/6] RUN useradd --create-home --uid 10001 appuser
+2026-10-28T15:14:06.2611002Z #108 CACHED
+2026-10-28T15:14:06.2611136Z 
+2026-10-28T15:14:06.2611358Z #109 [student3-frontend 6/6] RUN useradd --create-home --uid 10001 appuser
+2026-10-28T15:14:06.2612057Z #109 CACHED
+2026-10-28T15:14:06.2612189Z 
+2026-10-28T15:14:06.2612315Z #110 [student3-database 5/6] COPY . .
+2026-10-28T15:14:06.2612618Z #110 CACHED
+2026-10-28T15:14:06.2612742Z 
+2026-10-28T15:14:06.2612905Z #111 [student3-database 3/6] COPY requirements.txt .
+2026-10-28T15:14:06.2613254Z #111 CACHED
+2026-10-28T15:14:06.2613376Z 
+2026-10-28T15:14:06.2613625Z #112 [student3-database 4/6] RUN pip install --no-cache-dir -r requirements.txt
+2026-10-28T15:14:06.2614069Z #112 CACHED
+2026-10-28T15:14:06.2614195Z 
+2026-10-28T15:14:06.2614320Z #103 [student3-backend 2/5] WORKDIR /app
+2026-10-28T15:14:06.2614628Z #103 CACHED
+2026-10-28T15:14:06.2614751Z 
+2026-10-28T15:14:06.2615288Z #113 [student3-database 6/6] RUN useradd --create-home --uid 10001 appuser     && mkdir -p /data     && chown appuser /data     && ln -s /data/budget.db /app/budget.db
+2026-10-28T15:14:06.2616292Z #113 CACHED
+2026-10-28T15:14:06.2616423Z 
+2026-10-28T15:14:06.2616554Z #114 [student3-database] exporting to image
+2026-10-28T15:14:06.2616905Z #114 exporting layers done
+2026-10-28T15:14:06.2617412Z #114 exporting manifest sha256:637b00dd1364a5df2de975ff2947a461dd69eb9959f3f7290dcc7a3792929276
+2026-10-28T15:14:06.3788405Z #114 exporting manifest sha256:637b00dd1364a5df2de975ff2947a461dd69eb9959f3f7290dcc7a3792929276 0.0s done
+2026-10-28T15:14:06.3789992Z #114 exporting config sha256:13216c53886f4c3f009f11ba824eed0b0e90fdf0ced41c7995df20acd5616d61
+2026-10-28T15:14:06.4918332Z #114 exporting config sha256:13216c53886f4c3f009f11ba824eed0b0e90fdf0ced41c7995df20acd5616d61 0.1s done
+2026-10-28T15:14:06.6026721Z #114 exporting attestation manifest sha256:930bcbe7fd18f7eba27a981e36e125f78de047f6044ff57ffa0d62695cff49d2
+2026-10-28T15:14:06.8240005Z #114 exporting attestation manifest sha256:930bcbe7fd18f7eba27a981e36e125f78de047f6044ff57ffa0d62695cff49d2 0.2s done
+2026-10-28T15:14:06.8241615Z #114 exporting manifest list sha256:c0cff106ae046dfe5d97d4519e7a6db7e3bb3c4b5b12de3af176f95e3e405916
+2026-10-28T15:14:07.0320724Z #114 exporting manifest list sha256:c0cff106ae046dfe5d97d4519e7a6db7e3bb3c4b5b12de3af176f95e3e405916 0.1s done
+2026-10-28T15:14:07.0322658Z #114 naming to docker.io/library/travel-agent-aws-student3-database:latest 0.0s done
+2026-10-28T15:14:07.0323938Z #114 unpacking to docker.io/library/travel-agent-aws-student3-database:latest
+2026-10-28T15:14:07.1374091Z #114 ...
+2026-10-28T15:14:07.1374457Z 
+2026-10-28T15:14:07.1374737Z #115 [student1-frontend] exporting to image
+2026-10-28T15:14:07.1375452Z #115 exporting layers 0.0s done
+2026-10-28T15:14:07.1376575Z #115 exporting manifest sha256:72210c83cf6b30c6dbe11c63e895b3f3db397a0aea6fddfa7605776bb78ed98f 0.0s done
+2026-10-28T15:14:07.1378233Z #115 exporting config sha256:6766b3a01a384b3e3c308d6b71ef9814e6d6f9d37912ebd20f03f4fb39a3ede6 0.0s done
+2026-10-28T15:14:07.1379617Z #115 exporting attestation manifest sha256:b2c402c857d86bda8488100ec480e251b8ff62f563f6e679e3fc9ce6bd0fa5df 0.2s done
+2026-10-28T15:14:07.1381045Z #115 exporting manifest list sha256:f4d7f929f94a46a30c91a365aae4b62f5b66f4a1c6be63ef1dca79c1c9467175 0.1s done
+2026-10-28T15:14:07.1382565Z #115 naming to docker.io/library/travel-agent-aws-student1-frontend:latest 0.1s done
+2026-10-28T15:14:07.1383613Z #115 unpacking to docker.io/library/travel-agent-aws-student1-frontend:latest 0.1s done
+2026-10-28T15:14:07.1384389Z #115 DONE 0.9s
+2026-10-28T15:14:07.1384620Z 
+2026-10-28T15:14:07.1384827Z #116 [student2-database] exporting to image
+2026-10-28T15:14:07.1385365Z #116 exporting layers done
+2026-10-28T15:14:07.1386171Z #116 exporting manifest sha256:bc92612061516b29b9c19829822836d5a77fdab27eaa5765eb0d5bb47e5d9c6f done
+2026-10-28T15:14:07.1387866Z #116 exporting config sha256:be92e21396c5e42374f0b54a2c4ca8a178fb1413ef2d2589aa570962f681a1ac 0.0s done
+2026-10-28T15:14:07.1388989Z #116 exporting attestation manifest sha256:a1515722af58192047bd062f6bfbe7ee31e6185cf0834c5fee5b9457c33ce6bc 0.3s done
+2026-10-28T15:14:07.1390126Z #116 exporting manifest list sha256:eb7026677828b32bee43516ede7b2625a4ce604d8189ab53400d2fe0c9ea3310 0.1s done
+2026-10-28T15:14:07.1391089Z #116 naming to docker.io/library/travel-agent-aws-student2-database:latest 0.1s done
+2026-10-28T15:14:07.1392119Z #116 unpacking to docker.io/library/travel-agent-aws-student2-database:latest 0.1s done
+2026-10-28T15:14:07.1392751Z #116 DONE 0.9s
+2026-10-28T15:14:07.1392930Z 
+2026-10-28T15:14:07.1393097Z #117 [student5-database] exporting to image
+2026-10-28T15:14:07.1393535Z #117 exporting layers done
+2026-10-28T15:14:07.1394191Z #117 exporting manifest sha256:16b2ec95556a5f4ca1ac46ca454628300d2a4cb52a07f075c2ac5893921d5209 done
+2026-10-28T15:14:07.1395195Z #117 exporting config sha256:73a5e189f42770861c320f4c1784f903b2e7baad831930970352d95f695a1d8d 0.0s done
+2026-10-28T15:14:07.1396295Z #117 exporting attestation manifest sha256:f518b74b2e9f83650c06a7d919f06adfc7d64f7039b4aceea357d99136a36ec7 0.3s done
+2026-10-28T15:14:07.1397711Z #117 exporting manifest list sha256:e3bfea5c5a51d5b6caaf12935b08301e77d46cc269b99d233c271353ddb00dab 0.2s done
+2026-10-28T15:14:07.1398537Z #117 naming to docker.io/library/travel-agent-aws-student5-database:latest 0.1s done
+2026-10-28T15:14:07.1399254Z #117 unpacking to docker.io/library/travel-agent-aws-student5-database:latest 0.1s done
+2026-10-28T15:14:07.1399799Z #117 DONE 0.9s
+2026-10-28T15:14:07.1399955Z 
+2026-10-28T15:14:07.1400102Z #118 [student2-backend] exporting to image
+2026-10-28T15:14:07.1400472Z #118 exporting layers done
+2026-10-28T15:14:07.1401034Z #118 exporting manifest sha256:7d1ddb5cb0ce75565bb6326e31ee051977fee5c0eeaae01c2f3d2709478c3b49 done
+2026-10-28T15:14:07.1402046Z #118 exporting config sha256:a85ceb616d2f88929ec6990adaaf660b80b23631e832204063e8eee07853b046 0.0s done
+2026-10-28T15:14:07.1402989Z #118 exporting attestation manifest sha256:d569d2b1d2d6774485ea979f1c6a1bb7b5eae0c708519899074332bb7ee9aeb1 0.3s done
+2026-10-28T15:14:07.1403961Z #118 exporting manifest list sha256:3aa209120b6d72bad92a84e6116c75a7ed8f8ab011ebc04f34d9092f7c21c36b 0.2s done
+2026-10-28T15:14:07.1404784Z #118 naming to docker.io/library/travel-agent-aws-student2-backend:latest 0.1s done
+2026-10-28T15:14:07.1405497Z #118 unpacking to docker.io/library/travel-agent-aws-student2-backend:latest 0.1s done
+2026-10-28T15:14:07.1406033Z #118 DONE 0.9s
+2026-10-28T15:14:07.1406187Z 
+2026-10-28T15:14:07.1406334Z #119 [student2-frontend] exporting to image
+2026-10-28T15:14:07.1406718Z #119 exporting layers done
+2026-10-28T15:14:07.1407308Z #119 exporting manifest sha256:5af1e7605d647268af2a0f2de7cf1359b723d3e1277a4def68aac26fa29e970b 0.0s done
+2026-10-28T15:14:07.1408100Z #119 exporting config sha256:5af7cc3bd464a6cd9851b0f673c8349915f877c06388659b17be3f3a7ce0d1d0 0.0s done
+2026-10-28T15:14:07.1408934Z #119 exporting attestation manifest sha256:7017f878a4c093869f23b3487806c1aad48aadec7dc0766340cb1a25690724cf 0.3s done
+2026-10-28T15:14:07.1409797Z #119 exporting manifest list sha256:b2929a1bf268fb6f512ac37abc8b1389ef918a60be11f6004af7b61a4749c0dd 0.2s done
+2026-10-28T15:14:07.1410525Z #119 naming to docker.io/library/travel-agent-aws-student2-frontend:latest 0.1s done
+2026-10-28T15:14:07.1411167Z #119 unpacking to docker.io/library/travel-agent-aws-student2-frontend:latest 0.1s done
+2026-10-28T15:14:07.1411769Z #119 DONE 0.9s
+2026-10-28T15:14:07.1411913Z 
+2026-10-28T15:14:07.1412044Z #120 [student4-frontend] exporting to image
+2026-10-28T15:14:07.1412382Z #120 exporting layers 0.0s done
+2026-10-28T15:14:07.1412922Z #120 exporting manifest sha256:f425f171fa61a96a2d72eade5bcca96c1de579e111708ffd6a4e2b713b1fe071 0.0s done
+2026-10-28T15:14:07.1413729Z #120 exporting config sha256:d79b461cebd43cf78393dcdfe9e6bf873e11519bcb2bebf468265857b9384fd9 0.0s done
+2026-10-28T15:14:07.1414701Z #120 exporting attestation manifest sha256:fb2be6756f88e43370d1873e5136da072e489f329656219c1c187c406de5e0a9 0.3s done
+2026-10-28T15:14:07.1415567Z #120 exporting manifest list sha256:4f4e590b29fba16195b265ad0328acfeaedae6963d15a4b72694368c2cd6daa2 0.2s done
+2026-10-28T15:14:07.1416306Z #120 naming to docker.io/library/travel-agent-aws-student4-frontend:latest 0.1s done
+2026-10-28T15:14:07.1416950Z #120 unpacking to docker.io/library/travel-agent-aws-student4-frontend:latest 0.1s done
+2026-10-28T15:14:07.1417426Z #120 DONE 0.9s
+2026-10-28T15:14:07.1417563Z 
+2026-10-28T15:14:07.1417695Z #121 [student5-frontend] exporting to image
+2026-10-28T15:14:07.1418028Z #121 exporting layers done
+2026-10-28T15:14:07.1418530Z #121 exporting manifest sha256:712963b00414e4da3fc8dd7c612c88358e72ae67071120d3d439b76593b99d50 0.0s done
+2026-10-28T15:14:07.1419273Z #121 exporting config sha256:20798fd262552a71147912a10cfa394ac95055389d32ce725d386c8d53f39e15 0.0s done
+2026-10-28T15:14:07.1420065Z #121 exporting attestation manifest sha256:cb5668e822dbca7e408d042e29512683745ada2052a3e849d447233af46fafa0 0.3s done
+2026-10-28T15:14:07.1421029Z #121 exporting manifest list sha256:53c31fb672f8b8d0663f698fa823c9f4734e5efafe645ff0cc1d1c056e77ca7f 0.2s done
+2026-10-28T15:14:07.1421856Z #121 naming to docker.io/library/travel-agent-aws-student5-frontend:latest 0.1s done
+2026-10-28T15:14:07.1422484Z #121 unpacking to docker.io/library/travel-agent-aws-student5-frontend:latest 0.1s done
+2026-10-28T15:14:07.1422943Z #121 DONE 0.9s
+2026-10-28T15:14:07.1423078Z 
+2026-10-28T15:14:07.1423205Z #122 [student1-database] exporting to image
+2026-10-28T15:14:07.1423526Z #122 exporting layers done
+2026-10-28T15:14:07.1424032Z #122 exporting manifest sha256:3a76e6373335ba0f1a6d55bb9e071861fdbba3d20fe546543e3aeefe8f14de95 0.0s done
+2026-10-28T15:14:07.1424780Z #122 exporting config sha256:58028d6743099071a293d557f018902378ebe017efbdd760f2002cb033d434ee 0.1s done
+2026-10-28T15:14:07.1425570Z #122 exporting attestation manifest sha256:1d3c3188a4f7dc3bdf71f9b83adbd8a7cd7da3c74881ce6f191f1c8c650da210 0.3s done
+2026-10-28T15:14:07.1426408Z #122 exporting manifest list sha256:e5cf880745fc19e8b3bb7f7e5766b674792a46dc67901b4b481b2f3103f2124e 0.2s done
+2026-10-28T15:14:07.1427114Z #122 naming to docker.io/library/travel-agent-aws-student1-database:latest 0.1s done
+2026-10-28T15:14:07.1427728Z #122 unpacking to docker.io/library/travel-agent-aws-student1-database:latest 0.1s done
+2026-10-28T15:14:07.1428186Z #122 DONE 0.9s
+2026-10-28T15:14:07.1428333Z 
+2026-10-28T15:14:07.1428466Z #123 [student5-backend] exporting to image
+2026-10-28T15:14:07.1428792Z #123 exporting layers done
+2026-10-28T15:14:07.1429285Z #123 exporting manifest sha256:8279cf42dadfb8720b75ce1e52e835377a1ee822a88ed73fa51628929e430aa2 0.0s done
+2026-10-28T15:14:07.1430042Z #123 exporting config sha256:d13cc22c46f9cfecac1f118c5649b6ea0413d2a66e7fdb8b92e89966cb582c1a 0.0s done
+2026-10-28T15:14:07.1430843Z #123 exporting attestation manifest sha256:19e15b8baff79949c28bd0283616491b5668bb443632e94acf65f2e80a104ef3 0.3s done
+2026-10-28T15:14:07.1431765Z #123 exporting manifest list sha256:ae08704cce7b4088e86e7c44051323a876015b59024160e59bd521404d761634 0.2s done
+2026-10-28T15:14:07.1432459Z #123 naming to docker.io/library/travel-agent-aws-student5-backend:latest 0.1s done
+2026-10-28T15:14:07.1433073Z #123 unpacking to docker.io/library/travel-agent-aws-student5-backend:latest 0.1s done
+2026-10-28T15:14:07.1433524Z #123 DONE 0.9s
+2026-10-28T15:14:07.1433658Z 
+2026-10-28T15:14:07.1433784Z #124 [student1-backend] exporting to image
+2026-10-28T15:14:07.1434102Z #124 exporting layers done
+2026-10-28T15:14:07.1434607Z #124 exporting manifest sha256:37e6dbf2ef4988d643bb12d15b2dc0f3a93de273843da06922579316ae20b112 0.0s done
+2026-10-28T15:14:07.1435348Z #124 exporting config sha256:bbb3b5f077802df147cdd04f2616e5b6472468960a7701be6d1d34a6808920cf 0.0s done
+2026-10-28T15:14:07.1436142Z #124 exporting attestation manifest sha256:a6931734a58eec614c137647567790aa4a59b3c091f52d45076cb971e0a7b810 0.3s done
+2026-10-28T15:14:07.1437076Z #124 exporting manifest list sha256:5e8c8d9409e9be362b80e605c47e520b2c0ec8dd22a0679666a000787db746ee 0.2s done
+2026-10-28T15:14:07.1437784Z #124 naming to docker.io/library/travel-agent-aws-student1-backend:latest 0.0s done
+2026-10-28T15:14:07.1438398Z #124 unpacking to docker.io/library/travel-agent-aws-student1-backend:latest 0.1s done
+2026-10-28T15:14:07.1438854Z #124 DONE 1.0s
+2026-10-28T15:14:07.1438987Z 
+2026-10-28T15:14:07.1439120Z #114 [student3-database] exporting to image
+2026-10-28T15:14:07.1439599Z #114 unpacking to docker.io/library/travel-agent-aws-student3-database:latest 0.1s done
+2026-10-28T15:14:07.3095855Z #114 DONE 0.9s
+2026-10-28T15:14:07.3096269Z 
+2026-10-28T15:14:07.3096547Z #125 [shared-home] exporting to image
+2026-10-28T15:14:07.3097240Z #125 exporting layers done
+2026-10-28T15:14:07.3098018Z #125 exporting manifest sha256:f1e4d0d7edd5e6fa01b2675711f90a26cbb9a5ac8f3f9d6f9c8fe43cb468f3a1 0.0s done
+2026-10-28T15:14:07.3099169Z #125 exporting config sha256:027f266a7ba811cf613f3060e51b931acbbb29cc96e26f1d1d36ceb95d923d3f 0.0s done
+2026-10-28T15:14:07.3100443Z #125 exporting attestation manifest sha256:bf663dd01f55565628e537470e49f1dc0e6883c6e3eeae504bc0c3abe56d3471 0.3s done
+2026-10-28T15:14:07.3102295Z #125 exporting manifest list sha256:adca97f8b215eeb2e5c8540160604856f5948d24b5f2a0abf31fcbbbc283ab90 0.2s done
+2026-10-28T15:14:07.3103260Z #125 naming to docker.io/library/travel-agent-aws-shared-home:latest 0.0s done
+2026-10-28T15:14:07.3104047Z #125 unpacking to docker.io/library/travel-agent-aws-shared-home:latest 0.1s done
+2026-10-28T15:14:07.3104655Z #125 DONE 1.0s
+2026-10-28T15:14:07.3104842Z 
+2026-10-28T15:14:07.3105014Z #126 [student3-backend] exporting to image
+2026-10-28T15:14:07.3105447Z #126 exporting layers done
+2026-10-28T15:14:07.3106153Z #126 exporting manifest sha256:7cb2b8f9f7213b281509bb19439d3b06209a027e12e5dfe2f95fd3ad7ab97ad4 0.0s done
+2026-10-28T15:14:07.3107211Z #126 exporting config sha256:6f6c8409673349f8b00382f2f4a25a0ca18be66e0ae5dc751abae3811ae0a4e1 0.1s done
+2026-10-28T15:14:07.3108342Z #126 exporting attestation manifest sha256:c6d087d98a65a8ffb95239bd105b1d3aea89ddcf6da1f8ccfed8fd22455c649d 0.2s done
+2026-10-28T15:14:07.3109499Z #126 exporting manifest list sha256:05945203534276a38d3fe96128512640a42636ed78643d4748e7d85cf6e0e82f 0.1s done
+2026-10-28T15:14:07.3110468Z #126 naming to docker.io/library/travel-agent-aws-student3-backend:latest 0.0s done
+2026-10-28T15:14:07.3111206Z #126 unpacking to docker.io/library/travel-agent-aws-student3-backend:latest 0.1s done
+2026-10-28T15:14:07.3111815Z #126 DONE 0.9s
+2026-10-28T15:14:07.3111970Z 
+2026-10-28T15:14:07.3112115Z #127 [student3-frontend] exporting to image
+2026-10-28T15:14:07.3112449Z #127 exporting layers done
+2026-10-28T15:14:07.3112948Z #127 exporting manifest sha256:610fa23a5c2c8042624189916d5e842cf27b0ac0a8801a92ad7082480f0881c6 0.0s done
+2026-10-28T15:14:07.3113705Z #127 exporting config sha256:16a52bad7ebf1ab5d7d48a2eb75eeb0a8d788103c3f35e7dca7d9957b77d8742 0.1s done
+2026-10-28T15:14:07.3114525Z #127 exporting attestation manifest sha256:90575687a2a2179dd6c8b6ad5e5c31d5ada17a0b5e460cdb6ba95b29f6e27f74 0.2s done
+2026-10-28T15:14:07.3115361Z #127 exporting manifest list sha256:45a1ecf8dbdc1a5e1fdb242ad33980f7067965dcd598bbf60406208affa8151c 0.1s done
+2026-10-28T15:14:07.3116081Z #127 naming to docker.io/library/travel-agent-aws-student3-frontend:latest 0.0s done
+2026-10-28T15:14:07.3116710Z #127 unpacking to docker.io/library/travel-agent-aws-student3-frontend:latest 0.1s done
+2026-10-28T15:14:07.3117181Z #127 DONE 0.9s
+2026-10-28T15:14:07.7574803Z 
+2026-10-28T15:14:07.7575617Z #128 [student4-backend] resolving provenance for metadata file
+2026-10-28T15:14:08.2376501Z #128 DONE 0.5s
+2026-10-28T15:14:08.2376793Z 
+2026-10-28T15:14:08.2377218Z #129 [student4-database] resolving provenance for metadata file
+2026-10-28T15:14:08.2377909Z #129 DONE 0.5s
+2026-10-28T15:14:08.2378144Z 
+2026-10-28T15:14:08.2378485Z #130 [student2-database] resolving provenance for metadata file
+2026-10-28T15:14:08.2379120Z #130 DONE 0.3s
+2026-10-28T15:14:08.2379339Z 
+2026-10-28T15:14:08.2380100Z #131 [student2-backend] resolving provenance for metadata file
+2026-10-28T15:14:08.2380733Z #131 DONE 0.4s
+2026-10-28T15:14:08.2380952Z 
+2026-10-28T15:14:08.2381259Z #132 [student1-frontend] resolving provenance for metadata file
+2026-10-28T15:14:08.2382197Z #132 DONE 0.5s
+2026-10-28T15:14:08.2382422Z 
+2026-10-28T15:14:08.2382722Z #133 [student5-frontend] resolving provenance for metadata file
+2026-10-28T15:14:08.2383333Z #133 DONE 0.5s
+2026-10-28T15:14:08.2383549Z 
+2026-10-28T15:14:08.2383842Z #134 [student2-frontend] resolving provenance for metadata file
+2026-10-28T15:14:08.2384448Z #134 DONE 0.3s
+2026-10-28T15:14:08.2384657Z 
+2026-10-28T15:14:08.2384948Z #135 [student3-database] resolving provenance for metadata file
+2026-10-28T15:14:08.2602135Z #135 DONE 0.0s
+2026-10-28T15:14:08.2602532Z 
+2026-10-28T15:14:08.2603029Z #136 [student3-backend] resolving provenance for metadata file
+2026-10-28T15:14:08.2604069Z #136 DONE 0.5s
+2026-10-28T15:14:08.2604296Z 
+2026-10-28T15:14:08.2604614Z #137 [student5-database] resolving provenance for metadata file
+2026-10-28T15:14:08.2605579Z #137 DONE 0.4s
+2026-10-28T15:14:08.2605799Z 
+2026-10-28T15:14:08.2606100Z #138 [student5-backend] resolving provenance for metadata file
+2026-10-28T15:14:08.2606712Z #138 DONE 0.1s
+2026-10-28T15:14:08.2606923Z 
+2026-10-28T15:14:08.2607231Z #139 [student1-database] resolving provenance for metadata file
+2026-10-28T15:14:08.2607844Z #139 DONE 0.2s
+2026-10-28T15:14:08.2608057Z 
+2026-10-28T15:14:08.2608356Z #140 [student4-frontend] resolving provenance for metadata file
+2026-10-28T15:14:08.2608964Z #140 DONE 0.3s
+2026-10-28T15:14:08.2609175Z 
+2026-10-28T15:14:08.2609491Z #141 [student1-backend] resolving provenance for metadata file
+2026-10-28T15:14:08.2610096Z #141 DONE 0.1s
+2026-10-28T15:14:08.2610306Z 
+2026-10-28T15:14:08.2610580Z #142 [shared-home] resolving provenance for metadata file
+2026-10-28T15:14:08.2611161Z #142 DONE 0.2s
+2026-10-28T15:14:08.2611378Z 
+2026-10-28T15:14:08.2611914Z #143 [student3-frontend] resolving provenance for metadata file
+2026-10-28T15:14:08.2612582Z #143 DONE 0.1s
+2026-10-28T15:14:08.2808698Z  Image travel-agent-aws-student2-frontend Built 
+2026-10-28T15:14:08.2996849Z  Image travel-agent-aws-student1-frontend Built 
+2026-10-28T15:14:08.3178430Z  Image travel-agent-aws-student5-backend Built 
+2026-10-28T15:14:08.3365507Z  Image travel-agent-aws-student4-database Built 
+2026-10-28T15:14:08.3553944Z  Image travel-agent-aws-student3-backend Built 
+2026-10-28T15:14:08.3757326Z  Image travel-agent-aws-student2-database Built 
+2026-10-28T15:14:08.3944464Z  Image travel-agent-aws-student5-database Built 
+2026-10-28T15:14:08.4117055Z  Image travel-agent-aws-student5-frontend Built 
+2026-10-28T15:14:08.4408066Z  Image travel-agent-aws-student2-backend Built 
+2026-10-28T15:14:08.4496943Z  Image travel-agent-aws-student4-backend Built 
+2026-10-28T15:14:08.4669814Z  Image travel-agent-aws-shared-home Built 
+2026-10-28T15:14:08.4847961Z  Image travel-agent-aws-student1-backend Built 
+2026-10-28T15:14:08.5023495Z  Image travel-agent-aws-student3-database Built 
+2026-10-28T15:14:08.5212707Z  Image travel-agent-aws-student4-frontend Built 
+2026-10-28T15:14:08.5407510Z  Image travel-agent-aws-student3-frontend Built 
+2026-10-28T15:14:08.5626343Z  Image travel-agent-aws-student1-database Built 
+2026-10-28T15:14:08.5811195Z UTC: 2026-10-28T15:14:08Z
+2026-10-28T15:14:08.5819023Z 41eda947da0c40a86d8303e6701daad4c316ca52
+2026-10-28T15:14:08.8647385Z  Container travel-agent-aws-student5-backend-1 Running 
+2026-10-28T15:14:08.8648353Z  Container travel-agent-aws-student3-database-1 Running 
+2026-10-28T15:14:08.8653211Z  Container travel-agent-aws-student3-backend-1 Running 
+2026-10-28T15:14:08.8654653Z  Container travel-agent-aws-student3-frontend-1 Running 
+2026-10-28T15:14:08.8656049Z  Container travel-agent-aws-student1-frontend-1 Running 
+2026-10-28T15:14:08.8657422Z  Container travel-agent-aws-student4-frontend-1 Running 
+2026-10-28T15:14:08.8658512Z  Container travel-agent-aws-student2-frontend-1 Running 
+2026-10-28T15:14:08.8659654Z  Container travel-agent-aws-student2-backend-1 Running 
+2026-10-28T15:14:08.8660376Z  Container travel-agent-aws-student1-database-1 Running 
+2026-10-28T15:14:08.8661087Z  Container travel-agent-aws-student1-backend-1 Running 
+2026-10-28T15:14:08.8662028Z  Container travel-agent-aws-student4-database-1 Running 
+2026-10-28T15:14:08.8662745Z  Container travel-agent-aws-student5-database-1 Running 
+2026-10-28T15:14:08.8663453Z  Container travel-agent-aws-student2-database-1 Running 
+2026-10-28T15:14:08.8664174Z  Container travel-agent-aws-student4-backend-1 Running 
+2026-10-28T15:14:08.8664876Z  Container travel-agent-aws-student5-frontend-1 Running 
+2026-10-28T15:14:08.8665557Z  Container travel-agent-aws-shared-home-1 Running 
+2026-10-28T15:14:08.9218280Z UTC: 2026-10-28T15:14:08Z
+2026-10-28T15:14:08.9226685Z 41eda947da0c40a86d8303e6701daad4c316ca52
+2026-10-28T15:14:09.1012690Z NAME                                   IMAGE                                                                     COMMAND                  SERVICE             CREATED        STATUS        PORTS
+2026-10-28T15:14:09.1015375Z travel-agent-aws-shared-home-1         sha256:dc1050ea5a61cfd57453a19066f9da9f59e78ce9d596b27c5789b842d8870eca   "python app.py"          shared-home         3 hours ago    Up 3 hours    127.0.0.1:8080->5003/tcp
+2026-10-28T15:14:09.1018125Z travel-agent-aws-student1-backend-1    sha256:76ab0b083a9d1c732131277c96c7adb5a11bef56b5e7844d6ce3795ad7392963   "python app.py"          student1-backend    3 hours ago    Up 3 hours    5001/tcp
+2026-10-28T15:14:09.1021358Z travel-agent-aws-student1-database-1   sha256:c2fbc7bc249c1df9853fc86132f8150a1efdcdb2cc36d28802c8f17166440dbe   "python /deployment/…"   student1-database   3 hours ago    Up 3 hours    6001/tcp
+2026-10-28T15:14:09.1024538Z travel-agent-aws-student1-frontend-1   sha256:cbc4a09706b0350de11749b1ad704e6999e1e8f68ce2e490a205d61a3dab2a51   "python app.py"          student1-frontend   3 hours ago    Up 3 hours    127.0.0.1:3001->3001/tcp
+2026-10-28T15:14:09.1026827Z travel-agent-aws-student2-backend-1    sha256:6baf9a9041ce8f41e923fb1e06fa86c11c4dc314a96666580f0ee0091d6fc4e4   "python app.py"          student2-backend    3 hours ago    Up 3 hours    5001/tcp
+2026-10-28T15:14:09.1029234Z travel-agent-aws-student2-database-1   sha256:1d03c2b6837164fa1e9c0fc70901df61603609a1af7a05f6a77c6d322ee87435   "python /deployment/…"   student2-database   3 hours ago    Up 3 hours    5000/tcp
+2026-10-28T15:14:09.1031463Z travel-agent-aws-student2-frontend-1   sha256:df6f90da1178dadc57f17ca00a1e51ec18ab174b5b9414067f3b80145f9dabdd   "python app.py"          student2-frontend   3 hours ago    Up 3 hours    127.0.0.1:3002->5002/tcp
+2026-10-28T15:14:09.1034060Z travel-agent-aws-student3-backend-1    sha256:1a320564fbd4a46f4883278dbd12e3f9f20e7048bfd03834362f292a9b27e3f1   "gunicorn --bind 0.0…"   student3-backend    3 hours ago    Up 3 hours    5003/tcp
+2026-10-28T15:14:09.1036232Z travel-agent-aws-student3-database-1   sha256:052da387bd2ffca5afbbb35609151712a0c74affc80fad689abb0c94bc312abb   "python /deployment/…"   student3-database   3 hours ago    Up 3 hours    6003/tcp
+2026-10-28T15:14:09.1038492Z travel-agent-aws-student3-frontend-1   sha256:7084cd3ad8889d57e882dfd3aa021667fb19602b9b5c277d5bb77b64220a7b51   "gunicorn --bind 0.0…"   student3-frontend   3 hours ago    Up 3 hours    127.0.0.1:3003->3003/tcp
+2026-10-28T15:14:09.1041231Z travel-agent-aws-student4-backend-1    sha256:244ecc2ea2efd279f5ec600534d15c48920fa34cfef2665703235244b32adf4b   "docker-entrypoint.s…"   student4-backend    15 hours ago   Up 15 hours   127.0.0.1:5004->5001/tcp
+2026-10-28T15:14:09.1043820Z travel-agent-aws-student4-database-1   sha256:ea0cc4c8cca55c8ec1a3face3f1fe019c7e19906f5952b4a9436c7d892bef75d   "docker-entrypoint.s…"   student4-database   5 days ago     Up 5 days     5002/tcp
+2026-10-28T15:14:09.1045779Z travel-agent-aws-student4-frontend-1   sha256:4128c1703b81c07f00e32c12db4a28eb64f7719e904f895db4e11db6f50e4667   "/docker-entrypoint.…"   student4-frontend   5 days ago     Up 5 days     127.0.0.1:3004->80/tcp
+2026-10-28T15:14:09.1047707Z travel-agent-aws-student5-backend-1    sha256:013c5a2b8169bd596af00db1ca87fd1366dd532f79aa276ecbc06bb02f2d3972   "python app.py"          student5-backend    3 hours ago    Up 3 hours    5505/tcp
+2026-10-28T15:14:09.1049371Z travel-agent-aws-student5-database-1   sha256:6085e2de6c892570d4c1268aff64a7567cf94908c0d0b6c490bc5aa997d720cc   "python app.py"          student5-database   3 hours ago    Up 3 hours    5405/tcp
+2026-10-28T15:14:09.1051081Z travel-agent-aws-student5-frontend-1   sha256:0212d17655920d2f78a95e99bc8cface9048d3f105d499f26afa426f476f9ad8   "python app.py"          student5-frontend   3 hours ago    Up 3 hours    127.0.0.1:8505->8505/tcp
+2026-10-28T15:14:09.1198590Z PASS HTTP response: http://127.0.0.1:8080/
+2026-10-28T15:14:09.1257258Z PASS HTTP response: http://127.0.0.1:3001/
+2026-10-28T15:14:09.1493791Z PASS HTTP response: http://127.0.0.1:3002/booking
+2026-10-28T15:14:09.1558200Z PASS HTTP response: http://127.0.0.1:3003/
+2026-10-28T15:14:09.1607041Z PASS HTTP response: http://127.0.0.1:3004/
+2026-10-28T15:14:09.1659569Z PASS HTTP response: http://127.0.0.1:8505/
+2026-10-28T15:14:09.1748438Z PASS HTTP response: http://127.0.0.1:5004/api/saved_itineraries
+2026-10-28T15:14:09.1749834Z Reachability checks only; CRUD, database persistence, and AI-disable checks remain required.
+2026-10-28T15:14:09.1844498Z ##[group]Run {
+2026-10-28T15:14:09.1844844Z [36;1m{[0m
+2026-10-28T15:14:09.1845140Z [36;1m  echo '## AWS EC2 deployment'[0m
+2026-10-28T15:14:09.1845536Z [36;1m  echo "- Commit: \`$GITHUB_SHA\`"[0m
+2026-10-28T15:14:09.1845933Z [36;1m  echo "- Outcome: \`success\`"[0m
+2026-10-28T15:14:09.1846452Z [36;1m  echo '- Smoke checks are reachability checks, not full CRUD validation.'[0m
+2026-10-28T15:14:09.1846982Z [36;1m} >> "$GITHUB_STEP_SUMMARY"[0m
+2026-10-28T15:14:09.1868239Z shell: /usr/bin/bash -e {0}
+2026-10-28T15:14:09.1868598Z ##[endgroup]
+2026-10-28T15:14:09.2099522Z Post job cleanup.
+2026-10-28T15:14:09.2791170Z ##[group]Cleaning up Tailscale
+2026-10-28T15:14:09.2794647Z 🔄 Logging out of Tailscale...
+2026-10-28T15:14:09.2984751Z Running: sudo -E tailscale logout
+2026-10-28T15:14:09.5776004Z ✅ Successfully logged out of Tailscale
+2026-10-28T15:14:09.5776755Z Stopping tailscale
+2026-10-28T15:14:09.7339375Z ✅ Stopped tailscale
+2026-10-28T15:14:09.7340670Z ##[endgroup]
+2026-10-28T15:14:09.7485504Z Cleaning up orphan processes
