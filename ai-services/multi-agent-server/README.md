@@ -198,7 +198,7 @@ From the repository root, start Ollama with the configured models, then run:
 node ai-services/multi-agent-server/server.js
 ```
 
-The service listens on `127.0.0.1:7010` by default. Set `MULTI_AGENT_HOST=0.0.0.0` when a Docker-hosted backend needs to reach it, and set the backend's `MULTI_AGENT_SERVICE_URL` to the host address.
+The service listens on `0.0.0.0:7010` by default so Docker-hosted Student 5 can reach it at `host.docker.internal:7010`. Set `MULTI_AGENT_HOST=127.0.0.1` to restrict the service to local host clients. Student 5's Compose configuration already points `MULTI_AGENT_SERVICE_URL` at `host.docker.internal:7010`.
 
 ## API
 

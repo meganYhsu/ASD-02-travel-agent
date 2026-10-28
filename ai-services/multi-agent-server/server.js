@@ -5,7 +5,7 @@
 const http = require("node:http");
 const { randomUUID } = require("node:crypto");
 
-const HOST = process.env.MULTI_AGENT_HOST || "127.0.0.1";
+const HOST = process.env.MULTI_AGENT_HOST || "0.0.0.0";
 const PORT = Number(process.env.MULTI_AGENT_PORT || 7010);
 const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434/v1").replace(/\/$/, "");
 const PLANNER_MODEL = process.env.PLANNER_MODEL || process.env.OLLAMA_MODEL || "qwen2.5:0.5b";
