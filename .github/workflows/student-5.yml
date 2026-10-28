@@ -48,4 +48,6 @@ jobs:
         run: docker build -t student-5-frontend ./frontend
 
       - name: Verify Docker Compose configuration includes Student-5
-        run: docker compose -f ../docker-compose.yml config >/dev/null
+        env:
+          FLASK_SECRET_KEY: ci-validation-placeholder
+        run: docker compose -f ../docker-compose.yml config --quiet
