@@ -1,0 +1,117 @@
+{
+  "service": "student-3 Budget & Expense Tracking",
+  "frontend": "http://127.0.0.1:3003",
+  "run_at": "2026-10-28T07:41:42+00:00",
+  "expect_ai": "off",
+  "ai_flags": {
+    "ai_mode_enabled": false,
+    "mcp_enabled": false,
+    "rag_enabled": false,
+    "multi_agent_enabled": false
+  },
+  "passed": 14,
+  "total": 14,
+  "average_response_ms": 71.9,
+  "successful_requests": 5,
+  "failed_requests": 0,
+  "checks": [
+    {
+      "group": "availability",
+      "check": "frontend page",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 46.7
+    },
+    {
+      "group": "availability",
+      "check": "frontend /health",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 60.7
+    },
+    {
+      "group": "communication",
+      "check": "frontend -> backend /health",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 106.3
+    },
+    {
+      "group": "communication",
+      "check": "backend -> database (dashboard)",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 115.8
+    },
+    {
+      "group": "crud",
+      "check": "create expense",
+      "passed": true,
+      "detail": "HTTP 200, row found: True",
+      "ms": 89.3
+    },
+    {
+      "group": "crud",
+      "check": "read expense on dashboard",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 30.0
+    },
+    {
+      "group": "crud",
+      "check": "update expense",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 47.5
+    },
+    {
+      "group": "crud",
+      "check": "delete expense",
+      "passed": true,
+      "detail": "HTTP 200",
+      "ms": 41.1
+    },
+    {
+      "group": "ai-baseline",
+      "check": "backend reports all AI flags off",
+      "passed": true,
+      "detail": "{\"ai_mode_enabled\": false, \"mcp_enabled\": false, \"rag_enabled\": false, \"multi_agent_enabled\": false}",
+      "ms": null
+    },
+    {
+      "group": "ai-baseline",
+      "check": "AI-Mode disabled (503)",
+      "passed": true,
+      "detail": "HTTP 503",
+      "ms": 121.2
+    },
+    {
+      "group": "ai-baseline",
+      "check": "MCP disabled (503)",
+      "passed": true,
+      "detail": "HTTP 503",
+      "ms": 41.5
+    },
+    {
+      "group": "ai-baseline",
+      "check": "RAG disabled (503)",
+      "passed": true,
+      "detail": "HTTP 503",
+      "ms": 44.5
+    },
+    {
+      "group": "ai-baseline",
+      "check": "Multi-Agent disabled (503)",
+      "passed": true,
+      "detail": "HTTP 503",
+      "ms": 32.2
+    },
+    {
+      "group": "performance",
+      "check": "5/5 dashboard requests succeeded",
+      "passed": true,
+      "detail": "0 failed",
+      "ms": 71.9
+    }
+  ]
+}
