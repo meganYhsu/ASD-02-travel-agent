@@ -18,6 +18,16 @@ Shared assistant flow: User -> Travel Assistant tab -> Flask API -> shared RAG s
 
 MCP flow: Travel Assistant tab -> Student 5 Flask API -> shared MCP HTTP server (port 7004) -> registered travel tool -> structured result
 
+Multi-Agent flow: Student-5 Multi-Agent Review tab -> Student-5 Flask API -> shared non-containerised Multi-Agent Server (port 7010) -> Planner -> Worker -> Reviewer -> human decision. Workflow state is held in server memory; shared-loop review records are written under `ai-services/ai-mode/reviews/<student>`.
+
+Development validation flow: the shared agentic loop gathers service evidence and calls the shared Planner/Worker/Reviewer server. Run it from the repository root after starting the services:
+
+```bash
+node ai-services/ai-mode/agents/agenticLoop.js --student student-5 --task "Validate Student 5 Travel Preparation & Compliance" --mode all
+```
+
+The loop asks for a human decision and records the review under `ai-services/ai-mode/reviews/student-5`. Start Ollama, the shared Multi-Agent Server, and shared RAG/MCP services first. The Student 5 MCP feature check calls the itinerary activity tool, so Student 4's database service must also be available. `--mode base`, `--mode mcp`, `--mode rag` and `--mode all` select service validation; `--review-mode workflow` selects Multi-Agent Workflow Review. Testing and cloud deployment report reviews use `--review-mode testing_report --report-file <path>` and `--review-mode cloud_deployment_report --report-file <path>`.
+
 The frontend never queries SQLite. SQL lives in `database/db.py` and uses parameterised queries.
 
 ## Frontend
@@ -65,6 +75,8 @@ SQLite tables and seed counts:
 - POST `/api/ai/generate-pretrip-checklist`
 - POST `/api/ai/save-pretrip-checklist`
 - POST `/api/ai/assistant`
+- POST `/api/multi-agent/workflows` with `{ "task": "...", "evidence": "...", "review_mode": "workflow|testing_report|cloud_deployment_report" }`
+- POST `/api/multi-agent/workflows/<workflow_id>/review` with `{ "decision": "Accept|Partially Accept|Reject", "note": "..." }`
 - GET `/api/mcp/tools`
 - POST `/api/mcp/tool` with `{ "tool_name": "...", "arguments": {} }`
 - POST `/api/alerts/compliance`
@@ -111,6 +123,9 @@ python student-5/frontend/app.py
 # terminal 4 (shared MCP server)
 set MCP_HOST=127.0.0.1
 python ai-services/mcp-server/http_server.py
+
+# terminal 5 (shared non-containerised Multi-Agent Server)
+node ai-services/multi-agent-server/server.js
 ```
 
 - UI: http://localhost:8505
@@ -157,12 +172,14 @@ docker compose up --build
 
 Then open http://localhost:8505 or the homepage at http://localhost:8080.
 
-The Student 5 container connects to the shared MCP server on the host at port 7004. Start it before using MCP;
-for Docker access it must listen on all interfaces:
+The Student 5 container connects to shared host services. For Docker access, start MCP and the Multi-Agent Server listening on all interfaces:
 
 ```
 set MCP_HOST=0.0.0.0
 python ai-services/mcp-server/http_server.py
+
+set MULTI_AGENT_HOST=0.0.0.0
+node ai-services/multi-agent-server/server.js
 ```
 
 ```
@@ -183,6 +200,8 @@ docker compose exec ollama ollama pull qwen2.5:3b
 - `MCP_SERVICE_URL` Shared MCP server, default `http://127.0.0.1:7004`
 - `MCP_TIMEOUT_SECONDS` Shared MCP request timeout
 - `MCP_ENABLED` Set to `false` to disable MCP
+- `MULTI_AGENT_SERVICE_URL` Shared Multi-Agent Server URL, default `http://127.0.0.1:7010`
+- `MULTI_AGENT_TIMEOUT_SECONDS` Multi-Agent request timeout
 
 ## Known limitations
 
