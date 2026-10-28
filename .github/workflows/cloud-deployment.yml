@@ -1,0 +1,115 @@
+
+name: Cloud Deployment - AWS EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-deployment-aws-staging
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate deployment files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Validate Compose configuration
+        run: docker compose -f deployment/aws/compose.yaml config --quiet
+
+      - name: Check Bash scripts
+        run: |
+          bash -n deployment/aws/deploy.sh
+          bash -n deployment/aws/smoke.sh
+          bash -n deployment/aws/tunnel.sh
+
+      - name: Test SQLite helper
+        run: python3 -m unittest discover -s deployment/aws -p 'test_sqlite_entrypoint.py' -v
+
+  deploy:
+    name: Deploy approved main commit to EC2
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: aws-staging
+    timeout-minutes: 40
+
+    steps:
+      - name: Configure SSH for EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_DEPLOY_SSH_KEY }}   
+          SSH_KNOWN_HOSTS: ${{ secrets.EC2_SSH_KNOWN_HOSTS }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_REPO_PATH: ${{ secrets.EC2_REPO_PATH }}
+        run: |
+          set -euo pipefail
+          for name in SSH_PRIVATE_KEY SSH_KNOWN_HOSTS EC2_HOST EC2_USER EC2_REPO_PATH; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing deployment setting: $name" >&2
+              exit 1
+            fi
+          done
+
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_deploy"
+          chmod 600 "$HOME/.ssh/id_deploy"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Deploy exact commit and run smoke checks on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_REPO_PATH: ${{ secrets.EC2_REPO_PATH }}
+        run: |
+          set -euo pipefail
+          printf -v sha_arg '%q' "$GITHUB_SHA"
+          printf -v path_arg '%q' "$EC2_REPO_PATH"
+
+          ssh -i "$HOME/.ssh/id_deploy" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 \
+            "$EC2_USER@$EC2_HOST" \
+            "bash -se -- $sha_arg $path_arg" <<'REMOTE'
+          set -euo pipefail
+
+          commit="$1"
+          repo="$2"
+          cd "$repo"
+
+          if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+            echo 'EC2 repository has local tracked changes; refusing deployment' >&2
+            exit 1
+          fi
+
+          git fetch origin main
+          git cat-file -e "$commit^{commit}"
+          git checkout --detach "$commit"
+
+          sudo -n bash deployment/aws/deploy.sh validate
+          sudo -n bash deployment/aws/deploy.sh build
+          sudo -n bash deployment/aws/deploy.sh start
+          sudo -n bash deployment/aws/deploy.sh status
+          sudo -n bash deployment/aws/smoke.sh
+          REMOTE
+
+      - name: Summarize deployment
+        if: always()
+        run: |
+          {
+            echo '## AWS EC2 deployment'
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Outcome: \`${{ job.status }}\`"
+            echo '- Smoke checks are reachability checks, not full CRUD validation.'
+          } >> "$GITHUB_STEP_SUMMARY"
