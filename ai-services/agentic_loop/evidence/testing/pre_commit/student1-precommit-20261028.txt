@@ -1,0 +1,68 @@
+# pre-commit run --files $(git ls-files student-1)   on branch student-1-release2 (089a213, dev + kyu), 2026-10-28T08:19:10Z
+# SKIP=npm-audit-student4-backend,npm-audit-student4-database,npm-audit-student4-frontend (npm not installed on this machine; Student 4 hooks, not Student 1)
+Student 2 - Ruff Security Scan.......................(no files to check)Skipped
+- hook id: student-2-ruff-security
+Detect Secrets - Shared Repository.......................................Passed
+- hook id: detect-secrets
+- duration: 0.29s
+Student 2 - Backend Dependency Audit.....................................Passed
+- hook id: student-2-pip-audit-backend
+- duration: 3.38s
+
+No known vulnerabilities found
+
+Student 2 - Database Dependency Audit....................................Passed
+- hook id: student-2-pip-audit-database
+- duration: 2.78s
+
+No known vulnerabilities found
+
+Student 2 - Frontend Dependency Audit....................................Passed
+- hook id: student-2-pip-audit-frontend
+- duration: 2.88s
+
+No known vulnerabilities found
+
+Ruff Security - Shared AI Services...................(no files to check)Skipped
+- hook id: ruff-security
+Audit Shared Multi-Agent Dependencies................(no files to check)Skipped
+- hook id: pip-audit-multi-agent
+Audit Shared MCP Dependencies........................(no files to check)Skipped
+- hook id: pip-audit-mcp
+Audit Shared Local RAG Dependencies..................(no files to check)Skipped
+- hook id: pip-audit-rag
+Audit Student 4 Backend Dependencies....................................Skipped
+- hook id: npm-audit-student4-backend
+Audit Student 4 Database Dependencies...................................Skipped
+- hook id: npm-audit-student4-database
+Audit Student 4 Frontend Dependencies...................................Skipped
+- hook id: npm-audit-student4-frontend
+Ruff security rules for Student 3....................(no files to check)Skipped
+- hook id: ruff-security-student3
+Audit Student 3 Python dependencies..................(no files to check)Skipped
+- hook id: pip-audit-student3
+Student 3 Release 2 endpoint tests...................(no files to check)Skipped
+- hook id: pytest-student3
+Ruff security rules for Student 1........................................Passed
+- hook id: ruff-security-student1
+- duration: 0.05s
+
+All checks passed!
+All checks passed!
+All checks passed!
+All checks passed!
+
+Audit Student 1 Python dependencies......................................Passed
+- hook id: pip-audit-student1
+- duration: 3.26s
+
+No known vulnerabilities found
+
+Student 1 Release 2 endpoint tests.......................................Passed
+- hook id: pytest-student1
+- duration: 0.7s
+
+.............................................                            [100%]
+45 passed in 0.40s
+
+exit 0
