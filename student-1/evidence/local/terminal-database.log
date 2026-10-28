@@ -1,0 +1,59 @@
+ * Serving Flask app 'db_api'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:6001
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [22/Oct/2026 17:47:09] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:16] "GET /preference-set/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:27] "GET /preference-set/2 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[35m[1mPOST /travelers HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/11 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "PUT /travelers/11 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/11 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[35m[1mPOST /interests HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/11 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/11 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "DELETE /travelers/11 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[33mGET /preference-set/11 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[35m[1mPOST /travelers HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "PUT /travelers/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[35m[1mPOST /interests HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /preference-set/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "DELETE /travelers/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[33mGET /preference-set/12 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /travelers/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preferences/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /interests?traveler_id=1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /accessibility-needs?traveler_id=1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preference-set/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[31m[1mPOST /travelers HTTP/1.1[0m" 400 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[31m[1mPOST /travelers HTTP/1.1[0m" 400 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[31m[1mPOST /travelers HTTP/1.1[0m" 400 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[31m[1mPOST /preferences HTTP/1.1[0m" 400 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[31m[1mPOST /interests HTTP/1.1[0m" 400 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[33mGET /travelers/9999 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preference-set/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preference-set/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[35m[1mPOST /travelers HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /travelers/13 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "PUT /travelers/13 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /travelers/13 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[35m[1mPOST /preferences HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[35m[1mPOST /preferences HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[35m[1mPOST /interests HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "PUT /interests/17 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[35m[1mPOST /accessibility-needs HTTP/1.1[0m" 201 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preference-set/13 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "DELETE /travelers/13 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[33mGET /travelers/13 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "[33mGET /interests/17 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preference-set/1 HTTP/1.1" 200 -

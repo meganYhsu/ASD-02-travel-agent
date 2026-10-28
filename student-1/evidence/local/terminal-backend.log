@@ -1,0 +1,28 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /multi-agent/lookup?workflow_id=2419b4d5-1ab4-4e6f-af02-022f85d9b0f5 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "POST /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "POST /travelers/12/update HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "POST /interests HTTP/1.1" 200 -
+[AGENTIC LOOP][PLAN] Check whether traveler 12 is ready for trip planning.
+[AGENTIC LOOP][ACT] Deterministic check scored 60% with 2 gap(s).
+[AGENTIC LOOP][OBSERVE] Model explained the gaps to the traveller.
+[AGENTIC LOOP][ADAPT] Reported to the traveller: Not ready for trip planning yet.
+127.0.0.1 - - [22/Oct/2026 17:47:56] "POST /completeness/12 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "POST /travelers/12/delete HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:47:56] "[33mGET /profile/12 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /profile/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /travelers HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /preference-set/1 HTTP/1.1" 200 -
+127.0.0.1 - - [22/Oct/2026 17:48:05] "GET /health HTTP/1.1" 200 -
+[AGENTIC LOOP][PLAN] Summarise traveler 1: need profile, budget, interests and accessibility needs from the database API.
+[AGENTIC LOOP][ACT] Retrieved profile for Traveller One from Sydney, Australia; calling qwen2.5:0.5b for the structured preference set.
+[AGENTIC LOOP][OBSERVE] Model returned 176 characters; issues found: 0
+[AGENTIC LOOP][ADAPT] Answer accepted on the first attempt, no retry needed.
+127.0.0.1 - - [22/Oct/2026 17:48:05] "POST /summarise HTTP/1.1" 200 -

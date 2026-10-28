@@ -9,7 +9,8 @@ conn = sqlite3.connect(DB_PATH)
 tables = ["Travelers", "Preferences", "Interests", "AccessibilityNeeds"]
 
 for table in tables:
-    count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    # Table names come from the fixed list above, never from input.
+    count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]  # noqa: S608
     print(table, count, "records")
     if count < 10:
         print("FAIL:", table, "needs at least 10 records")

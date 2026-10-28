@@ -177,6 +177,49 @@ switches it off; CI does this, and the route answers `503 RAG is disabled`.
 Example questions: "What dietary restriction does Traveller One have?",
 "Which travellers have a luxury travel style?"
 
+## Multi-Agent preference review (Release 2)
+
+Frontend -> backend -> shared Multi-Agent server (`ai-services/multi-agent-server`,
+port 6767, not containerised) -> Planner -> Worker -> Reviewer -> Human Review.
+
+The backend sends the selected traveller's preference set (profile without
+the email address, budget and pace, interests, accessibility needs, and the
+deterministic completeness verdict) as `service=traveller`,
+`task=review_preferences`. The Planner decides what to check, the Worker
+reviews the profile and writes a trip-planning brief, and the Reviewer checks
+that brief against the evidence. The person using the page then records
+**Accept**, **Partially Accept** or **Reject** with a reason or correction of
+at least 20 characters. The shared server saves the decision; it never
+changes the traveller's data.
+
+| Backend route | Purpose |
+|---|---|
+| `POST /multi-agent/workflow` | `traveler_id`, optional `user_request` (max 500 chars). Runs the workflow, returns the four stages as HTML. |
+| `GET /multi-agent/workflows/<id>` and `GET /multi-agent/lookup?workflow_id=<id>` | Reload a saved workflow with its latest decision. |
+| `POST /multi-agent/workflows/<id>/review` | `decision`, `reason`, optional `evidence`. Records the human decision. |
+| `GET /multi-agent/evidence/<traveler_id>` | The JSON body sent to the shared server (used by the terminal client). |
+
+Workflow IDs must be UUIDs, and only workflows with this feature's service and
+task are shown or reviewed, because the shared server keeps every student's
+history together.
+
+From the terminal (backend and shared server running):
+
+```bash
+python student-1/tools/preferences_review_cli.py --traveler-id 1
+```
+
+It prints each stage, prompts for the human decision, and can save the
+result with `--save`. Pass `--decision` and `--reason` to run it without prompts.
+
+### AI switches
+
+`AI_MODE_ENABLED`, `MCP_ENABLED`, `RAG_ENABLED` and `MULTI_AGENT_ENABLED` are
+**off unless set to `true`**, so CI and the AWS deployment run the cloud
+baseline with no extra configuration. `docker-compose.yml` and
+`.env.example` turn them on for local runs. With them off, the AI routes
+answer 503 and the completeness score still works without the AI explanation.
+
 ## Running it
 
 As part of the integrated application, from the repository root:
@@ -194,7 +237,12 @@ Pull the model once, into the shared Ollama container:
 docker compose exec ollama ollama pull qwen2.5:0.5b
 ```
 
-Locally without Docker (three terminals, from `student-1/`):
+Start the shared AI services on the host first (each in its own terminal):
+the MCP server, the RAG server, and the Multi-Agent server
+(`python ai-services/multi-agent-server/app.py`).
+
+Locally without Docker (three terminals, from `student-1/`, after
+`cp .env.example .env` so the AI switches are on):
 
 ```bash
 python database/db_api.py
@@ -204,16 +252,51 @@ python frontend/app.py
 
 ## Tests
 
+Release 2 pytest suites (no servers needed; the backend and database API run
+in-process and the Multi-Agent server is stubbed):
+
+```bash
+cd student-1
+python -m pytest -v
+```
+
+| Suite | What it covers |
+|---|---|
+| `test_release2_endpoints.py` | **The two post-commit endpoint functions:** `POST /travelers` (`add_traveler`) and `POST /travelers/<id>/update` (`update_traveler`). Success, persistence, validation, duplicate email, unknown ID, HTML escaping, database down. |
+| `test_release2_multi_agent.py` | Evidence sent to the shared server, the four stages rendered, human-review validation and recording, foreign or malformed workflow IDs, server down. |
+| `test_release2_cloud_ready.py` | AI switches default to off, AI routes refuse with 503, CRUD and health still work, configurable navigation URL. |
+
+Live-server scripts (database API and backend running):
+
 ```bash
 python tests/check_seed.py        # every table has at least 10 records
 python tests/test_endpoints.py    # 16 endpoint and validation checks
 python tests/test_crud_cycle.py   # 12 checks: create -> read -> update -> delete -> cascade
 python tests/test_mcp.py          # MCP boundaries, plus tool results (or the disabled response)
 python tests/test_rag.py          # RAG input checks, grounded + insufficient-context answers (or disabled)
+python tests/cloud_smoke.py --frontend http://127.0.0.1:3001   # deployment smoke test
 ```
 
-`.github/workflows/student-1.yml` runs all five on every push, with
-`MCP_ENABLED=false` and `RAG_ENABLED=false`, then builds the three Docker images.
+`.github/workflows/student-1.yml` runs on every push to `student-1/**` with
+every AI switch off. It runs pip-audit, the seed check, the two endpoint
+suites (JUnit XML uploaded as the `student-1-test-results` artifact), the
+Multi-Agent and cloud-baseline suites, and the live scripts. It then builds
+the three images and runs them on a Docker network the way ECS does, smoke
+testing them through the frontend.
+
+### Pre-commit security scans
+
+From the repository root, once per clone:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Each commit then runs the team's shared hooks plus the Student 1 hooks:
+detect-secrets, the Ruff security (`S`) rules on `student-1/`, pip-audit on
+the three student-1 requirement files, and the student-1 pytest suites. See
+`evidence/security/pre-commit-security-report.md` for the results.
 
 ## Known issues and limitations
 
@@ -222,5 +305,8 @@ python tests/test_rag.py          # RAG input checks, grounded + insufficient-co
   the response is shown as returned, flagged for human review.
 - The database container has no volume, so it reseeds on recreate. Intentional
   for Release 0 demos - the ten seed records are always present.
+- The Multi-Agent workflow is synchronous: the page waits for all three agents
+  (up to 420 s). With `qwen2.5:0.5b` the Reviewer often repeats the Worker's
+  answer; `qwen2.5:3b` (the shared server's default) gives more useful reviews.
 - Login is handled by the shared home page; this feature does not yet scope the
   traveller list to the logged-in user.

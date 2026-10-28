@@ -4,16 +4,12 @@ on:
   push:
     paths:
       - "student-1/**"
-      - "ai-services/mcp-server/**"
-      - "rag-server/rag_pipeline.py"
       - "docker-compose.yml"
       - ".github/workflows/student-1.yml"
 
   pull_request:
     paths:
       - "student-1/**"
-      - "ai-services/mcp-server/**"
-      - "rag-server/rag_pipeline.py"
       - "docker-compose.yml"
       - ".github/workflows/student-1.yml"
 
@@ -23,11 +19,13 @@ jobs:
   validate-student-1:
     runs-on: ubuntu-latest
 
-    # The shared MCP and RAG servers run on a developer's machine, not in CI,
-    # so the integrations are kept but switched off here.
+    # CI and the cloud baseline: every AI service is off. The shared AI
+    # servers run on a developer's machine, not in CI.
     env:
+      AI_MODE_ENABLED: "false"
       MCP_ENABLED: "false"
       RAG_ENABLED: "false"
+      MULTI_AGENT_ENABLED: "false"
 
     defaults:
       run:
@@ -42,19 +40,27 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install microservice dependencies
+      - name: Install microservice and test dependencies
         run: |
-          pip install -r database/requirements.txt
-          pip install -r backend/requirements.txt
-          pip install -r frontend/requirements.txt
+          pip install -r database/requirements.txt -r backend/requirements.txt -r frontend/requirements.txt
+          pip install pytest pip-audit
 
       - name: Validate Python syntax
-        run: python -m compileall database backend frontend tests
+        run: python -m compileall -q database backend frontend tests tools
+
+      - name: Audit pinned dependencies (pip-audit)
+        run: pip-audit -r database/requirements.txt -r backend/requirements.txt -r frontend/requirements.txt
 
       - name: Create database and validate seed data
         run: |
           python -c "import sys; sys.path.insert(0, 'database'); from db_api import init_db; init_db()"
           python tests/check_seed.py
+
+      - name: "Post-commit endpoint tests: POST /travelers and POST /travelers/<id>/update"
+        run: python -m pytest tests/test_release2_endpoints.py -v --junitxml=test-results/release2-endpoints.xml
+
+      - name: Release 2 Multi-Agent and cloud-baseline tests
+        run: python -m pytest tests/test_release2_multi_agent.py tests/test_release2_cloud_ready.py -v --junitxml=test-results/release2-multi-agent-cloud.xml
 
       - name: Start microservices
         run: |
@@ -80,3 +86,28 @@ jobs:
           docker build -t student-1-database database
           docker build -t student-1-backend backend
           docker build -t student-1-frontend frontend
+
+      - name: Run the containers like the cloud deployment and smoke test them
+        run: |
+          docker network create s1net
+          docker run -d --name student1-database --network s1net student-1-database
+          docker run -d --name student1-backend --network s1net \
+            -e DB_API_URL=http://student1-database:6001 student-1-backend
+          docker run -d --name student1-frontend --network s1net -p 3101:3001 \
+            -e BACKEND_URL=http://student1-backend:5001 student-1-frontend
+          sleep 8
+          python tests/cloud_smoke.py --frontend http://127.0.0.1:3101 --expect-ai off --json test-results/cloud-smoke-ci.json
+
+      - name: Container logs
+        if: failure()
+        run: |
+          docker logs student1-database || true
+          docker logs student1-backend || true
+          docker logs student1-frontend || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-1-test-results
+          path: student-1/test-results/
