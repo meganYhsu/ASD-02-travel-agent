@@ -24,7 +24,7 @@ def api(method: str, path: str, json: dict | None = None, params: dict | None = 
             f"{BACKEND_URL}{path}",
             json=json,
             params=params,
-            timeout=90,
+            timeout=600,
         )
     except requests.RequestException as exc:
         logger.warning("Backend unavailable: %s", exc)
@@ -435,6 +435,43 @@ def create_app() -> Flask:
             f"<p class='disclaimer'>{esc(data.get('disclaimer'))}</p>"
             "</article>"
         )
+
+    @app.post("/multi-agent/run")
+    def multi_agent_run():
+        payload = request.get_json(silent=True) or request.form.to_dict()
+        status, body = api("POST", "/api/multi-agent/workflows", json=payload)
+        if status not in (200, 201):
+            return error_banner((body or {}).get("error") or "Multi-Agent review failed")
+        workflow = (body or {}).get("data") or {}
+        workflow_id = esc(workflow.get("workflow_id"))
+        agent_cards = "".join(
+            f"<article class='card'><h3>{title}</h3><pre>{esc((workflow.get(key) or {}).get('output'))}</pre></article>"
+            for key, title in (("planner", "Planner"), ("worker", "Worker"), ("reviewer", "Reviewer"))
+        )
+        return (
+            f"<article class='card'><h3>{esc(workflow.get('review_title'))}</h3>"
+            f"<p>Status: {esc(workflow.get('status'))}</p></article>"
+            f"{agent_cards}<article class='card'><h3>Human review required</h3>"
+            "<label>Review note <input name='note' id='multi-agent-note' maxlength='4000'></label>"
+            f"<button hx-post='/multi-agent/review' hx-vals='{{&quot;workflow_id&quot;:&quot;{workflow_id}&quot;,&quot;decision&quot;:&quot;Accept&quot;}}' hx-include='#multi-agent-note' hx-target='#multi-agent-result'>Accept</button> "
+            f"<button hx-post='/multi-agent/review' hx-vals='{{&quot;workflow_id&quot;:&quot;{workflow_id}&quot;,&quot;decision&quot;:&quot;Partially Accept&quot;}}' hx-include='#multi-agent-note' hx-target='#multi-agent-result'>Partially accept</button> "
+            f"<button hx-post='/multi-agent/review' hx-vals='{{&quot;workflow_id&quot;:&quot;{workflow_id}&quot;,&quot;decision&quot;:&quot;Reject&quot;}}' hx-include='#multi-agent-note' hx-target='#multi-agent-result'>Reject</button></article>"
+        )
+
+    @app.post("/multi-agent/review")
+    def multi_agent_review():
+        payload = request.get_json(silent=True) or request.form.to_dict()
+        workflow_id = payload.get("workflow_id", "")
+        decision = payload.get("decision", "")
+        status, body = api(
+            "POST", f"/api/multi-agent/workflows/{workflow_id}/review",
+            json={"decision": decision, "note": payload.get("note", "")},
+        )
+        if status != 200:
+            return error_banner((body or {}).get("error") or "Could not record human review")
+        workflow = (body or {}).get("data") or {}
+        human = workflow.get("human_review") or {}
+        return success_banner(f"Human decision recorded: {human.get('decision')} — {workflow.get('status')}")
 
     @app.get("/partials/mcp-tools")
     def partial_mcp_tools():
