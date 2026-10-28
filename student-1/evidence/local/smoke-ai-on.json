@@ -1,0 +1,59 @@
+{
+  "frontend": "http://127.0.0.1:3001",
+  "expect_ai": "on",
+  "timestamp": "2026-10-22T17:47:56+1100",
+  "passed": 10,
+  "failed": 0,
+  "results": [
+    {
+      "check": "frontend /health",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "backend /health through the proxy",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "page renders",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "READ traveller list from the database",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "CREATE traveller",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "UPDATE traveller",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "CREATE interest",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "deterministic completeness check",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "DELETE traveller",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "deleted traveller is gone",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

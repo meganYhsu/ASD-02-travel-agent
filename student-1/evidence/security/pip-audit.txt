@@ -1,0 +1,2 @@
+# pip-audit 2.9.0 -r backend, database, frontend requirements
+No known vulnerabilities found

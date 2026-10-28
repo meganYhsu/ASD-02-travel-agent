@@ -1,0 +1,36 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+2026-10-22 17:47:03,388 INFO werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:6767
+ * Running on http://172.20.10.4:6767
+2026-10-22 17:47:03,388 INFO werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-22 17:47:03,388 INFO werkzeug:  * Restarting with stat
+2026-10-22 17:47:03,645 WARNING werkzeug:  * Debugger is active!
+2026-10-22 17:47:03,655 INFO werkzeug:  * Debugger PIN: 577-343-881
+2026-10-22 17:47:09,046 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:09] "GET / HTTP/1.1" 200 -
+2026-10-22 17:47:16,553 INFO agents.planner_agent: Planner model call started: base_url=http://127.0.0.1:11434/v1 model=qwen2.5:0.5b timeout=120.0s prompt_chars=973
+2026-10-22 17:47:17,975 INFO httpx2: HTTP Request: POST http://127.0.0.1:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-10-22 17:47:17,983 INFO agents.planner_agent: Planner model call completed in 1.43s
+2026-10-22 17:47:17,984 INFO agents.worker_agent: Worker model call started: base_url=http://127.0.0.1:11434/v1 model=qwen2.5:0.5b timeout=120.0s prompt_chars=973
+2026-10-22 17:47:18,226 INFO httpx2: HTTP Request: POST http://127.0.0.1:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-10-22 17:47:18,227 INFO agents.worker_agent: Worker model call completed in 0.24s
+2026-10-22 17:47:18,228 INFO agents.reviewer_agent: Reviewer model call started: base_url=http://127.0.0.1:11434/v1 model=qwen2.5:0.5b timeout=120.0s prompt_chars=1300
+2026-10-22 17:47:18,474 INFO httpx2: HTTP Request: POST http://127.0.0.1:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-10-22 17:47:18,475 INFO agents.reviewer_agent: Reviewer model call completed in 0.25s
+2026-10-22 17:47:18,479 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:18] "POST /workflow HTTP/1.1" 200 -
+2026-10-22 17:47:18,485 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:18] "POST /workflow/2419b4d5-1ab4-4e6f-af02-022f85d9b0f5/review HTTP/1.1" 200 -
+2026-10-22 17:47:27,753 INFO agents.planner_agent: Planner model call started: base_url=http://127.0.0.1:11434/v1 model=qwen2.5:0.5b timeout=120.0s prompt_chars=797
+2026-10-22 17:47:27,909 INFO httpx2: HTTP Request: POST http://127.0.0.1:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-10-22 17:47:27,909 INFO agents.planner_agent: Planner model call completed in 0.16s
+2026-10-22 17:47:27,909 INFO agents.worker_agent: Worker model call started: base_url=http://127.0.0.1:11434/v1 model=qwen2.5:0.5b timeout=120.0s prompt_chars=797
+2026-10-22 17:47:28,177 INFO httpx2: HTTP Request: POST http://127.0.0.1:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-10-22 17:47:28,178 INFO agents.worker_agent: Worker model call completed in 0.27s
+2026-10-22 17:47:28,178 INFO agents.reviewer_agent: Reviewer model call started: base_url=http://127.0.0.1:11434/v1 model=qwen2.5:0.5b timeout=120.0s prompt_chars=1222
+2026-10-22 17:47:28,471 INFO httpx2: HTTP Request: POST http://127.0.0.1:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-10-22 17:47:28,471 INFO agents.reviewer_agent: Reviewer model call completed in 0.29s
+2026-10-22 17:47:28,472 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:28] "POST /workflow HTTP/1.1" 200 -
+2026-10-22 17:47:28,508 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:28] "GET /workflow/2d742c90-2952-4382-9a03-7006dac123e3 HTTP/1.1" 200 -
+2026-10-22 17:47:28,510 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:28] "POST /workflow/2d742c90-2952-4382-9a03-7006dac123e3/review HTTP/1.1" 200 -
+2026-10-22 17:47:28,527 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:28] "GET /workflow/2d742c90-2952-4382-9a03-7006dac123e3 HTTP/1.1" 200 -
+2026-10-22 17:47:56,405 INFO werkzeug: 127.0.0.1 - - [22/Oct/2026 17:47:56] "GET /workflow/2419b4d5-1ab4-4e6f-af02-022f85d9b0f5 HTTP/1.1" 200 -

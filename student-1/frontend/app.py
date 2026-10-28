@@ -4,19 +4,30 @@ Serves the HTMX page and proxies /api/* to the Student 1 backend so the
 browser only ever talks to one origin.
 """
 
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
 import requests
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:5001")
 PORT = int(os.getenv("PORT", "3001"))
+# Longer than the backend's wait for the shared Multi-Agent server (420 s).
+PROXY_TIMEOUT_SECONDS = int(os.getenv("PROXY_TIMEOUT_SECONDS", "450"))
+# Public address of the shared home page used by the navigation bar. The local
+# default matches docker-compose; in AWS it is the load balancer URL.
+SHARED_HOME_URL = os.getenv("SHARED_HOME_URL", "http://127.0.0.1:8080").rstrip("/")
 
 app = Flask(__name__)
 
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", shared_home_url=SHARED_HOME_URL)
+
+
+@app.route("/health")
+def health():
+    """Load balancer / ECS health check. Does not depend on the backend."""
+    return jsonify({"service": "student-1-frontend", "status": "ok"})
 
 
 @app.route("/css/<path:filename>")
@@ -32,7 +43,7 @@ def proxy(subpath):
             f"{BACKEND_URL}/{subpath}",
             params=request.args,
             data=request.form,
-            timeout=180,
+            timeout=PROXY_TIMEOUT_SECONDS,
         )
         return resp.text, resp.status_code
     except requests.RequestException:
@@ -40,4 +51,7 @@ def proxy(subpath):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=PORT, debug=True)
+    # Direct runs listen on 127.0.0.1 with the debugger off unless FLASK_HOST /
+    # FLASK_DEBUG say otherwise. Containers start gunicorn (see the Dockerfile).
+    app.run(host=os.getenv("FLASK_HOST", "127.0.0.1"), port=PORT,
+            debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

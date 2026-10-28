@@ -1,0 +1,9 @@
+# ruff 0.14.0: ruff check --select S --per-file-ignores '**/test_*.py:S101' student-1   (Release 1 code, commit 33a0288)
+student-1/backend/app.py:914:18: S104 Possible binding to all interfaces
+student-1/backend/app.py:914:40: S201 Use of `debug=True` in Flask app detected
+student-1/database/db_api.py:562:18: S104 Possible binding to all interfaces
+student-1/database/db_api.py:562:40: S201 Use of `debug=True` in Flask app detected
+student-1/frontend/app.py:43:18: S104 Possible binding to all interfaces
+student-1/frontend/app.py:43:40: S201 Use of `debug=True` in Flask app detected
+student-1/tests/check_seed.py:12:26: S608 Possible SQL injection vector through string-based query construction
+Found 7 errors.

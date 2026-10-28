@@ -1,0 +1,84 @@
+{
+  "frontend": "http://127.0.0.1:3101",
+  "expect_ai": "off",
+  "timestamp": "2026-10-22T17:47:56+1100",
+  "passed": 15,
+  "failed": 0,
+  "results": [
+    {
+      "check": "frontend /health",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "backend /health through the proxy",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "all AI services disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "page renders",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "READ traveller list from the database",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "CREATE traveller",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "UPDATE traveller",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "CREATE interest",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "deterministic completeness check",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "AI-Mode summary refused",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "Multi-Agent refused",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "MCP refused",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "RAG refused",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "DELETE traveller",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "check": "deleted traveller is gone",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

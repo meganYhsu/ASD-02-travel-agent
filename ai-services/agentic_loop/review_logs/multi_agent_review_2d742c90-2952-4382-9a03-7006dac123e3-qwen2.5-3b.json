@@ -1,0 +1,12 @@
+{
+  "review_mode": "multi_agent",
+  "timestamp": "2026-10-28T08:21:51.490599+00:00",
+  "source_workflow_id": "2d742c90-2952-4382-9a03-7006dac123e3",
+  "source_workflow_status": "success",
+  "model": "qwen2.5:3b",
+  "implementation_assessment": "Highest-priority gap: Human review decision missing. Correction: Record explicit decision. Missing observation: Human review evidence. Retest: Ensure human review decision is recorded.",
+  "review_recommendation": "Unsupported: Human review decision missing. Retest: Ensure human review decision is recorded in workflow history. Highest-priority risk: Missing explicit human approval in audit trail. Evidence: human_reviews[].",
+  "review_status": "completed",
+  "human_release_decision": "pending",
+  "error": null
+}
