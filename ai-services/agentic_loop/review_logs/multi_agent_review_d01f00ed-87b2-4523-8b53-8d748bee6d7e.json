@@ -1,0 +1,14 @@
+{
+  "review_mode": "multi_agent",
+  "timestamp": "2026-10-27T13:27:29.550943+00:00",
+  "source_workflow_id": "d01f00ed-87b2-4523-8b53-8d748bee6d7e",
+  "source_workflow_status": "partial_failure",
+  "model": "qwen2.5:3b",
+  "implementation_assessment": "Highest-priority gap: Planner's timeout. Evidence: `planner_result.status = \"timeout\"`. Correction: Ensure planner agent is robust, e.g., retry logic or fallback.",
+  "review_recommendation": "supported. No unsupported claims. Highest-priority risk: Ensure planner agent retries on timeout. Evidence: `planner_result.status = \"timeout\"`. Correction: Implement retry logic.",
+  "review_status": "completed",
+  "human_release_decision": "Reject",
+  "error": null,
+  "human_review_note": "1",
+  "human_review_timestamp": "2026-10-27T13:27:43.397Z"
+}
