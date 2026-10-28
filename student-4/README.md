@@ -1,5 +1,87 @@
 ## Student 4 - Testing Instructions
 
+
+### Pre-commit security checks
+
+From the repository root, create an isolated tooling environment and install the
+local Git hook:
+
+```bash
+python3.12 -m venv .venv-security
+.venv-security/bin/python -m pip install pre-commit==4.3.0
+.venv-security/bin/python -m pre_commit validate-config
+.venv-security/bin/python -m pre_commit install
+bash scripts/security/run-checks.sh
+```
+
+Python 3.12 and Node.js/npm must be available. The first scan downloads the pinned
+hook tools; dependency audits require internet access. No application dependencies
+are upgraded or application databases accessed by these commands.
+
+The root `.pre-commit-config.yaml` checks staged files for secrets without online
+credential verification, runs Ruff security rules on changed shared Python code,
+audits the shared Multi-Agent/MCP/local RAG Python requirements, and audits all
+three Student 4 Node lockfiles. Other students' Node dependency manifests are not
+audited by this Student 4 setup. Their individual scanning coverage remains their
+responsibility. Node audit checks use the lockfiles without running package scripts.
+
+Normal commits run the hooks automatically after local installation. Each teammate
+must install the hook in their own clone; committing the configuration alone does
+not install hooks on other computers. Ruff and secret scanning inspect staged files
+on commit; the manual command above scans all tracked matching files. New files
+must be staged to be included. Node dependency audits run on every commit. Each
+shared Python dependency audit runs when its corresponding requirements file is
+included in the commit. The manual all-files scan still runs all three Python
+audits. Shared findings remain unresolved until reviewed and remediated by the
+owners; skipping an unchanged manifest is not a passing audit of that service.
+Findings and scanner/network errors from executed checks block the commit.
+Ruff's assert warning is excluded only for `test_*.py` files because assertions
+are expected in tests; the remaining security rules still apply to those files.
+
+The report script writes timestamped logs, the commit SHA, and the pre-commit
+version under `.security-reports/`. That directory and `.venv-security/` are ignored
+by Git. Keep raw scan logs local: findings may contain sensitive source excerpts.
+Review/redact evidence before sharing it or including it in the group report.
+Record findings, affected files/dependencies, agreed remediation, and retest results
+for the Testing Report Review. This configuration does not automatically fix files,
+upgrade dependencies, or suppress existing findings. Documenting a finding does
+not make the hook pass; corrections to shared code require coordination with its
+owner.
+
+
+### Automated backend endpoint tests
+
+From `student-4/backend`, run:
+
+```bash
+npm ci
+npm test
+```
+
+The Node.js test runner exercises the real Express itinerary router, controllers,
+and database HTTP client against a temporary local database API stub. Tests use
+random local ports and fixed data without reading or changing the application
+database. Docker, Groq, Ollama, and API keys are not required.
+
+The two backend endpoint functions covered are:
+
+- `GET /api/saved_itineraries`: saved records, an empty list, and database errors.
+- `GET /api/saved_itineraries/:id`: itinerary/activity contents, invalid IDs,
+  missing records, and database errors.
+
+To also generate a JUnit XML report, run `npm run test:ci`. The report is written
+to `student-4/backend/reports/endpoint-tests.xml` relative to the repository root.
+Generated reports are ignored by Git.
+
+After a push or pull request affecting Student 4, `.github/workflows/student-4.yml`
+runs these tests as a required step within its validation job. A failing test
+fails the job and prevents subsequent build steps from running. The workflow
+uploads the XML report as `student-4-endpoint-test-results`, including when tests
+fail, and retains it for 30 days. Download the artifact and preserve the workflow
+run URL, commit SHA, and execution logs for the testing report and agentic-loop
+review. Required branch protection checks must be configured separately in GitHub
+if merges should also be blocked.
+
 Student 4's Plan Itinerary component uses the Groq API to generate itineraries.
 
 The Groq API key is not committed to GitHub for security reasons.

@@ -10,9 +10,12 @@ app = Flask(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL") or "http://127.0.0.1:5000"
 RAG_URL = os.getenv("RAG_URL") or "http://127.0.0.1:7001"
 MCP_URL = os.getenv("MCP_URL") or "http://127.0.0.1:7004"
+MULTI_AGENT_SERVICE_URL = os.getenv("MULTI_AGENT_SERVICE_URL","http://127.0.0.1:6767")
 
 RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
 MCP_ENABLED = os.getenv("MCP_ENABLED", "true").lower() == "true"
+MULTI_AGENT_ENABLED = os.getenv("MULTI_AGENT_ENABLED", "true").lower() == "true"
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -26,7 +29,7 @@ BOOKING_PROMPT_FILE = (
 #itinerary routes Create, Read, Update, Delete (CRUD) operations
 @app.route('/itineraries', methods=['GET'])
 def get_itineraries():
-    response = requests.get(f"{DATABASE_URL}/itineraries")
+    response = requests.get(f"{DATABASE_URL}/itineraries",timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -49,7 +52,7 @@ def create_itinerary():
         if not data.get(field):
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    response = requests.post(f"{DATABASE_URL}/itineraries", json=data)
+    response = requests.post(f"{DATABASE_URL}/itineraries", json=data,timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -72,13 +75,13 @@ def update_itinerary(itinerary_id):
         if not data.get(field):
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    response = requests.put(f"{DATABASE_URL}/itineraries/{itinerary_id}", json=data)
+    response = requests.put(f"{DATABASE_URL}/itineraries/{itinerary_id}", json=data,timeout=15)
     return jsonify(response.json()), response.status_code
 
 
 @app.route('/itineraries/<int:itinerary_id>', methods=['DELETE'])
 def delete_itinerary(itinerary_id):
-    response = requests.delete(f"{DATABASE_URL}/itineraries/{itinerary_id}")
+    response = requests.delete(f"{DATABASE_URL}/itineraries/{itinerary_id}", timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -89,7 +92,7 @@ def delete_itinerary(itinerary_id):
 #provider routes Create, Read, Update, Delete (CRUD) operations
 @app.route('/provider', methods=['GET'])
 def get_provider():
-    response = requests.get(f"{DATABASE_URL}/provider")
+    response = requests.get(f"{DATABASE_URL}/provider",timeout=15)
     return jsonify(response.json()), response.status_code
 
 @app.route('/provider', methods=['POST'])
@@ -110,7 +113,7 @@ def create_provider():
         if not data.get(field):
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    response = requests.post(f"{DATABASE_URL}/provider", json=data)
+    response = requests.post(f"{DATABASE_URL}/provider", json=data,timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -132,13 +135,13 @@ def update_provider(provider_id):
         if not data.get(field):
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    response = requests.put(f"{DATABASE_URL}/provider/{provider_id}", json=data)
+    response = requests.put(f"{DATABASE_URL}/provider/{provider_id}", json=data, timeout=15)
     return jsonify(response.json()), response.status_code
 
 
 @app.route('/provider/<int:provider_id>', methods=['DELETE'])
 def delete_provider(provider_id):  
-    response = requests.delete(f"{DATABASE_URL}/provider/{provider_id}")
+    response = requests.delete(f"{DATABASE_URL}/provider/{provider_id}", timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -149,7 +152,7 @@ def delete_provider(provider_id):
 #bookings routes Create, Read, Update, Delete (CRUD) operations
 @app.route('/bookings', methods=['GET'])
 def get_bookings():
-    response = requests.get(f"{DATABASE_URL}/bookings")
+    response = requests.get(f"{DATABASE_URL}/bookings", timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -179,7 +182,7 @@ def create_booking():
         return jsonify({"error": "Cost cannot be negative"}), 400
     
 
-    response = requests.post(f"{DATABASE_URL}/bookings", json=data)
+    response = requests.post(f"{DATABASE_URL}/bookings", json=data,timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -208,12 +211,12 @@ def update_booking(booking_id):
     if data['cost'] < 0:
         return jsonify({"error": "Cost cannot be negative"}), 400
 
-    response = requests.put(f"{DATABASE_URL}/bookings/{booking_id}", json=data)
+    response = requests.put(f"{DATABASE_URL}/bookings/{booking_id}", json=data, timeout=15)
     return jsonify(response.json()), response.status_code
 
 @app.route('/bookings/<int:booking_id>', methods=['DELETE'])
 def delete_booking(booking_id):
-    response = requests.delete(f"{DATABASE_URL}/bookings/{booking_id}")
+    response = requests.delete(f"{DATABASE_URL}/bookings/{booking_id}", timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -256,7 +259,7 @@ def create_booking_from_itinerary():
         'create_time': data['create_time']
     }
 
-    booking_response = requests.post(f"{DATABASE_URL}/bookings", json=booking_data) 
+    booking_response = requests.post(f"{DATABASE_URL}/bookings", json=booking_data, timeout=15) 
 
     if booking_response.status_code != 201:
         return jsonify({"error": "Failed to create booking"}), booking_response.status_code
@@ -271,7 +274,7 @@ def create_booking_from_itinerary():
         'quantity': data['quantity']
     }
 
-    booking_item_response = requests.post(f"{DATABASE_URL}/booking_items", json=booking_item_data)  
+    booking_item_response = requests.post(f"{DATABASE_URL}/booking_items", json=booking_item_data, timeout=15)  
 
     if booking_item_response.status_code != 201: 
         return jsonify({"error": "Failed to create booking item"}), booking_item_response.status_code
@@ -584,7 +587,7 @@ def match_provider():
 #booking_item routes Create, Read, Update, Delete (CRUD) operations
 @app.route('/booking_items', methods=['GET'])
 def get_booking_items():
-    response = requests.get(f"{DATABASE_URL}/booking_items")
+    response = requests.get(f"{DATABASE_URL}/booking_items", timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -608,7 +611,7 @@ def create_booking_item():
         return jsonify({"error": "Quantity must be a positive integer"}), 400
 
     
-    response = requests.post(f"{DATABASE_URL}/booking_items", json=data)
+    response = requests.post(f"{DATABASE_URL}/booking_items", json=data, timeout=15)
     return jsonify(response.json()), response.status_code   
 
 @app.route('/booking_items/<int:booking_item_id>', methods=['PUT'])
@@ -630,13 +633,13 @@ def update_booking_item(booking_item_id):
     if not isinstance(data['quantity'], int) or data['quantity'] <= 0:
         return jsonify({"error": "Quantity must be a positive integer"}), 400
 
-    response = requests.put(f"{DATABASE_URL}/booking_items/{booking_item_id}", json=data)
+    response = requests.put(f"{DATABASE_URL}/booking_items/{booking_item_id}", json=data, timeout=15)
     return jsonify(response.json()), response.status_code
 
 
 @app.route('/booking_items/<int:booking_item_id>', methods=['DELETE'])
 def delete_booking_item(booking_item_id):
-    response = requests.delete(f"{DATABASE_URL}/booking_items/{booking_item_id}")
+    response = requests.delete(f"{DATABASE_URL}/booking_items/{booking_item_id}", timeout=15)
     return jsonify(response.json()), response.status_code
 
 
@@ -728,6 +731,248 @@ def mcp_tool():
         }), 503
 
 
+# Multi-Agent Booking Review
+@app.route('/multi-agent/workflow', methods=['POST'])
+def multi_agent_booking_review():
+
+    if not MULTI_AGENT_ENABLED:
+        return jsonify({
+            "error": "Multi-Agent is disabled"
+        }), 503
+
+    data = request.get_json(silent=True) or {}
+
+    booking_id = data.get("booking_id")
+
+    user_request = data.get("user_request")
+    
+    
+    if booking_id in (None, ""):
+        booking_id = None
+    elif type(booking_id) is not int or booking_id <= 0:
+        return jsonify({
+        "error": "booking_id must be a positive integer"
+        }), 400
+
+    if not isinstance(user_request, str) or not user_request.strip():
+        return jsonify({
+            "error": "A valid user_request is required"
+        }), 400
+
+    try:
+        booking_response = requests.get(
+            f"{DATABASE_URL}/bookings",
+            timeout=10
+        )
+
+        provider_response = requests.get(
+            f"{DATABASE_URL}/provider",
+            timeout=10
+        )
+
+        item_response = requests.get(
+            f"{DATABASE_URL}/booking_items",
+            timeout=10
+        )
+
+        itinerary_response = requests.get(
+            f"{DATABASE_URL}/itineraries",
+            timeout=10
+        )
+
+        for response in (
+            booking_response,
+            provider_response,
+            item_response,
+            itinerary_response
+        ):
+            response.raise_for_status()
+
+        bookings = booking_response.json()
+        providers = provider_response.json()
+        booking_items = item_response.json()
+        itineraries = itinerary_response.json()
+
+    except (requests.RequestException, ValueError) as exc:
+        app.logger.warning("Database request failed: %s", exc)
+
+        return jsonify({
+            "error": "Unable to retrieve booking data"
+        }), 503
+
+    if booking_id is None:
+        # All Bookings
+        context = {
+            "bookings": bookings,
+            "providers": providers,
+            "booking_items": booking_items,
+            "itineraries": itineraries
+        }
+
+    else:
+        # Specific Booking
+        selected_booking = next(
+            (
+                b for b in bookings
+                if b.get("booking_id") == booking_id
+            ),
+            None
+        )
+
+        if selected_booking is None:
+            return jsonify({
+                "error": "Booking not found"
+            }), 404
+
+        selected_provider = next(
+            (
+                p for p in providers
+                if p.get("provider_id")
+                == selected_booking.get("provider_id")
+            ),
+            None
+        )
+
+        selected_items = [
+            item for item in booking_items
+            if item.get("booking_id") == booking_id
+        ]
+
+        selected_itinerary_ids = {
+            item.get("itinerary_id")
+            for item in selected_items
+        }
+
+        selected_itineraries = [
+            itinerary for itinerary in itineraries
+            if itinerary.get("itinerary_id")
+            in selected_itinerary_ids
+        ]
+
+        context = {
+            "booking": selected_booking,
+            "provider": selected_provider,
+            "booking_items": selected_items,
+            "itineraries": selected_itineraries
+        }
+
+    task = "check_bookings"
+
+    payload = {
+        "service": "booking",
+        "task": task,
+        "user_request": user_request.strip(),
+        "context": context
+    }
+
+    try:
+        response = requests.post(
+            f"{MULTI_AGENT_SERVICE_URL}/workflow",
+            json=payload,
+            timeout=780
+        )
+
+        response.raise_for_status()
+
+        return jsonify(response.json()), response.status_code
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Multi-Agent workflow timed out"
+        }), 504
+
+    except (requests.RequestException, ValueError) as exc:
+        app.logger.warning("Multi-Agent request failed: %s", exc)
+
+        return jsonify({
+            "error": "Shared Multi-Agent Server is unavailable"
+        }), 503
+
+
+
+# Get Multi-Agent Workflow Result
+@app.route('/multi-agent/workflows/<workflow_id>', methods=['GET'])
+def get_multi_agent_workflow(workflow_id):
+
+    if not MULTI_AGENT_ENABLED:
+        return jsonify({
+            "error": "Multi-Agent is disabled"
+        }), 503
+
+    try:
+        response = requests.get(
+            f"{MULTI_AGENT_SERVICE_URL}/workflow/{workflow_id}",
+            timeout=15
+        )
+
+        return jsonify(response.json()), response.status_code
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Multi-Agent request timed out"
+        }), 504
+
+    except (requests.RequestException, ValueError):
+        return jsonify({
+            "error": "Unable to retrieve Multi-Agent workflow"
+        }), 503
+
+
+# Submit Human Review
+@app.route('/multi-agent/workflows/<workflow_id>/review', methods=['POST'])
+def submit_multi_agent_review(workflow_id):
+
+    if not MULTI_AGENT_ENABLED:
+        return jsonify({
+            "error": "Multi-Agent is disabled"
+        }), 503
+
+    data = request.get_json(silent=True) or {}
+
+    decision = data.get("decision")
+    reason = data.get("reason", "")
+    evidence = data.get("evidence", "")
+
+    if decision not in ["Accept", "Partially Accept", "Reject"]:
+        return jsonify({
+            "error": "Invalid review decision"
+        }), 400
+
+    if not isinstance(reason, str) or len(reason.strip()) < 20:
+        return jsonify({
+            "error": "Reason must contain at least 20 characters"
+        }), 400
+
+    if not isinstance(evidence, str):
+        return jsonify({
+            "error": "Evidence must be a string"
+        }), 400
+
+    try:
+        response = requests.post(
+            f"{MULTI_AGENT_SERVICE_URL}/workflow/{workflow_id}/review",
+            json={
+                "decision": decision,
+                "reason": reason.strip(),
+                "evidence": evidence.strip()
+            },
+            timeout=15
+        )
+
+        return jsonify(response.json()), response.status_code
+
+    except requests.Timeout:
+        return jsonify({
+            "error": "Human review request timed out"
+        }), 504
+
+    except (requests.RequestException, ValueError):
+        return jsonify({
+            "error": "Unable to submit Human Review"
+        }), 503
+
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # Required for communication between Docker containers.
+    app.run(host='0.0.0.0', port=5001, debug=False) # noqa: S104

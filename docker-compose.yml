@@ -20,6 +20,10 @@ services:
     ports:
       - "8080:5003"
 
+    # Add a secret key for Flask session management. This key should be kept secret in production.
+    environment:
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY must be set}
+
     depends_on:
       - student1-frontend
       - student2-frontend
@@ -162,6 +166,7 @@ services:
       OLLAMA_MODEL: llama3.2:3b
       MCP_BASE_URL: http://host.docker.internal:7004
       RAG_SERVICE_URL: http://host.docker.internal:7001
+      MULTI_AGENT_SERVICE_URL: http://host.docker.internal:6767
 
     ports:
       - "5004:5001"
@@ -213,8 +218,11 @@ services:
       RAG_SERVER_URL: http://host.docker.internal:7001
       RAG_CALLER: student-3-budget
       RAG_TIMEOUT_SECONDS: "300"
+      MULTI_AGENT_SERVICE_URL: http://host.docker.internal:6767
+      AI_MODE_ENABLED: "true"
       MCP_ENABLED: "true"
       RAG_ENABLED: "true"
+      MULTI_AGENT_ENABLED: "true"
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -340,6 +348,11 @@ services:
       OLLAMA_MODEL: qwen2.5:0.5b
       MCP_URL: http://host.docker.internal:7004
       RAG_URL: http://host.docker.internal:7001
+      MULTI_AGENT_SERVICE_URL: http://host.docker.internal:6767
+      MULTI_AGENT_ENABLED: "true"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ports:
       - "5002:5001"

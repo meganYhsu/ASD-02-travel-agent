@@ -1,0 +1,9 @@
+# Keep local data, secrets and caches out of the image
+__pycache__/
+*.pyc
+*.db
+.env
+.env.*
+.pytest_cache/
+Dockerfile
+.dockerignore

@@ -2,11 +2,26 @@
 .vs/
 node_modules/
 dist/
+student-4/backend/reports/
 
 .venv/
+.venv-security/
+.security-reports/
+.aws-reports/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
 
 __pycache__/
 
 *.db
 ai-services/mcp-server/.venv/
 .DS_Store
+
+# Release 2 test output
+test-results/
+.pytest_cache/
+.ruff_cache/

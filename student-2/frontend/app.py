@@ -1,6 +1,7 @@
 from unittest import result
 
 from flask import Flask, render_template, request, redirect, url_for
+from markupsafe import escape
 import requests
 import os
 
@@ -13,7 +14,7 @@ print("BACKEND_URL =", BACKEND_URL)
 
 @app.route('/itinerary')
 def itinerary():
-    response = requests.get(f"{BACKEND_URL}/itineraries")
+    response = requests.get(f"{BACKEND_URL}/itineraries",timeout=15)
     itinerary_list = response.json()
 
     return render_template(
@@ -35,7 +36,8 @@ def add_itinerary():
 
     requests.post(
         f"{BACKEND_URL}/itineraries",
-        json=data
+        json=data,
+        timeout=15
     )
 
     return redirect(url_for('itinerary'))
@@ -54,8 +56,10 @@ def update_itinerary(itinerary_id):
 
     requests.put(
         f"{BACKEND_URL}/itineraries/{itinerary_id}",
-        json=data
+        json=data,
+        timeout=15
     )
+
 
     return redirect(url_for('itinerary'))
 
@@ -64,7 +68,7 @@ def update_itinerary(itinerary_id):
 def delete_itinerary(itinerary_id):
 
     requests.delete(
-        f"{BACKEND_URL}/itineraries/{itinerary_id}"
+        f"{BACKEND_URL}/itineraries/{itinerary_id}", timeout=15
     )
 
     return redirect(url_for('itinerary'))
@@ -73,16 +77,20 @@ def delete_itinerary(itinerary_id):
 
 @app.route('/booking')
 def booking():
-    booking_response = requests.get(f"{BACKEND_URL}/bookings")
+    #booking_response = requests.get(f"{BACKEND_URL}/bookings")
+    booking_response = requests.get(f"{BACKEND_URL}/bookings",timeout=15)
     bookings = booking_response.json()
 
-    provider_response = requests.get(f"{BACKEND_URL}/provider")
+    #provider_response = requests.get(f"{BACKEND_URL}/provider")
+    provider_response = requests.get(f"{BACKEND_URL}/provider",timeout=15)
     providers = provider_response.json()
 
-    itinerary_response = requests.get(f"{BACKEND_URL}/itineraries")
+    #itinerary_response = requests.get(f"{BACKEND_URL}/itineraries")
+    itinerary_response = requests.get(f"{BACKEND_URL}/itineraries",timeout=15)
     itineraries = itinerary_response.json()
 
-    booking_item_response = requests.get( f"{BACKEND_URL}/booking_items")
+    #booking_item_response = requests.get( f"{BACKEND_URL}/booking_items")
+    booking_item_response = requests.get( f"{BACKEND_URL}/booking_items",timeout=15)
     booking_items = booking_item_response.json()
 
     provider_names = {
@@ -134,7 +142,8 @@ def add_booking():
 
     response = requests.post(
         f"{BACKEND_URL}/bookings/from-itinerary",
-        json=data
+        json=data,
+        timeout=15
     )
 
     print("ADD STATUS:", response.status_code)
@@ -156,7 +165,8 @@ def update_booking(booking_id):
 
     response = requests.put(
         f"{BACKEND_URL}/bookings/{booking_id}",
-        json=data
+        json=data,
+        timeout=15
     )
 
     print("UPDATE STATUS:", response.status_code)
@@ -168,7 +178,7 @@ def update_booking(booking_id):
 def delete_booking(booking_id):
 
     response = requests.delete(
-        f"{BACKEND_URL}/bookings/{booking_id}"
+        f"{BACKEND_URL}/bookings/{booking_id}", timeout=15
     )
 
     print("DELETE STATUS:", response.status_code)
@@ -498,5 +508,232 @@ def booking_mcp():
     """
 
 
+# Multi-Agent Booking Review
+@app.route('/booking/multi-agent', methods=['POST'])
+def booking_multi_agent():
+    
+    booking_id_raw = request.form.get('booking_id', '').strip()
+    
+    booking_id = None
+    
+    if booking_id_raw:
+        try:
+            booking_id = int(booking_id_raw)
+            if booking_id <= 0:
+                return "<p>Please select a valid Booking ID.</p>", 400
+        except ValueError:
+            return "<p>Invalid Booking ID.</p>", 400
+
+    user_request = request.form.get('user_request', '').strip()
+    
+    if not user_request:
+        return "<p>Please enter a review request.</p>", 400
+
+    try:
+        response = requests.post(
+            f"{BACKEND_URL}/multi-agent/workflow",
+            json={
+                "booking_id": booking_id,
+                "user_request": user_request
+            },
+            timeout=800
+        )
+
+    except requests.Timeout:
+        return "<p>Multi-Agent workflow timed out.</p>", 504
+
+    except requests.RequestException as exc:
+        app.logger.error("Backend connection failed: %s", exc)
+        return "<p>Unable to connect to Backend API.</p>", 503
+
+    try:
+        data = response.json()
+
+    except ValueError:
+        app.logger.error(
+            "Backend returned non-JSON response: HTTP %s",
+            response.status_code
+        )
+        return (
+            "<p>Backend returned an invalid response. "
+            "Please check Backend logs.</p>",
+            502
+        )
+    
+    if response.status_code != 200:
+        message = escape(
+            str(data.get('error', 'Unable to run workflow.'))
+        )
+        return f"<p>Error: {message}</p>", response.status_code
+
+    workflow_id = escape(str(data.get('workflow_id', '')))
+
+    if not workflow_id:
+        return "<p>Workflow ID is missing.</p>", 502
+
+    planner = data.get('planner_result') or {}
+    worker = data.get('worker_result') or {}
+    reviewer = data.get('reviewer_result') or {}
+
+    planner_status = escape(str(planner.get('status', 'unknown')))
+    worker_status = escape(str(worker.get('status', 'unknown')))
+    reviewer_status = escape(str(reviewer.get('status', 'unknown')))
+    planner_error = escape(str(planner.get('error', '')))
+
+    planner_text = escape(str(planner.get('plan', 'No plan returned.')))
+    worker_text = escape(str(worker.get('output', 'No output returned.')))
+    reviewer_text = escape(str(reviewer.get('review', 'No review returned.')))
+    workflow_status = escape(str(data.get('status', 'unknown')))
+    
+    planner_error_html = (
+        f'<p><strong>Error:</strong> {planner_error}</p>'
+        if planner_error else ''
+    )
+
+    return f"""
+    <div class="section-card">
+        <h3>Multi-Agent Booking Review</h3>
+
+        <p><strong>Workflow ID:</strong> {workflow_id}</p>
+        <p><strong>Workflow Status:</strong> {workflow_status}</p>
+
+        <h4>Planner Agent</h4>
+        <p><strong>Status:</strong> {planner_status}</p>
+        <p style="white-space:pre-wrap;">{planner_text}</p>
+        {planner_error_html}
+        
+        <h4>Worker Agent</h4>
+        <p><strong>Status:</strong> {worker_status}</p>
+        <p style="white-space:pre-wrap;">{worker_text}</p>
+        
+        <h4>Reviewer Agent</h4>
+        <p><strong>Status:</strong> {reviewer_status}</p>
+        <p style="white-space:pre-wrap;">{reviewer_text}</p>
+
+        <hr>
+
+        <h4>Human Review</h4>
+
+        <form hx-post="/booking/multi-agent/review"
+              hx-target="#human-review-result"
+              hx-swap="innerHTML">
+
+            <input type="hidden"
+                   name="workflow_id"
+                   value="{workflow_id}">
+
+            <fieldset class="human-review-decisions">
+                <legend>Decision:</legend>
+                <label>
+                   <input
+                       type="radio" 
+                       name="decision"
+                       value="Accept"
+                       required>
+                    Accept
+                </label>
+                
+                <label>
+                    <input
+                        type="radio"
+                        name="decision"
+                        value="Partially Accept">
+                    Partially Accept
+                </label>
+                
+                <label>
+                    <input
+                        type="radio"
+                        name="decision"
+                        value="Reject">
+                    Reject
+                </label>
+            </fieldset>
+
+            <label>Reason:</label>
+            <textarea name="reason"
+                      minlength="20"
+                      required
+                      placeholder="Explain your decision (at least 20 characters)."></textarea>
+
+            <label>Evidence (optional):</label>
+            <textarea name="evidence"
+                      placeholder="Supporting evidence"></textarea>
+
+            <button type="submit">Submit Human Review</button>
+        </form>
+
+        <div id="human-review-result"></div>
+    </div>
+    """
+
+
+# Submit Human Review Decision
+@app.route('/booking/multi-agent/review', methods=['POST'])
+def booking_multi_agent_review():
+
+    workflow_id = request.form.get('workflow_id', '').strip()
+    decision = request.form.get('decision', '').strip()
+    reason = request.form.get('reason', '').strip()
+    evidence = request.form.get('evidence', '').strip()
+
+    if not workflow_id:
+        return "<p>Workflow ID is required.</p>", 400
+
+    if decision not in ['Accept', 'Partially Accept', 'Reject']:
+        return "<p>Invalid decision.</p>", 400
+
+    if len(reason) < 20:
+        return "<p>Reason must contain at least 20 characters.</p>", 400
+
+    try:
+        response = requests.post(
+            f"{BACKEND_URL}/multi-agent/workflows/{workflow_id}/review",
+            json={
+                "decision": decision,
+                "reason": reason,
+                "evidence": evidence
+            },
+            timeout=20
+        )
+
+    except requests.Timeout:
+        return "<p>Human Review request timed out.</p>", 504
+
+    except requests.RequestException as exc:
+        app.logger.error("Human Review request failed: %s", exc)
+        return "<p>Unable to connect to Backend API.</p>", 503
+
+    try:
+        data = response.json()
+
+    except ValueError:
+        app.logger.error(
+            "Human Review returned non-JSON response: HTTP %s",
+            response.status_code
+        )
+        return (
+            "<p>Backend returned an invalid Human Review response.</p>",
+            502
+        )
+
+   
+    if response.status_code != 200:
+        message = escape(
+            str(data.get('error', 'Human Review submission failed.'))
+        )
+        return f"<p>Error: {message}</p>", response.status_code
+
+    return f"""
+    <div>
+        <h4>Human Review Recorded</h4>
+        <p><strong>Decision:</strong> {escape(decision)}</p>
+        <p><strong>Reason:</strong> {escape(reason)}</p>
+        <p>The review was successfully saved to the shared Multi-Agent Server.</p>
+    </div>
+    """
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, debug=True)
+     # Required for communication between Docker containers.
+    app.run(host='0.0.0.0', port=5002, debug=False) # noqa: S104

@@ -10,6 +10,9 @@ const {
 const readline = require("readline/promises");
 const fs = require("node:fs");
 
+const { spawn } = require("child_process");
+const path = require("path");
+
 
 
 
@@ -115,7 +118,7 @@ const RAG_ENABLED =
         .toLowerCase() !== "false";
 
 
-const VALIDATION_MODES = ["base", "mcp", "rag", "all"];
+const VALIDATION_MODES = ["base", "mcp", "rag", "all", "multi-agent", "testing", "cloud"];
 const REVIEW_MODES = ["workflow", "testing_report", "cloud_deployment_report"];
 
 const FEATURE_VALIDATION = {
@@ -128,6 +131,124 @@ const FEATURE_VALIDATION = {
         rag: observeStudent5Rag
     }
 };
+
+
+const RELEASE2_REVIEW_MODES = [
+    "multi-agent",
+    "testing",
+    "cloud"
+];
+
+// Release 2 Python Review
+function runPythonReview(mode, student) {
+    const scripts = {
+        "multi-agent": "run_multi_agent_review.py",
+        "testing": "run_testing_review.py",
+        "cloud": "run_cloud_review.py"
+    };
+
+    const script = scripts[mode];
+
+    if (!script) {
+        throw new Error(`Review mode not implemented: ${mode}`);
+    }
+
+    const reviewDir = path.resolve(
+        __dirname,
+        "../../agentic_loop"
+    );
+
+    const scriptPath = path.join(reviewDir, script);
+
+
+    return new Promise((resolve, reject) => {
+        console.log(
+            "Python arguments:",
+            ["testing", "cloud"].includes(mode)
+                ? [scriptPath, "--student", student]
+                : [scriptPath]
+        );
+
+        const child = spawn(
+            process.platform === "win32" ? "python" : "python3",
+            ["testing", "cloud"].includes(mode)
+                ? [scriptPath, "--student", student]
+                : [scriptPath],
+            {
+                cwd: reviewDir,
+                stdio: ["inherit", "pipe", "pipe"]
+            }
+        );
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", chunk => {
+            const output = chunk.toString();
+            stdout += output;
+            process.stdout.write(output);
+        });
+
+        child.stderr.on("data", chunk => {
+            const output = chunk.toString();
+            stderr += output;
+            process.stderr.write(output);
+        });
+
+        child.on("error", reject);
+
+        child.on("close", code => {
+            if (code !== 0) {
+                reject(new Error(
+                    `Python Review failed (exit ${code}). ${stderr}`
+                ));
+                return;
+            }
+
+            const match = stdout.match(
+                /Review report saved:\s*(.+\.json)/i
+            );
+
+            if (!match) {
+                reject(new Error("Python Review report path not found."));
+                return;
+            }
+
+            try {
+                const reportPath = match[1].trim();
+                const report = JSON.parse(
+                    fs.readFileSync(reportPath, "utf8")
+                );
+
+                if (report.review_status !== "completed") {
+                    reject(new Error(
+                        `Review status is ${report.review_status}`
+                    ));
+                    return;
+                }
+
+                resolve({ report, reportPath });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Main shared agentic loop function
 
 async function main() {
 
@@ -153,7 +274,7 @@ async function main() {
     ========================================================= */
 
 
-        function parseArgs(argv) {
+    function parseArgs(argv) {
 
         const args = {
             student:
@@ -300,6 +421,82 @@ async function main() {
             process.argv.slice(2)
         );
 
+    // Release 2 review modes use their own evidence pipelines.
+    if (RELEASE2_REVIEW_MODES.includes(args.mode)) {
+        console.log(`\nRELEASE 2 REVIEW MODE: ${args.mode}`);
+
+        console.log("Selected JS student:", args.student);
+        const { report, reportPath } = await runPythonReview(args.mode, args.student);
+        const decision = await humanReview({
+            observation: report.evidence || report,
+            implementation: report.implementation || {},
+            review: report.review || {},
+            round: 1
+        });
+
+        const updatedReport = {
+            ...report,
+            human_release_decision: decision.decision,
+            human_review_note: decision.note,
+            human_review_timestamp: new Date().toISOString()
+        };
+
+        fs.writeFileSync(
+            reportPath,
+            JSON.stringify(updatedReport, null, 2),
+            "utf8"
+        );
+
+        await recordReview({
+            student: "Shared",
+            round: 1,
+            task: `Release 2 ${args.mode} review | Workflow ID: ${report.workflow_id || "N/A"
+                }`,
+
+            observation: {
+                student: args.student,
+                component: `${args.mode} review`,
+                ok: true,
+                services: [],
+                issues: []
+            },
+
+            validationEvidence: JSON.stringify(
+                report.evidence || report,
+                null,
+                2
+            ),
+
+            implementationRecommendation:
+                report.implementation || "See Python review report",
+
+            review:
+                report.review || "See Python review report",
+
+            humanDecision: decision.decision,
+            humanNote: decision.note,
+
+            carryForward: "",
+            timestamp: new Date().toISOString()
+        });
+
+        console.log(`\nHuman decision: ${decision.decision}`);
+        console.log(`Review report updated: ${reportPath}`);
+        return;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const student =
         args.student;
@@ -337,7 +534,7 @@ async function main() {
     console.log(
         `Task: ${task}`
     );
-    
+
     console.log(
         `Validation mode: ${args.mode}`
     );
@@ -398,7 +595,7 @@ async function main() {
                 student,
                 args.mode
             );
-        
+
 
 
         let evidenceText =
@@ -708,29 +905,42 @@ async function humanReview({
         output: process.stdout
     });
 
+    const options = {
+        "1": "Accept",
+        "2": "Partially Accept",
+        "3": "Reject"
+    };
+
     try {
         console.log(`\nROUND ${round} HUMAN REVIEW`);
 
-        console.log("\n1 - Accept");
-        console.log("2 - Partially Accept");
-        console.log("3 - Reject");
+        let selection;
 
-        const selection =
-            (await rl.question("Decision: ")).trim();
+        while (true) {
+            console.log("\n1 - Accept");
+            console.log("2 - Partially Accept");
+            console.log("3 - Reject");
 
-        const note =
-            (await rl.question("Optional note: ")).trim();
+            selection = (await rl.question("Decision: ")).trim();
 
-        let decision = "Reject";
+            if (options[selection]) {
+                break;
+            }
 
-        if (selection === "1") {
-            decision = "Accept";
-        } else if (selection === "2") {
-            decision = "Partially Accept";
+            console.log(
+                "Invalid decision. Please enter 1, 2, or 3."
+            );
+        }
+
+        let note = (await rl.question("Reason: ")).trim();
+
+        while (!note) {
+            console.log("A reason is required.");
+            note = (await rl.question("Reason: ")).trim();
         }
 
         return {
-            decision,
+            decision: options[selection],
             note
         };
 

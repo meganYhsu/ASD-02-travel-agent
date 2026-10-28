@@ -193,5 +193,6 @@ def delete_booking_item(booking_item_id):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+     # Required for communication between Docker containers.
+    app.run(host='0.0.0.0', port=5000, debug=False) # noqa: S104
 

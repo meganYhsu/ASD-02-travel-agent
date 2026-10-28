@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+import os
 
 app = Flask(
     __name__,
@@ -7,7 +8,7 @@ app = Flask(
     static_url_path="/css"
 )
 
-app.secret_key = "travel-agent-secret"
+app.secret_key = os.environ["FLASK_SECRET_KEY"]  # Set a secret key for session management
 
 # Demo accounts for Release 0
 accounts = {

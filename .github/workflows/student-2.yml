@@ -53,6 +53,13 @@ jobs:
       - name: Validate Python syntax
         run: python -m compileall student-2/backend student-2/database student-2/frontend
 
+      - name: Install pytest
+        run: python -m pip install pytest
+
+      - name: Test Student 2 Backend API Endpoints
+        run: |
+          python -m pytest student-2/tests/test_endpoints.py -v
+
       - name: Build backend Docker image
         run: docker build -t student-2-backend ./student-2/backend
 

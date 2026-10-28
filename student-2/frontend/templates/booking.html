@@ -4,8 +4,40 @@
 <head>
     <title>Booking</title>
 
-
     <link rel="stylesheet" href="http://localhost:8080/css/styles.css" />
+
+    <style>
+        #multi-agent-loading {
+            display: none;
+            margin-top: 15px;
+            font-style: italic;
+            color: #64748b;
+        }
+
+        #multi-agent-loading.htmx-request {
+            display: block;
+        }
+
+        .human-review-decisions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .human-review-decisions legend {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .human-review-decisions label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 
@@ -346,6 +378,78 @@
         </div>
 
 
+        <!-- Multi-Agent Booking Review -->
+        <div class="section-card">
+            <section>
+                <h2>Multi-Agent Booking Review</h2>
+
+                <p>
+                    Multi-Agent Booking Assistant to review individual bookings or analyse multiple booking records.
+
+                    The Planner creates a review strategy, the Worker examines booking details and linked
+                    itineraries,and the Reviewer evaluates the findings for accuracy and consistency.
+
+                    After the analysis, you can review the results and provide your own final decision.
+                </p>
+
+                <form hx-post="/booking/multi-agent" hx-target="#multi-agent-result" hx-swap="innerHTML"
+                    hx-indicator="#multi-agent-loading" hx-disabled-elt="find button[type='submit']">
+
+                    <!-- Review Scope -->
+                    <label for="review-scope">Review Scope:</label>
+
+                    <select id="review-scope" onchange="toggleBookingSelection()">
+                        <option value="all">All Bookings</option>
+                        <option value="specific">Specific Booking</option>
+                    </select>
+
+                    <br><br>
+
+                    <!-- Specific Booking Selection -->
+                    <div id="specific-booking-selection" style="display: none;">
+
+                        <label for="multi-agent-booking-id">
+                            Select Booking:
+                        </label>
+                        <select id="multi-agent-booking-id" name="booking_id" disabled>
+
+                            <option value="" selected>
+                                Select a booking
+                            </option>
+
+                            {% for booking in bookings %}
+                            <option value="{{ booking.booking_id }}">
+                                Booking #{{ booking.booking_id }}
+                                - Trip {{ booking.trip_id }}
+                                - {{ booking.status }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <br><br>
+
+                    <label>Review Request:</label>
+
+                    <textarea name="user_request" rows="3" required
+                        placeholder="e.g. Find bookings in Sydney where the status is not confirmed."></textarea>
+                    <br><br>
+
+                    <button type="submit">
+                        Run Multi-Agent Review
+                    </button>
+                </form>
+
+                <p class="htmx-indicator" id="multi-agent-loading">
+                    Running Multi-Agent Review... This may take a few minutes.
+                </p>
+
+                <div id="multi-agent-result"></div>
+
+            </section>
+        </div>
+
+
         <script>
 
             function openAddModal() {
@@ -406,6 +510,26 @@
                 }
 
                 openAddModal();
+            }
+
+            function toggleBookingSelection() {
+                const scope = document.getElementById('review-scope');
+                const container = document.getElementById(
+                    'specific-booking-selection'
+                );
+                const bookingSelect = document.getElementById(
+                    'multi-agent-booking-id'
+                );
+                const isSpecific = scope.value === 'specific';
+
+                container.style.display = isSpecific ? 'block' : 'none';
+
+                bookingSelect.disabled = !isSpecific;
+                bookingSelect.required = isSpecific;
+
+                if (!isSpecific) {
+                    bookingSelect.value = '';
+                }
             }
 
         </script>

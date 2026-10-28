@@ -64,6 +64,9 @@ import MCPIntegratedFile
 import RAGAssistantPage
     from "./pages/RAGAssistantPage";
 
+import MultiAgentServiceIntegration
+    from "./pages/MultiAgentServiceIntegration";
+
 function App() {
     return (
         <div className="app-shell">
@@ -107,6 +110,11 @@ function App() {
                         <Route
                             path="/RAGAssistant"
                             element={<RAGAssistantPage />}
+                        />
+
+                        <Route
+                            path="/MultiAgentServiceIntegration"
+                            element={<MultiAgentServiceIntegration />}
                         />
 
                     </Routes>
