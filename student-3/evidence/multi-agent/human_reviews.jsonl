@@ -1,0 +1,1 @@
+﻿{"workflow_id": "98a5e9ea-1358-43b3-9042-587182af4e36", "service": "budget", "task": "review_spending", "itinerary_id": null, "timestamp": "2026-10-27T13:28:19.817692+00:00", "decision": "Partially Accept", "reason": "Cut food spending as suggested, but the Reviewer's risk is wrong: the Worker correctly said 44.5% of total spent.", "evidence": ""}
